@@ -12,8 +12,9 @@ import { io, type Socket } from "socket.io-client";
  */
 
 /** Server URL, overridable per environment via `VITE_SERVER_URL`. */
-const SERVER_URL: string =
-  import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001";
+// const SERVER_URL: string =
+//   import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001";
+  const SERVER_URL: string = "https://elementals-game.netlify.app"
 
 /**
  * The single shared socket instance. Socket.IO manages reconnection
