@@ -12,10 +12,8 @@ import { io, type Socket } from "socket.io-client";
  */
 
 /** Server URL, overridable per environment via `VITE_SERVER_URL`. */
-// const SERVER_URL: string =
-//   import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001";
-  const SERVER_URL: string = "https://elementals-c1937bd8ae33.herokuapp.com"
-
+const SERVER_URL: string =
+  import.meta.env.VITE_SERVER_URL ?? "https://elementals-c1937bd8ae33.herokuapp.com";
 /**
  * The single shared socket instance. Socket.IO manages reconnection
  * automatically; after a reconnect the app re-requests authoritative state
