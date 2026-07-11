@@ -1,0 +1,1280 @@
+/* ==========================================================================
+   Ability Bar & Bottom Inventory Layout Styles (Dark Fantasy theme)
+   ========================================================================== */
+
+/* Sits in normal flow at the bottom of the battlefield's flex column, so the
+   arena above always shrinks to fit — the game is never hidden behind the bar
+   or the shop panel, on any screen or orientation. */
+.ability-bar-wrapper {
+  position: relative;
+  width: min(calc(100% - 1.5rem), 78rem);
+  margin: 0 auto;
+  flex-shrink: 0;
+  z-index: 100;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Glassmorphic main bottom bar */
+.ability-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(11, 14, 23, 0.92) 0%, rgba(20, 25, 40, 0.85) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 1px rgba(255, 255, 255, 0.06);
+  padding: 1.25rem;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  min-height: 120px;
+  width: 100%;
+}
+
+/* Left side: stats readouts */
+.ability-bar__stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 0 0 auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding-right: 1rem;
+}
+
+.ability-bar__stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: max-content;
+}
+
+.ability-bar__stat-group--large {
+  min-width: 140px;
+}
+
+.ability-bar__stat-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.ability-bar__stat-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.ability-bar__stat-val {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  font-family: 'Courier New', monospace;
+  min-width: 80px;
+  text-align: center;
+}
+
+.ability-bar__stat-val--gold {
+  color: #ffd24a;
+  text-shadow: 0 0 16px rgba(255, 210, 74, 0.4);
+  font-size: 1.4rem;
+  min-width: 100px;
+}
+
+.ability-bar__stat-label {
+  font-size: 0.65rem;
+  color: #8fa0b0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ability-bar__stat-label--shield {
+  color: #8fe3ff;
+  font-weight: 700;
+}
+
+.ability-bar__stat-values .slash {
+  color: rgba(255, 255, 255, 0.2);
+  margin: 0 3px;
+}
+
+/* Center abilities section. min-width: 0 lets it shrink inside the flex row;
+   wrapping keeps buttons inside the bar instead of spilling out. */
+.ability-bar__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  min-height: 90px;
+}
+
+/* Right side: Repairs & Shields control button */
+.ability-bar__controls {
+  display: flex;
+  align-items: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  padding-left: 1rem;
+}
+
+.ability-bar__shop-toggle {
+  background: linear-gradient(135deg, rgba(255, 210, 74, 0.12) 0%, rgba(255, 210, 74, 0.06) 100%);
+  border: 2px solid rgba(255, 210, 74, 0.35);
+  color: #ffd24a;
+  padding: 0.85rem 1.35rem;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+  min-width: 110px;
+}
+
+.ability-bar__shop-toggle:hover {
+  background: linear-gradient(135deg, rgba(255, 210, 74, 0.2) 0%, rgba(255, 210, 74, 0.1) 100%);
+  border-color: rgba(255, 210, 74, 0.6);
+  box-shadow: 0 8px 20px rgba(255, 210, 74, 0.2);
+  transform: translateY(-2px);
+}
+
+.ability-bar__shop-toggle--active {
+  background: linear-gradient(135deg, rgba(255, 210, 74, 0.3) 0%, rgba(255, 210, 74, 0.15) 100%);
+  border-color: #ffd24a;
+  box-shadow: 0 0 20px rgba(255, 210, 74, 0.3);
+}
+
+.ability-bar__shop-toggle-icon {
+  font-size: 1.6rem;
+}
+
+.ability-bar__shop-toggle-text {
+  font-size: 0.8rem;
+}
+
+/* ==========================================================================
+   Ability Button Styles
+   ========================================================================== */
+
+.ability-button-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+
+.ability-button {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: var(--gradient, #3a4152);
+  border: 2.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ability-button:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.05);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.6),
+    0 0 20px var(--color, rgba(255, 255, 255, 0.3));
+}
+
+.ability-button:active:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Element Glows */
+.ability-button--water { --color: #4aa3ff; }
+.ability-button--fire { --color: #ff6b4a; }
+.ability-button--air { --color: #b7c9ff; }
+.ability-button--earth { --color: #c9a56b; }
+.ability-button--electricity { --color: #ffd24a; }
+.ability-button--ice { --color: #8fe3ff; }
+.ability-button--nature { --color: #6bd88a; }
+
+/* Disabled states (grays out, adds red tint if broke, overlays) */
+.ability-button--disabled {
+  filter: grayscale(0.9) brightness(0.65);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ability-button--ultimate {
+  border: 2.5px solid #ffd24a;
+  background: linear-gradient(135deg, rgba(255, 210, 74, 0.15) 0%, rgba(255, 210, 74, 0.05) 100%);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 0 15px rgba(255, 210, 74, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.ability-button--ultimate:hover:not(:disabled) {
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.6),
+    0 0 25px rgba(255, 210, 74, 0.4);
+  border-color: #ffe375;
+  transform: translateY(-4px) scale(1.08);
+}
+
+.ability-button__badge {
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f2f5fb;
+  filter: drop-shadow(0 0 6px var(--color, rgba(0, 0, 0, 0.6)))
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+/* Ultimate cards keep a translucent background, so tint their icon gold. */
+.ability-button--ultimate .ability-button__badge {
+  color: #ffd24a;
+}
+
+.ability-button__hotkey {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 5px;
+  border-radius: 4px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ability-button__cost {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #ffd24a;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 210, 74, 0.2);
+}
+
+/* Charge pool pips (Lightning Barrage): dim = recharging, gold = ready. */
+.ability-button__charges {
+  position: absolute;
+  top: 22px;
+  left: 4px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+}
+
+.ability-button__charge-pip {
+  font-size: 0.65rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.18);
+  filter: grayscale(1);
+  transition: all 0.15s ease;
+}
+
+.ability-button__charge-pip--held {
+  color: #ffd24a;
+  filter: none;
+  text-shadow: 0 0 5px rgba(255, 210, 74, 0.7);
+}
+
+/* Spend-count buttons: cast with exactly 1, 2, or 3 charges. Overlaid along
+   the card's bottom edge, above the main cast button. */
+.ability-button__charge-cast {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  z-index: 5;
+}
+
+.ability-button__charge-cast-btn {
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  cursor: not-allowed;
+  transition: all 0.15s ease;
+}
+
+.ability-button__charge-cast-btn--ready {
+  color: #ffd24a;
+  border-color: rgba(255, 210, 74, 0.5);
+  cursor: pointer;
+}
+
+.ability-button__charge-cast-btn--ready:hover {
+  background: rgba(255, 210, 74, 0.25);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 8px rgba(255, 210, 74, 0.5);
+}
+
+.ability-tooltip__charges {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  color: #a0aabf;
+}
+
+.ability-tooltip__charge-row strong {
+  color: #fff;
+}
+
+.ability-tooltip__charge-timers {
+  color: #8fe3ff;
+}
+
+.ability-tooltip__charge-table {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  color: #8fa0b0;
+}
+
+.ability-tooltip__charge-hint {
+  font-size: 0.7rem;
+  color: #6b7385;
+  font-style: italic;
+}
+
+/* Cooldown Clock Wipe Overlay */
+.ability-button__cooldown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: 12px;
+}
+
+.ability-button__cooldown-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ability-button__cooldown-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 36;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.ability-button__cooldown-text {
+  position: relative;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Level indicator */
+.ability-button__level-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 3px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 210, 74, 0.2);
+}
+
+.ability-button__level-pip {
+  font-size: 0.65rem;
+  color: #ffd24a;
+  text-shadow: 0 0 4px rgba(255, 210, 74, 0.5);
+}
+
+.ability-button__level-text {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ffd24a;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 1px 3px;
+  border-radius: 3px;
+  text-shadow: 0 0 4px rgba(255, 210, 74, 0.3);
+}
+
+.ability-button__locked-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+}
+
+.ability-button__locked-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.ability-button__locked-icon {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e8ecf5;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.ability-button__unlock-cost {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffd24a;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 210, 74, 0.3);
+}
+
+/* Upgrade Plus Badge */
+.ability-button__upgrade-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, rgba(58, 65, 82, 0.8) 0%, rgba(40, 45, 65, 0.9) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  z-index: 10;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.ability-button__upgrade-btn--active {
+  background: linear-gradient(135deg, #5fd97a 0%, #4bb85a 100%);
+  border: 1.5px solid #fff;
+  color: #0b0e17;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(95, 217, 122, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.ability-button__upgrade-btn--active:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 16px rgba(95, 217, 122, 0.8), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* ==========================================================================
+   Tooltips (Hovering card overlay)
+   ========================================================================== */
+
+.ability-tooltip {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 260px;
+  background: linear-gradient(135deg, rgba(11, 14, 23, 0.97) 0%, rgba(20, 25, 40, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 200;
+  animation: tooltipFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ability-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 7px;
+  border-style: solid;
+  border-color: rgba(20, 25, 40, 0.95) transparent transparent transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.ability-tooltip__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.5rem;
+  gap: 0.5rem;
+}
+
+.ability-tooltip__name {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.ability-tooltip__kind {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: #fff;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.ability-tooltip__kind--attack { background: linear-gradient(135deg, #ff5a5a, #ff7a7a); }
+.ability-tooltip__kind--utility { background: linear-gradient(135deg, #5a8eff, #7aafff); }
+.ability-tooltip__kind--ultimate { background: linear-gradient(135deg, #ffd24a, #ffe375); color: #0b0e17; font-weight: 900; }
+
+.ability-tooltip__meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #8fa0b0;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ability-tooltip__desc {
+  font-size: 0.85rem;
+  color: #a0aabf;
+  line-height: 1.45;
+  margin: 0 0 0.7rem 0;
+  font-weight: 500;
+}
+
+.ability-tooltip__footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.ability-tooltip__level-info {
+  color: #e8ecf5;
+  font-weight: 600;
+}
+
+.ability-tooltip__upgrade {
+  font-weight: 700;
+  color: #ffd24a;
+}
+
+.text-green { color: #5fd97a; font-weight: 700; }
+.text-red { color: #ff5a5a; font-weight: 700; }
+.text-gold { color: #ffd24a; font-weight: 700; }
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Upgrade button tooltip */
+.ability-upgrade-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(11, 14, 23, 0.98) 0%, rgba(20, 25, 40, 0.96) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+  color: #e8ecf5;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 300;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  animation: tooltipFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ability-upgrade-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(20, 25, 40, 0.96) transparent transparent transparent;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.ability-upgrade-tooltip__header {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: #fff;
+}
+
+.ability-upgrade-tooltip__cost {
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   Shop Panel Overlay (Repairs, Shields, Citizens)
+   ========================================================================== */
+
+.shop-overlay {
+  /* Floats above the bar (the wrapper is position: relative) so opening it
+     never resizes the battlefield — it overlays the arena's bottom edge. */
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 150;
+  background: linear-gradient(135deg, rgba(11, 14, 23, 0.95) 0%, rgba(20, 25, 40, 0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 1.25rem;
+  color: #e8ecf5;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 78rem;
+}
+
+.shop-overlay__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.6rem;
+}
+
+.shop-overlay__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+
+.shop-overlay__close-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #8fa0b0;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.shop-overlay__close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.shop-overlay__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+/* Shop Single Item Box */
+.shop-item {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.shop-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transition: left 0.4s;
+  pointer-events: none;
+}
+
+.shop-item:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.shop-item:hover::before {
+  left: 100%;
+}
+
+.shop-item__icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 3px rgba(255, 255, 255, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shop-item__icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.shop-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.shop-item__name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+.shop-item__desc {
+  font-size: 0.75rem;
+  color: #8fa0b0;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.shop-item__stat {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffd24a;
+  margin-top: 0.3rem;
+}
+
+.shop-item__cost-needed {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ff7a7a;
+  margin-top: 0.4rem;
+  display: block;
+}
+
+.shop-item__buy-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #ffd24a 0%, #ffda5c 100%);
+  border: 1.5px solid #e0b32c;
+  color: #0b0e17;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(255, 210, 74, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.shop-item__buy-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: left 0.3s;
+}
+
+.shop-item__buy-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffe375 0%, #fff090 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 210, 74, 0.25);
+  border-color: #fff;
+}
+
+.shop-item__buy-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.shop-item__buy-btn:disabled {
+  background: linear-gradient(135deg, rgba(58, 65, 82, 0.6) 0%, rgba(45, 52, 70, 0.6) 100%);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@keyframes shopSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   Responsive layouts — desktop is the default; these adapt the bar to
+   portrait phones/tablets and to short landscape (phone sideways) screens.
+   ========================================================================== */
+
+/* Keep the shop panel from pushing the game off-screen on small displays:
+   it caps its height and scrolls internally instead. */
+.shop-overlay {
+  max-height: 40dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mid-size landscape windows (small laptops, tablets sideways): shrink the
+   buttons and stat readouts so the bar stays a single row that fits the
+   arena's 11rem height budget. */
+@media (max-width: 1100px) and (min-width: 701px) and (orientation: landscape) and (min-height: 561px) {
+  .ability-bar {
+    gap: 0.75rem;
+    padding: 0.85rem;
+    min-height: 0;
+  }
+
+  .ability-bar__stats {
+    gap: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .ability-bar__stat-icon {
+    font-size: 1.5rem;
+  }
+
+  .ability-bar__stat-val {
+    font-size: 1.05rem;
+    min-width: 0;
+  }
+
+  .ability-bar__stat-val--gold {
+    font-size: 1.1rem;
+    min-width: 0;
+  }
+
+  .ability-bar__stat-group--large {
+    min-width: 0;
+  }
+
+  .ability-bar__buttons {
+    gap: 0.5rem;
+    min-height: 0;
+  }
+
+  .ability-button-container {
+    width: 68px;
+    height: 68px;
+  }
+
+  .ability-button__badge {
+    font-size: 1.8rem;
+  }
+
+  .ability-bar__shop-toggle {
+    min-width: 0;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .ability-bar__shop-toggle-text {
+    font-size: 0.7rem;
+  }
+}
+
+/* Portrait tablets & phones: stack the bar into compact rows. */
+@media (max-width: 900px) and (orientation: portrait), (max-width: 700px) {
+  .ability-bar {
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    min-height: 0;
+  }
+
+  .ability-bar__stats {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-right: 0;
+    padding-bottom: 0.6rem;
+    width: 100%;
+    justify-content: space-around;
+    gap: 0.5rem;
+  }
+
+  .ability-bar__stat-icon {
+    font-size: 1.4rem;
+    margin-bottom: 0;
+  }
+
+  .ability-bar__stat-val {
+    font-size: 1.05rem;
+    min-width: 0;
+  }
+
+  .ability-bar__stat-val--gold {
+    font-size: 1.1rem;
+    min-width: 0;
+  }
+
+  .ability-bar__stat-group--large {
+    min-width: 0;
+  }
+
+  .ability-bar__buttons {
+    min-height: auto;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ability-button-container {
+    width: 64px;
+    height: 64px;
+  }
+
+  .ability-button__badge {
+    font-size: 1.7rem;
+  }
+
+  .ability-button__cost,
+  .ability-button__hotkey {
+    font-size: 0.6rem;
+  }
+
+  .ability-bar__controls {
+    border-left: none;
+    padding-left: 0;
+    width: 100%;
+  }
+
+  .ability-bar__shop-toggle {
+    flex-direction: row;
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 1rem;
+    gap: 0.6rem;
+  }
+
+  .ability-bar__shop-toggle-icon {
+    font-size: 1.1rem;
+  }
+
+  /* Shop panel on portrait: compact horizontal rows (icon | info | buy)
+     instead of tall stacked cards, so all three items fit a phone screen. */
+  .shop-overlay {
+    padding: 0.75rem;
+    max-height: 42dvh;
+    gap: 0.6rem;
+  }
+
+  .shop-overlay__title {
+    font-size: 0.95rem;
+  }
+
+  .shop-overlay__header {
+    padding-bottom: 0.4rem;
+  }
+
+  .shop-overlay__grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .shop-item {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 0.6rem;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .shop-item__icon-wrapper {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .shop-item__icon {
+    font-size: 1.1rem;
+  }
+
+  .shop-item__info {
+    gap: 0.15rem;
+  }
+
+  .shop-item__name {
+    font-size: 0.85rem;
+  }
+
+  .shop-item__desc {
+    font-size: 0.7rem;
+  }
+
+  .shop-item__stat {
+    font-size: 0.7rem;
+    margin-top: 0;
+  }
+
+  .shop-item__buy-btn {
+    width: auto;
+    flex-shrink: 0;
+    margin-top: 0;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+}
+
+/* Short landscape (phone held sideways): one row, but with buttons kept
+   large enough to tap comfortably. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .ability-bar-wrapper {
+    width: calc(100% - 0.75rem);
+    gap: 0.35rem;
+    padding-bottom: 0.35rem;
+  }
+
+  .ability-bar {
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    min-height: 0;
+    border-radius: 12px;
+  }
+
+  .ability-bar__stats {
+    gap: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .ability-bar__stat-icon {
+    font-size: 1.35rem;
+    margin-bottom: 0;
+  }
+
+  .ability-bar__stat-val,
+  .ability-bar__stat-val--gold {
+    font-size: 1.05rem;
+    min-width: 0;
+  }
+
+  .ability-bar__stat-label {
+    font-size: 0.6rem;
+  }
+
+  .ability-bar__stat-group--large {
+    min-width: 0;
+  }
+
+  .ability-bar__buttons {
+    min-height: 0;
+    gap: 0.55rem;
+    flex-wrap: nowrap;
+  }
+
+  .ability-button-container {
+    width: 70px;
+    height: 70px;
+  }
+
+  .ability-button__badge {
+    font-size: 1.9rem;
+  }
+
+  .ability-button__cost,
+  .ability-button__hotkey {
+    font-size: 0.62rem;
+    padding: 1px 4px;
+  }
+
+  .ability-button__level-badge {
+    padding: 1px 3px;
+  }
+
+  .ability-button__level-pip {
+    font-size: 0.55rem;
+  }
+
+  .ability-button__charge-cast-btn {
+    width: 21px;
+    height: 19px;
+  }
+
+  .ability-bar__controls {
+    padding-left: 0.75rem;
+  }
+
+  .ability-bar__shop-toggle {
+    min-width: 0;
+    padding: 0.55rem 0.85rem;
+    gap: 0.3rem;
+  }
+
+  .ability-bar__shop-toggle-icon {
+    font-size: 1.25rem;
+  }
+
+  .ability-bar__shop-toggle-text {
+    font-size: 0.7rem;
+  }
+
+  .shop-overlay {
+    max-height: 48dvh;
+    padding: 0.6rem;
+    gap: 0.5rem;
+  }
+
+  .shop-overlay__title {
+    font-size: 0.85rem;
+  }
+
+  .shop-overlay__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .shop-item {
+    padding: 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .shop-item__icon-wrapper {
+    width: 30px;
+    height: 30px;
+  }
+
+  .shop-item__icon {
+    font-size: 1rem;
+  }
+
+  .shop-item__name {
+    font-size: 0.75rem;
+  }
+
+  .shop-item__desc {
+    font-size: 0.62rem;
+    line-height: 1.3;
+  }
+
+  .shop-item__stat {
+    font-size: 0.65rem;
+    margin-top: 0;
+  }
+
+  .shop-item__buy-btn {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.65rem;
+  }
+}

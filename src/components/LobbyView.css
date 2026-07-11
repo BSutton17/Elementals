@@ -1,0 +1,433 @@
+.lobby {
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  width: 100dvw;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem 1.25rem 1.5rem;
+  margin: 0 auto;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(80, 120, 255, 0.2), transparent 60%),
+    #0b0e17;
+  overflow: hidden;
+}
+
+/* The main content (players + kingdoms); becomes two columns when there's room. */
+.lobby__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.lobby__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+
+/* Desktop / tablet: use the extra width — full-width, two-column body. */
+@media (min-width: 48rem) {
+  .lobby {
+    padding: 2rem 3rem;
+  }
+  .lobby__body {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 2rem;
+  }
+  .lobby__players {
+    flex: 2;
+  }
+  .lobby__kingdoms {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+/* Mobile landscape (short, wide): tighten spacing and go two-column so the
+   whole lobby fits without a tall scroll. */
+@media (orientation: landscape) and (max-height: 35rem) {
+  .lobby {
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+  }
+  .lobby__body {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  .lobby__players {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+  }
+  .lobby__kingdoms {
+    flex: 1.4;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .lobby__kingdom-details {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+  }
+  .lobby__kingdom-btn {
+    padding: 0.45rem;
+    font-size: 0.8rem;
+  }
+  .lobby__heading {
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+  }
+  .lobby__player {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  .lobby__footer {
+    flex-direction: row;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+  }
+  .lobby__start-btn {
+    flex: 1;
+    padding: 0.6rem;
+    font-size: 0.95rem;
+  }
+  .lobby__actions {
+    flex: 1;
+    gap: 0.5rem;
+  }
+  .lobby__ready-btn,
+  .lobby__leave-btn {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.9rem;
+  }
+  /* Compact room code so the columns get the height. */
+  .room-code {
+    gap: 0.15rem;
+  }
+  .room-code__digits {
+    font-size: 1.6rem;
+  }
+  .room-code__label {
+    font-size: 0.65rem;
+  }
+  .room-code__copy {
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Narrow portrait phones: full-width tappable rows, two-column kingdom grid. */
+@media (max-width: 420px) {
+  .lobby {
+    padding: 1rem 0.75rem;
+    gap: 1rem;
+  }
+  .lobby__kingdom-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lobby__kingdom-details {
+    padding: 0.85rem;
+  }
+  .lobby__player {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+.lobby__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #aab3c5;
+}
+
+.lobby__count {
+  font-size: 0.9rem;
+  color: #8b93a7;
+}
+
+.lobby__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lobby__player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+}
+
+.lobby__player--offline {
+  opacity: 0.45;
+}
+
+.lobby__name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.lobby__tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cdd4e2;
+}
+
+.lobby__tag--host {
+  background: linear-gradient(120deg, #ffd24a, #ff9d4a);
+  color: #0b0e17;
+}
+
+.lobby__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.8rem;
+}
+
+.lobby__kingdom {
+  color: #aab3c5;
+}
+
+.lobby__ready {
+  color: #8b93a7;
+}
+
+.lobby__ready--on {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.lobby__kingdom-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.lobby__kingdom-btn {
+  padding: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lobby__kingdom-btn--selected {
+  border-color: var(--k);
+  box-shadow: inset 0 0 0 1px var(--k);
+  background: color-mix(in srgb, var(--k) 18%, transparent);
+}
+
+.lobby__kingdom-btn--taken {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.lobby__kingdom-taken {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8b93a7;
+}
+
+/* ---- Kingdom details panel (passives + abilities) ---- */
+
+.lobby__kingdom-hint {
+  margin: 1rem 0 0;
+  padding: 1.25rem;
+  font-size: 0.9rem;
+  color: #8b93a7;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+}
+
+.lobby__kingdom-details {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.lobby__details-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.6rem;
+}
+
+.lobby__details-heading {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b93a7;
+}
+
+.lobby__details-heading:first-of-type {
+  margin-top: 0.25rem;
+}
+
+.lobby__details-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lobby__details-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+}
+
+.lobby__details-item--weakness {
+  border-color: rgba(255, 90, 90, 0.2);
+}
+
+.lobby__details-item--weakness .lobby__details-name {
+  color: #ffb4b4;
+}
+
+.lobby__details-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e8ecf5;
+}
+
+.lobby__details-desc {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #aab3c5;
+}
+
+.lobby__details-kind {
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cdd4e2;
+}
+
+.lobby__details-kind--attack {
+  background: rgba(255, 90, 90, 0.18);
+  color: #ff9d9d;
+}
+
+.lobby__details-kind--utility {
+  background: rgba(90, 142, 255, 0.18);
+  color: #9dbdff;
+}
+
+.lobby__details-kind--ultimate {
+  background: rgba(255, 210, 74, 0.18);
+  color: #ffd24a;
+}
+
+.lobby__start-btn {
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0b0e17;
+  background: linear-gradient(120deg, #ffd24a, #ff9d4a);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.lobby__start-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lobby__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.lobby__ready-btn {
+  flex: 1;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0b0e17;
+  background: linear-gradient(120deg, #6bb8ff, #b79bff);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.lobby__ready-btn--on {
+  background: linear-gradient(120deg, #4ade80, #22c55e);
+}
+
+.lobby__leave-btn {
+  padding: 0.9rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffb4b4;
+  background: rgba(255, 90, 90, 0.1);
+  border: 1px solid rgba(255, 90, 90, 0.25);
+  border-radius: 999px;
+  cursor: pointer;
+}

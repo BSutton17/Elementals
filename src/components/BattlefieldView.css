@@ -1,0 +1,159 @@
+.battlefield {
+  --kingdom-primary: #4aa3ff;
+  --kingdom-secondary: #2193b0;
+  --kingdom-dark: #1e3c72;
+
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0.4rem 0 0;
+  margin: 0;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(255, 90, 60, 0.12), transparent 60%),
+    #0b0e17;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.battlefield__sr-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The arena fills whatever vertical space the inventory bar leaves over
+   (the bar sits in normal flow below it, so they can never overlap). The SVG
+   letterboxes its square viewBox inside the box (preserveAspectRatio), so the
+   full battlefield circle is always visible on any screen or orientation —
+   even while the shop panel is open. */
+.battlefield__arena-box {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battlefield__arena {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Portrait phones/tablets: smaller header chrome. */
+@media (max-width: 900px) and (orientation: portrait), (max-width: 700px) and (orientation: portrait) {
+  .battlefield__kingdom-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .battlefield__level-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Short landscape (phone sideways): compact header chrome. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .battlefield__kingdom-header {
+    top: 0.5rem;
+    left: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .battlefield__kingdom-header h2 {
+    font-size: 0.95rem;
+  }
+
+  .battlefield__level-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    border-width: 2px;
+  }
+}
+
+.battlefield__name {
+  fill: #e8ecf5;
+  font-size: 26px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.battlefield__stat-text {
+  fill: #cdd4e2;
+  font-size: 24px;
+  font-weight: 600;
+  text-anchor: start;
+}
+
+.battlefield__stat-text--income {
+  fill: #ffd24a;
+  text-anchor: middle;
+}
+
+.battlefield__eliminated {
+  fill: #ff5a5a;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-anchor: middle;
+}
+
+.kingdom-site--selectable {
+  cursor: pointer;
+}
+
+.kingdom-site--selectable:hover {
+  filter: brightness(1.15);
+}
+
+.battlefield__kingdom-header {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.battlefield__level-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--kingdom-primary), var(--kingdom-secondary));
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #0b0e17;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6), inset 0 1px 3px rgba(255, 255, 255, 0.2);
+  text-shadow: none;
+  flex-shrink: 0;
+}
+
+.battlefield__kingdom-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--kingdom-primary);
+  text-shadow: 0 0 16px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.05em;
+}

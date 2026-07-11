@@ -1,0 +1,123 @@
+.game-over {
+  --winner-color: #ffd24a;
+
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  width: 100dvw;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(1000px 600px at 50% 30%, rgba(255, 210, 74, 0.1), transparent 65%),
+    #0b0e17;
+}
+
+.game-over--defeat {
+  background:
+    radial-gradient(1000px 600px at 50% 30%, rgba(255, 90, 90, 0.12), transparent 65%),
+    #0b0e17;
+}
+
+.game-over--draw {
+  background:
+    radial-gradient(1000px 600px at 50% 30%, rgba(140, 150, 175, 0.12), transparent 65%),
+    #0b0e17;
+}
+
+.game-over__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  animation: gameOverIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.game-over__title {
+  margin: 0;
+  font-size: clamp(3rem, 12vw, 6rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: #ffd24a;
+  text-shadow: 0 0 40px rgba(255, 210, 74, 0.35);
+}
+
+.game-over--defeat .game-over__title {
+  color: #ff6b6b;
+  text-shadow: 0 0 40px rgba(255, 90, 90, 0.3);
+}
+
+.game-over--draw .game-over__title {
+  color: #aab3c5;
+  text-shadow: 0 0 30px rgba(140, 150, 175, 0.3);
+}
+
+.game-over__subtitle {
+  margin: 0;
+  max-width: 34ch;
+  font-size: clamp(1rem, 3vw, 1.25rem);
+  line-height: 1.5;
+  color: #aab3c5;
+}
+
+.game-over__winner-name {
+  font-weight: 800;
+  color: var(--winner-color);
+}
+
+.game-over__leave {
+  margin-top: 0.75rem;
+  padding: 0.85rem 2.75rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0b0e17;
+  background: linear-gradient(120deg, #6bb8ff, #b79bff);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 30px rgba(100, 140, 255, 0.35);
+}
+
+.game-over__leave:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(100, 140, 255, 0.5);
+}
+
+@keyframes gameOverIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Short screens (landscape phones): compress so everything stays visible. */
+@media (max-height: 640px) {
+  .game-over {
+    padding: 1rem;
+  }
+
+  .game-over__content {
+    gap: 0.75rem;
+  }
+
+  .game-over__title {
+    font-size: clamp(2rem, 10vh, 3.5rem);
+  }
+
+  .game-over__leave {
+    padding: 0.6rem 2rem;
+    font-size: 0.95rem;
+  }
+}

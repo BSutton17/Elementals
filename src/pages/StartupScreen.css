@@ -1,0 +1,251 @@
+.startup {
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  width: 100dvw;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(80, 120, 255, 0.25), transparent 60%),
+    radial-gradient(900px 500px at 50% 110%, rgba(255, 90, 60, 0.18), transparent 60%),
+    #0b0e17;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
+
+.startup__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.startup__title {
+  margin: 0;
+  font-size: clamp(3rem, 12vw, 7rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: #e8ecf5;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.startup__tagline {
+  margin: 0;
+  max-width: 36ch;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: #aab3c5;
+}
+
+.startup__play {
+  margin-top: 0.5rem;
+  padding: 0.85rem 2.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0b0e17;
+  background: linear-gradient(120deg, #6bb8ff, #b79bff);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+  box-shadow: 0 8px 30px rgba(100, 140, 255, 0.35);
+}
+
+.startup__play:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(100, 140, 255, 0.5);
+}
+
+.startup__play:disabled {
+  opacity: 0.5;
+  cursor: default;
+  box-shadow: none;
+}
+
+.startup__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #aab3c5;
+}
+
+.startup__status-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.startup__status--online {
+  color: #4ade80;
+}
+
+.startup__status--offline {
+  color: #f59e0b;
+}
+
+.startup__input {
+  width: 100%;
+  max-width: 18rem;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.6rem;
+  text-align: center;
+}
+
+.startup__input::placeholder {
+  color: #6b7385;
+}
+
+.startup__join {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 18rem;
+}
+
+.startup__input--code {
+  flex: 1;
+  letter-spacing: 0.3em;
+  max-width: none;
+}
+
+.startup__join-btn {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.startup__play:disabled,
+.startup__join-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.startup__error {
+  margin: 0;
+  color: #ffb4b4;
+  font-size: 0.9rem;
+}
+
+.startup__secondary {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.startup__title--sm {
+  font-size: clamp(2.5rem, 10vw, 4rem);
+}
+
+.startup__back {
+  align-self: flex-start;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.9rem;
+  color: #aab3c5;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.startup__code-input {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Responsive: keep the whole menu on screen at any size/orientation.
+   ========================================================================== */
+
+/* Short screens (landscape phones, small laptops at high zoom): compress the
+   title and spacing so name, buttons, and status all fit without scrolling. */
+@media (max-height: 640px) {
+  .startup {
+    padding: 1rem;
+  }
+
+  .startup__content {
+    gap: 0.7rem;
+  }
+
+  .startup__title {
+    font-size: clamp(1.75rem, 9vh, 3.25rem);
+  }
+
+  .startup__title--sm {
+    font-size: clamp(1.5rem, 8vh, 2.5rem);
+  }
+
+  .startup__tagline {
+    font-size: 0.9rem;
+  }
+
+  .startup__input {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .startup__code-input {
+    font-size: 1.3rem;
+  }
+
+  .startup__play {
+    margin-top: 0.15rem;
+    padding: 0.6rem 2rem;
+    font-size: 1rem;
+  }
+
+  .startup__secondary {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .startup__status {
+    font-size: 0.8rem;
+  }
+}
+
+/* Narrow portrait phones: keep inputs and buttons comfortably tappable
+   without overflowing the width. */
+@media (max-width: 420px) {
+  .startup {
+    padding: 1.25rem 1rem;
+  }
+
+  .startup__input,
+  .startup__join {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .startup__play,
+  .startup__secondary {
+    width: 100%;
+  }
+}
