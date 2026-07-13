@@ -37,16 +37,21 @@ export interface UpgradeAck {
   currency: number
 }
 
-/** Casts an active ability. `chargesToUse` selects how many charges a
- *  charge-costed ability (Lightning Barrage) spends on this cast. */
+/** Casts an active ability. `target` is a single kingdom id, or an array of
+ *  ids for a multi-target attack (Air's "Embrace of Winds" — the server spreads
+ *  the damage evenly). `chargesToUse` selects how many charges a charge-costed
+ *  ability (Lightning Barrage) spends on this cast. */
 export async function castAbility(
   abilityId: string,
-  targetId?: string | null,
+  target?: string | string[] | null,
   chargesToUse?: number,
 ): Promise<Ack<AbilityAck>> {
+  const targetIds = Array.isArray(target) ? target : undefined
+  const targetId = Array.isArray(target) ? undefined : target
   return (await socket.emitWithAck('match:useAbility', {
     abilityId,
     targetId,
+    targetIds,
     chargesToUse,
   })) as Ack<AbilityAck>
 }

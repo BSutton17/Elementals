@@ -12,3 +12,23 @@ export const KINGDOMS = [
 ] as const
 
 export type KingdomId = (typeof KINGDOMS)[number]['id']
+
+/**
+ * Kingdoms whose attacks may strike several kingdoms at once (Air's "Embrace of
+ * Winds", Epic 8). Mirrors the server's `multiTargetAttacks` passive so the
+ * battlefield offers multi-select targeting to exactly these kingdoms.
+ */
+export const MULTI_TARGET_KINGDOMS: ReadonlySet<string> = new Set(['air'])
+
+export function canMultiTarget(kingdomId: string | null): boolean {
+  return kingdomId != null && MULTI_TARGET_KINGDOMS.has(kingdomId)
+}
+
+/**
+ * Max enemies a multi-target attack may hit at once — mirrors the server's
+ * `multiTargetAttacks.maxTargets` (Air's "Embrace of Winds": 3 base, 5 upgraded;
+ * the server enforces the authoritative cap). 1 for kingdoms without the passive.
+ */
+export function multiTargetLimit(kingdomId: string | null): number {
+  return canMultiTarget(kingdomId) ? 3 : 1
+}

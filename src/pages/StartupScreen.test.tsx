@@ -5,19 +5,20 @@ import { StartupScreen } from './StartupScreen'
 const noop = () => {}
 
 describe('StartupScreen', () => {
-  it('renders the game title and tagline', () => {
+  it('renders the game title', () => {
     render(<StartupScreen name="" onName={noop} onJoin={noop} />)
-    expect(screen.getByRole('heading', { name: 'Kingdoms' })).toBeTruthy()
-    expect(screen.getByText(/last kingdom standing/i)).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Elementals' })).toBeTruthy()
   })
 
-  it('disables Create Room while offline and shows the connecting state', () => {
-    render(<StartupScreen name="Alice" onName={noop} onJoin={noop} />)
+  it('disables Create Room while offline and shows the offline status', () => {
+    const { container } = render(
+      <StartupScreen name="Alice" onName={noop} onJoin={noop} />,
+    )
     const create = screen.getByRole('button', {
       name: /create room/i,
     }) as HTMLButtonElement
     expect(create.disabled).toBe(true) // offline
-    expect(screen.getByText(/connecting to server/i)).toBeTruthy()
+    expect(container.querySelector('.startup__status--offline')).toBeTruthy()
   })
 
   it('navigates to the join screen', () => {

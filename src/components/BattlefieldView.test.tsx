@@ -1,8 +1,20 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { BattlefieldView } from './BattlefieldView'
+import { castAbility, changeTarget } from '../game/matchStore'
 import type { LobbyMatch } from '../game/lobby'
 import type { GamePlayer } from '../game/gameState'
+
+vi.mock('../game/matchStore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../game/matchStore')>()
+  return {
+    ...actual,
+    castAbility: vi.fn(async () => ({ ok: true, data: {} })),
+    changeTarget: vi.fn(async () => ({ ok: true, data: {} })),
+    buyItem: vi.fn(async () => ({ ok: true, data: {} })),
+    buyUpgrade: vi.fn(async () => ({ ok: true, data: {} })),
+  }
+})
 
 const match: LobbyMatch = {
   roomCode: '1234',
@@ -131,5 +143,99 @@ describe('BattlefieldView', () => {
     const bar = site(container, 'a').querySelector('[data-testid="health-bar"]')!
     expect(bar.getAttribute('data-max-hp')).toBe('10000')
     expect(screen.queryAllByTestId('target-indicator')).toHaveLength(0)
+  })
+})
+
+// --- Air multi-select targeting (Embrace of Winds) ---------------------------------
+
+const airMatch: LobbyMatch = {
+  ...match,
+  players: [
+    { id: 'a', name: 'Ari', kingdomId: 'air', ready: true, connected: true, socketId: 's1' },
+    { id: 'b', name: 'Bob', kingdomId: 'water', ready: true, connected: true, socketId: 's2' },
+    { id: 'c', name: 'Cleo', kingdomId: 'nature', ready: true, connected: true, socketId: 's3' },
+  ],
+}
+
+const airGame = (): GamePlayer[] => [
+  {
+    id: 'a',
+    name: 'Ari',
+    kingdomId: 'air',
+    castle: { hp: 10_000, maxHp: 10_000, shield: 0 },
+    economy: { citizens: 12, currency: 5000, incomePerTick: 1.2 },
+    target: null,
+    eliminated: false,
+    unlocked: { aLightBreeze: true },
+    cooldowns: { aLightBreeze: 0 },
+  },
+  {
+    id: 'b',
+    name: 'Bob',
+    kingdomId: 'water',
+    castle: { hp: 10_000, maxHp: 10_000, shield: 0 },
+    economy: { citizens: 10, currency: 0, incomePerTick: 2 },
+    target: null,
+    eliminated: false,
+  },
+  {
+    id: 'c',
+    name: 'Cleo',
+    kingdomId: 'nature',
+    castle: { hp: 10_000, maxHp: 10_000, shield: 0 },
+    economy: { citizens: 10, currency: 0, incomePerTick: 2 },
+    target: null,
+    eliminated: false,
+  },
+]
+
+describe('BattlefieldView — Air multi-select targeting', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('lets Air toggle several kingdoms as targets at once', () => {
+    const { container } = render(
+      <BattlefieldView match={airMatch} youId="a" players={airGame()} />,
+    )
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    fireEvent.click(screen.getByLabelText('Target Cleo'))
+
+    // Both selected kingdoms carry the highlight ring and a target line from you.
+    expect(site(container, 'b').querySelector('[data-testid="target-ring"]')).toBeTruthy()
+    expect(site(container, 'c').querySelector('[data-testid="target-ring"]')).toBeTruthy()
+    const mine = screen
+      .getAllByTestId('target-indicator')
+      .filter((el) => el.getAttribute('data-from') === 'a')
+      .map((el) => el.getAttribute('data-to'))
+    expect(mine.sort()).toEqual(['b', 'c'])
+    // Multi-select is local — it never pushes a single server-side target.
+    expect(changeTarget).not.toHaveBeenCalled()
+  })
+
+  it('clicking a selected kingdom again removes it from the set', () => {
+    const { container } = render(
+      <BattlefieldView match={airMatch} youId="a" players={airGame()} />,
+    )
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    fireEvent.click(screen.getByLabelText('Target Bob')) // toggle off
+    expect(site(container, 'b').querySelector('[data-testid="target-ring"]')).toBeNull()
+    expect(
+      screen.queryAllByTestId('target-indicator').filter((el) => el.getAttribute('data-from') === 'a'),
+    ).toHaveLength(0)
+  })
+
+  it('casts an attack against the whole selected set', () => {
+    render(<BattlefieldView match={airMatch} youId="a" players={airGame()} />)
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    fireEvent.click(screen.getByLabelText('Target Cleo'))
+    fireEvent.click(screen.getByLabelText('Cast A Light Breeze'))
+
+    expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['b', 'c'], undefined)
+  })
+
+  it('non-multi kingdoms keep single, server-tracked targeting', () => {
+    // Alice is Fire — clicking sets one server target, not a local set.
+    render(<BattlefieldView match={match} youId="a" players={game()} />)
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    expect(changeTarget).toHaveBeenCalledWith('b')
   })
 })

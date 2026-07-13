@@ -1,8 +1,8 @@
 import type { IconType } from 'react-icons'
-import { PiDropFill, PiFireFill, PiWindFill, PiEyeFill, PiMeteorFill, PiLightningFill, PiThermometerCold, PiBiohazardFill, PiSkullFill } from 'react-icons/pi'
+import { PiDropFill, PiFireFill, PiWindFill, PiEyeFill, PiMeteorFill, PiLightningFill, PiBiohazardFill, PiSkullFill } from 'react-icons/pi'
 import { BsWater } from 'react-icons/bs'
 import { MdFlood } from 'react-icons/md'
-import { FaSun, FaIcicles, FaMountain } from 'react-icons/fa'
+import { FaSun, FaIcicles, FaMountain, FaSnowman } from 'react-icons/fa'
 import { FaBottleWater, FaHurricane } from 'react-icons/fa6'
 import { GiWaveSurfer, GiFireDash, GiStonePile, GiDefensiveWall, GiLightningFlame, GiLightningDome, GiThunderSkull, GiMeltingIceCube, GiSnowing, GiAppleCore, GiPoisonGas } from 'react-icons/gi'
 import { TbTornado, TbTemperatureMinusFilled, TbDeviceLaptop, TbCloudRain } from 'react-icons/tb'
@@ -82,7 +82,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   fluidAssimilation: {
     id: 'fluidAssimilation',
     name: 'Fluid Assimilation',
-    description: 'Draw in the surrounding moisture to instantly restore a portion of your castle health.',
+    description: 'Dissolve into the surrounding moisture: no enemy can attack you for 10 seconds.',
     hotkey: 'R',
     kind: 'utility',
     element: 'water',
@@ -90,7 +90,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     gradient: 'linear-gradient(135deg, #2193b0, #6dd5ed)',
     icon: FaBottleWater,
     baseCost: 300,
-    upgradeCosts: [200, 350],
+    upgradeCosts: [300, 500],
   },
   riptide: {
     id: 'riptide',
@@ -385,7 +385,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   icicle: {
     id: 'icicle',
     name: 'Icicle',
-    description: 'Basic Ice attack. Fires a sharpened icicle at your target.',
+    description: 'Basic Ice attack. Fires a sharpened icicle at your target, dealing bonus damage if they are Frozen.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'ice',
@@ -398,7 +398,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   floodOfFrost: {
     id: 'floodOfFrost',
     name: 'Flood of Frost',
-    description: 'Powerful Ice attack with a chance to inflict Chilling Retribution, lengthening all of the target\'s cooldowns for a short time.',
+    description: 'Powerful Ice attack with a chance to inflict Chilling Retribution, lengthening all of the target\'s cooldowns for a short time. Deals bonus damage to Frozen targets.',
     hotkey: 'W',
     kind: 'attack',
     element: 'ice',
@@ -411,7 +411,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   freezeToTheCore: {
     id: 'freezeToTheCore',
     name: 'Freeze to the Core',
-    description: 'Freezes the target solid — guaranteed. Frozen kingdoms cannot attack for a few seconds.',
+    description: 'Freezes the target solid — guaranteed. Frozen kingdoms cannot attack for a few seconds, and take extra damage from your Ice attacks.',
     hotkey: 'E',
     kind: 'attack',
     element: 'ice',
@@ -421,18 +421,18 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     baseCost: 400,
     upgradeCosts: [300, 450, 600, 800],
   },
-  frozenFocus: {
-    id: 'frozenFocus',
-    name: 'Frozen Focus',
-    description: 'Sharpen your cold: your next two Ice attacks are guaranteed to Freeze the target or inflict Chilling Retribution.',
+  snowman: {
+    id: 'snowman',
+    name: 'Snowman',
+    description: 'Raise a temporary snowman that boosts your income by 50% for 10 seconds.',
     hotkey: 'R',
     kind: 'utility',
     element: 'ice',
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)',
-    icon: PiThermometerCold,
+    icon: FaSnowman,
     baseCost: 200,
-    upgradeCosts: [200, 350],
+    upgradeCosts: [300, 450],
   },
   blizzard: {
     id: 'blizzard',

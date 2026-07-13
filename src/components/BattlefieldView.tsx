@@ -1,4 +1,5 @@
-import { KINGDOMS } from '../game/kingdoms'
+import { useState } from 'react'
+import { KINGDOMS, canMultiTarget, multiTargetLimit } from '../game/kingdoms'
 import { placeKingdoms } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
@@ -62,6 +63,33 @@ export function BattlefieldView({
     KINGDOMS.find((k) => k.id === kingdomId)?.color ?? FALLBACK_COLOR
 
   const you = roster.find((p) => p.id === youId) || roster[0]
+
+  // Air's "Embrace of Winds" (Epic 8): its attacks can strike several kingdoms
+  // at once with the damage split evenly. For those kingdoms, targeting is a
+  // local multi-select (click to toggle); everyone else keeps the single,
+  // server-tracked target. Only living opponents can stay selected.
+  const multiTarget = canMultiTarget(you.kingdomId)
+  const targetLimit = multiTargetLimit(you.kingdomId)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const activeSelected = selectedIds.filter((id) =>
+    roster.some((p) => p.id === id && p.id !== youId && !p.eliminated),
+  )
+  const isTargeted = (id: string) =>
+    multiTarget ? activeSelected.includes(id) : you?.target === id
+  const toggleTarget = (id: string) => {
+    if (multiTarget) {
+      setSelectedIds((prev) =>
+        prev.includes(id)
+          ? prev.filter((x) => x !== id)
+          : prev.length >= targetLimit // Embrace of Winds cap (server-authoritative)
+            ? prev
+            : [...prev, id],
+      )
+    } else {
+      void changeTarget(id)
+    }
+  }
+
   const yourTheme = getKingdomTheme(you.kingdomId)
   const hasAirVision = you.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
   const cssVars = {
@@ -100,24 +128,35 @@ export function BattlefieldView({
           />
         </g>
 
-        {/* Layer: target indicators (#199) — under the kingdoms. */}
+        {/* Layer: target indicators (#199) — under the kingdoms. Your own
+            multi-select (Air) draws one line per selected kingdom; everyone
+            else draws their single server-tracked target. */}
         <g className="battlefield__layer-targets">
-          {roster.map((p) => {
-            if (p.eliminated || !p.target) return null
+          {roster.flatMap((p) => {
+            if (p.eliminated) return []
+            const targetIds =
+              p.id === youId && multiTarget
+                ? activeSelected
+                : p.target
+                  ? [p.target]
+                  : []
             const from = positionOf(p.id)
-            const to = positionOf(p.target)
-            if (!from || !to) return null
-            return (
-              <TargetIndicator
-                key={`target-${p.id}`}
-                from={from}
-                to={to}
-                color={colorOf(p.kingdomId)}
-                isYou={p.id === youId}
-                fromId={p.id}
-                toId={p.target}
-              />
-            )
+            if (!from) return []
+            return targetIds.flatMap((targetId) => {
+              const to = positionOf(targetId)
+              if (!to) return []
+              return [
+                <TargetIndicator
+                  key={`target-${p.id}-${targetId}`}
+                  from={from}
+                  to={to}
+                  color={colorOf(p.kingdomId)}
+                  isYou={p.id === youId}
+                  fromId={p.id}
+                  toId={targetId}
+                />,
+              ]
+            })
           })}
         </g>
 
@@ -131,12 +170,12 @@ export function BattlefieldView({
               x={positions[i]!.x}
               y={positions[i]!.y}
               isYou={p.id === youId}
-              isYourTarget={you?.target === p.id}
+              isYourTarget={isTargeted(p.id)}
               tickRate={tickRate}
               showStats={p.id === youId || hasAirVision}
               onSelect={
                 p.id !== youId && !p.eliminated
-                  ? () => void changeTarget(p.id)
+                  ? () => toggleTarget(p.id)
                   : undefined
               }
             />
@@ -159,11 +198,11 @@ export function BattlefieldView({
           shieldHp={you.castle.shield}
           nextCitizenCost={
             you.economy.nextCitizenCost ??
-            Math.round(10 * Math.pow(1.15, you.economy.citizensPurchased ?? 0))
+            Math.round(10 * Math.pow(1.10, you.economy.citizensPurchased ?? 0))
           }
           nextRepairCost={
             you.castle.nextRepairCost ??
-            Math.round(1000 * Math.pow(1.25, you.castle.repairs ?? 0))
+            Math.round(500 * Math.pow(1.25, you.castle.repairs ?? 0))
           }
           shieldCost={500}
           repairsUsed={you.castle.repairs ?? 0}
@@ -200,7 +239,11 @@ export function BattlefieldView({
           })}
           tickRate={tickRate}
           onCastAbility={(abilityId, chargesToUse) => {
-            void castAbility(abilityId, you.target, chargesToUse)
+            // Multi-target kingdoms (Air) send the whole selected set; the
+            // server spreads an attack's damage across them and ignores the
+            // list for self/all-target abilities.
+            const target = multiTarget ? activeSelected : you.target
+            void castAbility(abilityId, target, chargesToUse)
           }}
           onUpgradeAbility={(abilityId) => {
             void buyUpgrade(abilityId)
