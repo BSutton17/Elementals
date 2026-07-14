@@ -4,6 +4,7 @@ import { placeKingdoms } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
 import { TargetIndicator } from './TargetIndicator'
+import { BattlefieldFx } from './BattlefieldFx'
 import { AbilityBar } from './AbilityBar'
 import { getAbilitiesForKingdom, getUpgradeCost } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
@@ -185,6 +186,9 @@ export function BattlefieldView({
         {/* Layer: projectiles & effects — populated by later tickets. */}
         <g className="battlefield__layer-projectiles" data-testid="projectile-layer" />
       </svg>
+      {/* PixiJS effects overlay (Epic 9): visualizes authoritative events;
+          pointer-events:none keeps the SVG the interactive targeting surface. */}
+      <BattlefieldFx order={match.players.map((p) => ({ id: p.id, kingdomId: p.kingdomId }))} />
       </div>
 
       {you && (

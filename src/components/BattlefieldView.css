@@ -39,12 +39,27 @@
    full battlefield circle is always visible on any screen or orientation —
    even while the shop panel is open. */
 .battlefield__arena-box {
+  position: relative;
   flex: 1 1 0;
   min-height: 0;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* PixiJS effects overlay (Epic 9): fills the arena box and contain-fits the
+   same 1000×1000 space the SVG uses, so effects line up with the castles.
+   Above the SVG so projectiles/impacts are visible; click-through preserved. */
+.battlefield__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.battlefield__fx canvas {
+  display: block;
 }
 
 .battlefield__arena {
