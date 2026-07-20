@@ -88,6 +88,142 @@ export interface ParticleBurstConfig {
   fade?: boolean
 }
 
+/**
+ * A stream of particles emitted along a projectile's flight path, giving it a
+ * comet-like trail (e.g. a fireball's flaming tail). The framework emits one
+ * `particles` puff at the projectile's current position every `emitEveryMs`
+ * while it travels. Purely visual — has no effect without a `projectile`.
+ */
+export interface TrailConfig {
+  particles: ParticleBurstConfig
+  /** Milliseconds between puffs along the path (default 24). */
+  emitEveryMs?: number
+}
+
+/**
+ * A charge-then-fire beam (e.g. Scorching Sun's laser). A glow builds at the
+ * SOURCE for `chargeMs`, then a straight beam snaps out to the target and holds
+ * for `fireMs` while fading. The burst (impact/particles/shake) fires at the
+ * moment the beam does, not at cast time. Purely visual.
+ */
+export interface BeamConfig {
+  /** Charge-up time before the beam fires, in ms (the glow builds over this). */
+  chargeMs: number
+  /** How long the beam stays after firing before it's gone, in ms. */
+  fireMs: number
+  /** Beam thickness in world units. */
+  width: number
+  color: number
+  /** Radius the charge glow builds to, in world units (default width × 2). */
+  chargeSize?: number
+  /** Easing for the charge build-up (default 'easeIn'). */
+  easing?: EasingName
+}
+
+/**
+ * A traveling wave of water (Waterfall, and future tidal/tsunami abilities).
+ * Rendered as LAYERED procedural animation, not a moving sprite: water gathers
+ * at the caster (anticipation), then a churning mass — translucent body, darker
+ * interior, a foam crest that wobbles — travels A→B on a non-linear ease
+ * (accelerate out, decelerate into impact), continuously shedding spray, mist,
+ * and bubbles, before collapsing into a directional splash at the target (the
+ * splash proper is the EffectDefinition's impact/particles/shake). Reusable
+ * across water abilities via scale + palette. Purely visual.
+ */
+export interface WaveConfig {
+  /** Anticipation: water gathers/swirls at the caster before launch, in ms. */
+  gatherMs: number
+  /** Travel time A→B, in ms. */
+  travelMs: number
+  /** Overall wave radius in world units. */
+  size: number
+  /** Translucent water-body colour. */
+  bodyColor: number
+  /** Darker interior/undershadow colour. */
+  deepColor: number
+  /** Bright foam/highlight colour (rendered additive). */
+  foamColor: number
+  /** Body blobs forming the churning mass (default 5). */
+  blobs?: number
+  /** Spray/mist/bubbles emitted per second while traveling (default 70). */
+  sprayRate?: number
+  /** Travel easing — default 'easeInOut' for a weighty accelerate/decelerate. */
+  easing?: EasingName
+}
+
+/**
+ * A spinning vortex parked ON a point (e.g. Firenado / Hurricane). Rendered as
+ * layered procedural animation — a soft outer glow, a bright pulsing core
+ * "eye", several spiral bands with differential rotation + per-band turbulence,
+ * and a stream of embers that orbit and spiral upward — so it reads as churning
+ * energy, not rotating geometry. Reusable across kingdoms: only the palette
+ * changes (fire vs air). Purely visual.
+ */
+export interface VortexConfig {
+  /** How long the vortex spins on the target, in ms. */
+  durationMs: number
+  /** Overall radius of the vortex, in world units. */
+  size: number
+  /** Spiral bands / smoke colour. */
+  color: number
+  /** Bright core "eye" colour (default: `color`). */
+  coreColor?: number
+  /** Glowing ember colour (default: `coreColor` ?? `color`). */
+  emberColor?: number
+  /** Base rotation speed in radians/sec (inner bands spin faster). */
+  spin: number
+  /** Number of spiral bands (default 6). */
+  arms?: number
+  /** Embers emitted per second over the vortex's life (default 55). */
+  emberRate?: number
+}
+
+/**
+ * A continuously-emitting particle stream for a PERSISTENT status aura (e.g.
+ * Heat Wave's chimney smoke, Blazing Determination's flames). Unlike a
+ * ParticleBurst (one-shot), an aura emits at `rate` for as long as the status
+ * is active, then stops (existing particles finish). Purely visual.
+ */
+export interface AuraEmitterConfig {
+  /** Particles emitted per second while the aura is active. */
+  rate: number
+  color: number
+  /** Particle radius in world units (single value or [min, max]). */
+  size: number | [number, number]
+  lifetimeMs: number
+  /** Upward speed in world units/sec (particles rise; y decreases). */
+  riseSpeed: number | [number, number]
+  /** Horizontal velocity spread in world units/sec. */
+  drift?: number
+  /** Vertical offset of the emission origin from the anchor (negative = above,
+   *  e.g. the castle's chimney top). */
+  originY?: number
+  /** Horizontal spread of spawn positions in world units. */
+  spawnWidth?: number
+  /** Additive blending (flames/embers glow) vs normal (smoke). */
+  glow?: boolean
+  /** Scale multiplier reached at end of life (>1 grows like smoke, <1 shrinks). */
+  growth?: number
+  /** Horizontal sway amplitude in world units (drifting smoke). */
+  sway?: number
+  /** Fade alpha to 0 over lifetime (default true). */
+  fade?: boolean
+}
+
+/**
+ * A persistent status aura, keyed by status id. Started on `statusApplied` and
+ * stopped on `statusExpired`. One or more emitter layers (e.g. flames + embers)
+ * plus an optional one-shot shake when it begins.
+ */
+export interface AuraDefinition {
+  emitters: AuraEmitterConfig[]
+  /** A one-shot camera shake fired when the aura starts (e.g. on cast). */
+  shakeOnStart?: CameraShakeConfig
+  /** Render behind the castles (e.g. flames engulfing a castle) instead of in
+   *  front. Routed to a separate canvas beneath the SVG battlefield. */
+  behind?: boolean
+}
+
 /** A decaying camera shake. Pure VFX — never affects gameplay or hitboxes. */
 export interface CameraShakeConfig {
   /** Peak offset in world units. */
@@ -104,6 +240,14 @@ export interface CameraShakeConfig {
  */
 export interface EffectDefinition {
   projectile?: ProjectileConfig
+  /** Particle trail streamed along the projectile's path while it travels. */
+  trail?: TrailConfig
+  /** A charge-then-fire beam. Takes precedence over `projectile` when present. */
+  beam?: BeamConfig
+  /** A spinning vortex parked on the target for its duration. */
+  vortex?: VortexConfig
+  /** A traveling water wave (gather → travel → splash). */
+  wave?: WaveConfig
   impact?: ImpactConfig
   particles?: ParticleBurstConfig
   shake?: CameraShakeConfig

@@ -5,6 +5,7 @@ import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
 import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
+import { FloatingNumbers } from './FloatingNumbers'
 import { AbilityBar } from './AbilityBar'
 import { getAbilitiesForKingdom, getUpgradeCost } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
@@ -143,21 +144,21 @@ export function BattlefieldView({
                   : []
             const from = positionOf(p.id)
             if (!from) return []
-            return targetIds.flatMap((targetId) => {
-              const to = positionOf(targetId)
-              if (!to) return []
-              return [
-                <TargetIndicator
-                  key={`target-${p.id}-${targetId}`}
-                  from={from}
-                  to={to}
-                  color={colorOf(p.kingdomId)}
-                  isYou={p.id === youId}
-                  fromId={p.id}
-                  toId={targetId}
-                />,
-              ]
-            })
+            // return targetIds.flatMap((targetId) => {
+            //   const to = positionOf(targetId)
+            //   if (!to) return []
+            //   return [
+            //     <TargetIndicator
+            //       key={`target-${p.id}-${targetId}`}
+            //       from={from}
+            //       to={to}
+            //       color={colorOf(p.kingdomId)}
+            //       isYou={p.id === youId}
+            //       fromId={p.id}
+            //       toId={targetId}
+            //     />,
+            //   ]
+            // })
           })}
         </g>
 
@@ -185,6 +186,14 @@ export function BattlefieldView({
 
         {/* Layer: projectiles & effects — populated by later tickets. */}
         <g className="battlefield__layer-projectiles" data-testid="projectile-layer" />
+
+        {/* Layer: floating combat numbers (#265–#266) — topmost so damage and
+            healing values read clearly above the castles. */}
+        <FloatingNumbers
+          positionOf={positionOf}
+          kingdomOf={(id) => roster.find((p) => p.id === id)?.kingdomId ?? null}
+          colorOf={colorOf}
+        />
       </svg>
       {/* PixiJS effects overlay (Epic 9): visualizes authoritative events;
           pointer-events:none keeps the SVG the interactive targeting surface. */}
@@ -202,7 +211,7 @@ export function BattlefieldView({
           shieldHp={you.castle.shield}
           nextCitizenCost={
             you.economy.nextCitizenCost ??
-            Math.round(10 * Math.pow(1.10, you.economy.citizensPurchased ?? 0))
+            Math.round(25 * Math.pow(1.10, you.economy.citizensPurchased ?? 0))
           }
           nextRepairCost={
             you.castle.nextRepairCost ??

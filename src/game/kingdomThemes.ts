@@ -38,8 +38,8 @@ export const KINGDOM_THEMES: Record<string, KingdomTheme> = {
   electricity: {
     id: 'electricity',
     name: 'Electricity',
-    primary: '#ffd24a',
-    secondary: '#f9d423',
+    primary: '#a855f7', // electric purple
+    secondary: '#ffe14a', // yellow accent
     dark: '#360033',
   },
   ice: {

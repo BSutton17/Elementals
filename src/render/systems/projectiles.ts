@@ -15,6 +15,7 @@ interface ActiveProjectile {
   config: ProjectileConfig
   elapsed: number
   onArrive?: (at: Vec2) => void
+  onStep?: (at: Vec2, dtMs: number) => void
 }
 
 export class ProjectileSystem {
@@ -31,8 +32,18 @@ export class ProjectileSystem {
     this.pool = new ObjectPool(createNode, resetDisplayNode, poolOptions)
   }
 
-  /** Launch a projectile from `from` to `to`; `onArrive` fires once it lands. */
-  spawn(config: ProjectileConfig, from: Vec2, to: Vec2, onArrive?: (at: Vec2) => void): void {
+  /**
+   * Launch a projectile from `from` to `to`. `onArrive` fires once it lands;
+   * `onStep` fires each frame with the projectile's current position (used to
+   * stream a trail along the path).
+   */
+  spawn(
+    config: ProjectileConfig,
+    from: Vec2,
+    to: Vec2,
+    onArrive?: (at: Vec2) => void,
+    onStep?: (at: Vec2, dtMs: number) => void,
+  ): void {
     const node = this.pool.acquire()
     node.visible = true
     node.alpha = 1
@@ -48,6 +59,7 @@ export class ProjectileSystem {
       config,
       elapsed: 0,
       onArrive,
+      onStep,
     })
   }
 
@@ -62,6 +74,7 @@ export class ProjectileSystem {
       if (!p.config.faceDirection && p.config.spin) {
         p.node.rotation += p.config.spin * (dtMs / 1000)
       }
+      p.onStep?.(pos, dtMs)
       if (raw >= 1) {
         this.items.splice(i, 1)
         this.pool.release(p.node)

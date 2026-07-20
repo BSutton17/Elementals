@@ -12,6 +12,12 @@ export type {
   EasingName,
   ThemeToken,
   ProjectileConfig,
+  TrailConfig,
+  BeamConfig,
+  VortexConfig,
+  WaveConfig,
+  AuraEmitterConfig,
+  AuraDefinition,
   ImpactConfig,
   ParticleBurstConfig,
   CameraShakeConfig,
@@ -33,6 +39,10 @@ export { AnimationTimeline, Tween, type Animation } from './timeline'
 export { ProjectileSystem } from './systems/projectiles'
 export { ImpactSystem } from './systems/impacts'
 export { ParticleSystem, type ParticleSystemOptions } from './systems/particles'
+export { BeamSystem } from './systems/beams'
+export { VortexSystem } from './systems/vortex'
+export { WaveSystem } from './systems/wave'
+export { AuraSystem } from './systems/aura'
 export { LayerManager, LAYER_ORDER, type LayerName } from './layers'
 export { themeColor, hexToNumber } from './colors'
 export { lerp, lerpPoint, angleBetween, distance } from './trajectory'

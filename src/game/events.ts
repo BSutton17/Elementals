@@ -29,6 +29,41 @@ export interface DamageEvent {
   cause: string
 }
 
+export interface HealEvent {
+  type: 'heal'
+  tick: number
+  targetId: string
+  /** HP actually restored (effective healing). */
+  amount: number
+  /** Requested healing wasted because the castle was near full. */
+  overheal: number
+  cause: string
+}
+
+export interface StatusAppliedEvent {
+  type: 'statusApplied'
+  tick: number
+  targetId: string
+  sourceId: string
+  statusId: string
+  durationTicks: number
+  stacks: number
+}
+
+export interface StatusExpiredEvent {
+  type: 'statusExpired'
+  tick: number
+  playerId: string
+  statusId: string
+}
+
+export interface ShieldDestroyedEvent {
+  type: 'shieldDestroyed'
+  tick: number
+  playerId: string
+  cause: string
+}
+
 export interface EliminatedEvent {
   type: 'eliminated'
   tick: number

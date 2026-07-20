@@ -11,9 +11,19 @@ import { io, type Socket } from "socket.io-client";
  * state received from the server (see ARCHITECTURE.md).
  */
 
-/** Server URL, overridable per environment via `VITE_SERVER_URL`. */
+/** Production server URL (used when the app is built for deployment). */
+const PROD_SERVER_URL = "https://elementals-c1937bd8ae33.herokuapp.com";
+/** Local dev server URL (the Node/Socket.IO server's default port). */
+const DEV_SERVER_URL = "http://localhost:3001";
+
+/**
+ * Server URL. An explicit `VITE_SERVER_URL` always wins; otherwise we default
+ * to localhost during local dev (`vite dev`) and the production host in a
+ * built/deployed bundle (`import.meta.env.DEV` is baked in at build time).
+ */
 const SERVER_URL: string =
-  import.meta.env.VITE_SERVER_URL ?? "https://elementals-c1937bd8ae33.herokuapp.com";
+  import.meta.env.VITE_SERVER_URL ??
+  (import.meta.env.DEV ? DEV_SERVER_URL : PROD_SERVER_URL);
 /**
  * The single shared socket instance. Socket.IO manages reconnection
  * automatically; after a reconnect the app re-requests authoritative state
