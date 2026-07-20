@@ -3,7 +3,7 @@ import { KINGDOMS, canMultiTarget, multiTargetLimit } from '../game/kingdoms'
 import { placeKingdoms } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
-import { TargetIndicator } from './TargetIndicator'
+// import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
 import { FloatingNumbers } from './FloatingNumbers'
 import { AbilityBar } from './AbilityBar'
@@ -136,12 +136,12 @@ export function BattlefieldView({
         <g className="battlefield__layer-targets">
           {roster.flatMap((p) => {
             if (p.eliminated) return []
-            const targetIds =
-              p.id === youId && multiTarget
-                ? activeSelected
-                : p.target
-                  ? [p.target]
-                  : []
+            // const targetIds =
+            //   p.id === youId && multiTarget
+            //     ? activeSelected
+            //     : p.target
+            //       ? [p.target]
+            //       : []
             const from = positionOf(p.id)
             if (!from) return []
             // return targetIds.flatMap((targetId) => {
