@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js'
-import type { DisplayNode } from './types'
+import type { BoltLayer, BoltNode, DisplayNode } from './types'
 import { UNIT_RADIUS } from './nodeUtil'
 
 // Pixi node factories (Epic 9, ticket #210). The systems drive appearance
@@ -39,6 +39,40 @@ export function makeGlowNode(parent: Container): DisplayNode {
   g.visible = false
   parent.addChild(g)
   return g as unknown as DisplayNode
+}
+
+/**
+ * A lightning bolt drawer: an ADDITIVE Pixi Graphics that restrokes arbitrary
+ * polylines each frame in world coordinates (the layer root's transform scales
+ * it like every other node). Additive so overlapping glow + core read as bright
+ * electricity. Implements the Pixi-free `BoltNode` contract the LightningSystem
+ * drives; tests pass a fake instead.
+ */
+export function makeBoltNode(parent: Container): BoltNode {
+  const g = new Graphics()
+  g.blendMode = 'add'
+  parent.addChild(g)
+  return {
+    draw(layers: BoltLayer[]): void {
+      g.clear()
+      for (const layer of layers) {
+        for (const path of layer.paths) {
+          if (path.length < 2) continue
+          g.moveTo(path[0]!.x, path[0]!.y)
+          for (let i = 1; i < path.length; i++) g.lineTo(path[i]!.x, path[i]!.y)
+        }
+        g.stroke({ width: layer.width, color: layer.color, alpha: layer.alpha, cap: 'round', join: 'round' })
+      }
+      g.visible = true
+    },
+    clear(): void {
+      g.clear()
+      g.visible = false
+    },
+    destroy(): void {
+      g.destroy()
+    },
+  }
 }
 
 /**

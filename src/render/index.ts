@@ -16,6 +16,11 @@ export type {
   BeamConfig,
   VortexConfig,
   WaveConfig,
+  LightningConfig,
+  LightningBarrageConfig,
+  ThunderdomeConfig,
+  BoltNode,
+  BoltLayer,
   AuraEmitterConfig,
   AuraDefinition,
   ImpactConfig,
@@ -42,6 +47,8 @@ export { ParticleSystem, type ParticleSystemOptions } from './systems/particles'
 export { BeamSystem } from './systems/beams'
 export { VortexSystem } from './systems/vortex'
 export { WaveSystem } from './systems/wave'
+export { LightningSystem, generateBolt, generateBranches } from './systems/lightning'
+export { ThunderdomeSystem } from './systems/thunderdome'
 export { AuraSystem } from './systems/aura'
 export { LayerManager, LAYER_ORDER, type LayerName } from './layers'
 export { themeColor, hexToNumber } from './colors'

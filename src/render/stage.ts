@@ -1,7 +1,7 @@
 import { Application } from 'pixi.js'
 import { LayerManager } from './layers'
 import { AnimationFramework } from './framework'
-import { makeCircleNode, makeRingNode, makeBeamNode, makeGlowNode } from './nodes'
+import { makeCircleNode, makeRingNode, makeBeamNode, makeGlowNode, makeBoltNode } from './nodes'
 
 // Pixi stage (Epic 9, ticket #210). Owns the Pixi Application, mounts a
 // transparent canvas BENEATH the existing HTML/CSS UI, and drives the framework
@@ -50,6 +50,7 @@ export class PixiStage {
       vortexGlow: () => makeGlowNode(this.layers.get('projectiles')),
       wave: () => makeCircleNode(this.layers.get('particles')),
       waveGlow: () => makeGlowNode(this.layers.get('projectiles')),
+      bolt: () => makeBoltNode(this.layers.get('projectiles')),
       aura: () => makeCircleNode(this.layers.get('particles')),
       auraGlow: () => makeGlowNode(this.layers.get('projectiles')),
     })

@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { PixiStage } from '../render/stage'
-import { ABILITY_EFFECTS, AURA_EFFECTS } from '../render/effects'
+import { ABILITY_EFFECTS, AURA_EFFECTS, THUNDERDOME_CONFIG } from '../render/effects'
 import { placeKingdoms } from '../game/placement'
 import { onGameEvents } from '../game/gameEvents'
 import type {
   AbilityCastEvent,
+  DamageEvent,
   RawGameEvent,
   ShieldDestroyedEvent,
   StatusAppliedEvent,
@@ -147,16 +148,27 @@ function dispatch(
         if (!hasEffect && targetId === cast.casterId) continue
         const to = positionOf(targetId)
         if (!to) continue
-        front.framework.playAbility(cast.abilityId, { from, to, sourceKingdom })
+        // `chargesUsed` scales Lightning Barrage; harmless for other abilities.
+        front.framework.playAbility(cast.abilityId, {
+          from,
+          to,
+          sourceKingdom,
+          charges: cast.chargesUsed,
+        })
       }
       return
     }
     case 'statusApplied': {
-      // Persistent auras (Heat Wave smoke, Blazing Determination flames, Burn
-      // smoke). Unregistered status ids are ignored by the framework.
       const applied = event as unknown as StatusAppliedEvent
       const at = positionOf(applied.targetId)
       if (!at) return
+      // Thunderdome: an electrical pentagon cage around the target.
+      if (applied.statusId === 'thunderdome') {
+        front.framework.startThunderdome(auraKey('thunderdome', applied.targetId), at, THUNDERDOME_CONFIG)
+        return
+      }
+      // Persistent auras (Heat Wave smoke, Blazing Determination flames, Burn
+      // smoke). Unregistered status ids are ignored by the framework.
       const def = AURA_EFFECTS[applied.statusId]
       if (!def) return
       const key = auraKey(applied.statusId, applied.targetId)
@@ -171,9 +183,22 @@ function dispatch(
     }
     case 'statusExpired': {
       const expired = event as unknown as StatusExpiredEvent
+      if (expired.statusId === 'thunderdome') {
+        front.framework.stopThunderdome(auraKey('thunderdome', expired.playerId))
+        return
+      }
       const key = auraKey(expired.statusId, expired.playerId)
       front.framework.stopAura(key)
       back?.framework.stopAura(key)
+      return
+    }
+    case 'damage': {
+      // An Electricity hit on a trapped target surges its Thunderdome (no-op if
+      // there isn't one). The floating damage number is handled separately.
+      const dmg = event as unknown as DamageEvent
+      if (dmg.element === 'electricity') {
+        front.framework.surgeThunderdome(auraKey('thunderdome', dmg.targetId))
+      }
       return
     }
     case 'shieldDestroyed': {

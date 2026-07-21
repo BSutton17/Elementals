@@ -1,7 +1,17 @@
 import { test, expect } from 'vitest'
-import { ABILITY_EFFECTS, AURA_EFFECTS } from './effects'
+import { ABILITY_EFFECTS, AURA_EFFECTS, THUNDERDOME_CONFIG } from './effects'
 import { AnimationFramework } from './framework'
+import { generateBolt, generateBranches } from './systems/lightning'
 import type { DisplayNode } from './types'
+
+/** Deterministic RNG for the procedural-lightning tests. */
+function seededRng(seed = 1): () => number {
+  let s = seed
+  return () => {
+    s = (s * 16807) % 2147483647
+    return s / 2147483647
+  }
+}
 
 function fakeNode(): DisplayNode {
   const scale = {
@@ -33,7 +43,8 @@ test('fireball has a flaming trail whose colour differs from the core (reads as 
 })
 
 test('every kingdom basic attack reuses the fireball bolt, differing only by colour', () => {
-  const basics = ['fireball', 'waterBall', 'aLightBreeze', 'rockThrow', 'zap', 'icicle', 'sludge']
+  // Zap is the exception — Electricity's basic is a procedural lightning strike.
+  const basics = ['fireball', 'waterBall', 'aLightBreeze', 'rockThrow', 'icicle', 'sludge']
   const fb = ABILITY_EFFECTS.fireball!
   for (const id of basics) {
     const def = ABILITY_EFFECTS[id]
@@ -146,6 +157,145 @@ test('firenado spins a vortex on the target and bursts immediately', () => {
   expect(fw.vortices.active).toBe(1)
   fw.update(1700) // total 2700ms > durationMs
   expect(fw.vortices.active).toBe(0)
+})
+
+test('generateBolt preserves endpoints and subdivides into a jagged path', () => {
+  const from = { x: 0, y: 0 }
+  const to = { x: 100, y: 0 }
+  const path = generateBolt(from, to, 0.3, 4, seededRng())
+  expect(path[0]).toBe(from) // endpoints anchored to the strike
+  expect(path[path.length - 1]).toBe(to)
+  expect(path.length).toBe(2 ** 4 + 1) // 4 subdivisions → 17 points
+
+  // With zero jaggedness the midpoints stay exactly on the A→B line.
+  const straight = generateBolt(from, to, 0, 4, seededRng())
+  expect(straight.every((p) => Math.abs(p.y) < 1e-9)).toBe(true)
+})
+
+test('branches spawn along the bolt (or not) and stay short of the target', () => {
+  const rng = seededRng(7)
+  const main = generateBolt({ x: 0, y: 0 }, { x: 200, y: 0 }, 0.3, 4, rng)
+  const branches = generateBranches(main, 1, rng) // always branch
+  expect(branches.length).toBeGreaterThan(0)
+  for (const b of branches) {
+    expect(b.length).toBeGreaterThanOrEqual(2)
+    // A branch is instability, not extra reach — it never lands on the target.
+    expect(b[b.length - 1]).not.toEqual({ x: 200, y: 0 })
+  }
+  expect(generateBranches(main, 0, rng).length).toBe(0) // none when chance is 0
+})
+
+test('zap is a procedural lightning strike, not the shared bolt', () => {
+  const zap = ABILITY_EFFECTS.zap!
+  expect(zap.lightning?.durationMs).toBeGreaterThan(0)
+  expect(zap.projectile).toBeUndefined()
+  // Two hues: a bright core inside a distinct glow.
+  expect(zap.lightning!.coreColor).not.toBe(zap.lightning!.glowColor)
+  expect(zap.impact).toBeDefined() // flash on impact
+})
+
+test('zap strikes lightning, flashes + sparks + shakes, then clears', () => {
+  const fw = new AnimationFramework(
+    { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+    { defaultEffect: null },
+  )
+  fw.registry.registerMany(ABILITY_EFFECTS)
+
+  fw.playAbility('zap', { from: { x: 0, y: 0 }, to: { x: 300, y: 0 }, sourceKingdom: 'electricity' })
+  expect(fw.lightning.active).toBeGreaterThan(1) // main bolt + impact arcs
+  expect(fw.impacts.active).toBe(1) // flash
+  expect(fw.particles.active).toBeGreaterThan(0) // sparks
+  expect(fw.camera.shaking).toBe(true)
+
+  // The bolt lives only a flicker, then it's gone.
+  let guard = 0
+  while (fw.lightning.active > 0 && guard++ < 200) fw.update(16)
+  expect(fw.lightning.active).toBe(0)
+})
+
+test('thunderdome builds, surges, and collapses gracefully to nothing', () => {
+  const fw = new AnimationFramework(
+    { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+    { defaultEffect: null },
+  )
+  const at = { x: 200, y: 200 }
+
+  fw.startThunderdome('thunderdome:a', at, THUNDERDOME_CONFIG)
+  expect(fw.thunderdomes.active).toBe(1)
+  expect(fw.thunderdomes.has('thunderdome:a')).toBe(true)
+
+  // Build → idle: it persists.
+  for (let i = 0; i < 50; i++) fw.update(16)
+  expect(fw.thunderdomes.active).toBe(1)
+
+  // Surge is safe (existing dome and a missing one).
+  expect(() => fw.surgeThunderdome('thunderdome:a')).not.toThrow()
+  expect(() => fw.surgeThunderdome('thunderdome:none')).not.toThrow()
+  fw.update(16)
+
+  // Expire → collapse (no longer "has" it), then it clears itself.
+  fw.stopThunderdome('thunderdome:a')
+  expect(fw.thunderdomes.has('thunderdome:a')).toBe(false)
+  let guard = 0
+  while (fw.thunderdomes.active > 0 && guard++ < 200) fw.update(16)
+  expect(fw.thunderdomes.active).toBe(0)
+})
+
+test('THUNDERDOME_CONFIG is a two-hue electrical cage', () => {
+  expect(THUNDERDOME_CONFIG.radius).toBeGreaterThan(0)
+  expect(THUNDERDOME_CONFIG.coreColor).not.toBe(THUNDERDOME_CONFIG.glowColor)
+})
+
+test('lightning barrage is a charge-scaled barrage effect', () => {
+  const lb = ABILITY_EFFECTS.lightningBarrage!
+  expect(lb.barrage).toBeDefined()
+  expect(lb.barrage!.coreColor).not.toBe(lb.barrage!.glowColor) // two-hue like Zap
+})
+
+test('lightning barrage strikes, flashes, and shakes', () => {
+  const fw = new AnimationFramework(
+    { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+    { defaultEffect: null },
+  )
+  fw.registry.registerMany(ABILITY_EFFECTS)
+
+  fw.playAbility('lightningBarrage', {
+    from: { x: 0, y: 0 },
+    to: { x: 300, y: 0 },
+    sourceKingdom: 'electricity',
+    charges: 1,
+  })
+  fw.update(40) // fire the first scheduled strike + impact
+  expect(fw.lightning.active).toBeGreaterThan(0)
+  expect(fw.impacts.active).toBeGreaterThan(0)
+  expect(fw.camera.shaking).toBe(true)
+})
+
+test('lightning barrage intensity scales with the charges spent', () => {
+  const peakBolts = (charges: number): number => {
+    const fw = new AnimationFramework(
+      { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+      { defaultEffect: null },
+    )
+    fw.registry.registerMany(ABILITY_EFFECTS)
+    fw.playAbility('lightningBarrage', {
+      from: { x: 0, y: 0 },
+      to: { x: 300, y: 0 },
+      sourceKingdom: 'electricity',
+      charges,
+    })
+    let peak = 0
+    for (let i = 0; i < 60; i++) {
+      fw.update(16) // ~960ms — covers the strike window + corona
+      peak = Math.max(peak, fw.lightning.active)
+    }
+    return peak
+  }
+  const one = peakBolts(1)
+  const three = peakBolts(3)
+  expect(one).toBeGreaterThan(0)
+  // Three charges fire many more overlapping bolts than one.
+  expect(three).toBeGreaterThan(one)
 })
 
 test('shieldBreak bursts a kingdom-tinted shatter immediately at the castle', () => {

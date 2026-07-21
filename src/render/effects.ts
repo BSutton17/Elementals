@@ -1,4 +1,4 @@
-import type { AuraDefinition, EffectDefinition } from './types'
+import type { AuraDefinition, EffectDefinition, ThunderdomeConfig } from './types'
 
 // Per-ability effect definitions (Epic 9), keyed by the authoritative ability id
 // the server's `abilityCast` event carries. Registered into the framework's
@@ -75,9 +75,58 @@ const FIREBALL = basicBolt({ core: 0xffe27a, trail: 0xff4d1a, impact: 0xffa640, 
 const WATER_BALL = basicBolt({ core: 0xcdeaff, trail: 0x1e6fd0, impact: 0x4aa3ff, ember: 0x86c8ff })
 const A_LIGHT_BREEZE = basicBolt({ core: 0xffffff, trail: 0x8aa2e0, impact: 0xb7c9ff, ember: 0xd7e2ff })
 const ROCK_THROW = basicBolt({ core: 0xe8d3a8, trail: 0x7a5325, impact: 0xc9a56b, ember: 0xb08a4a })
-const ZAP = basicBolt({ core: 0xfff6b0, trail: 0xe0a020, impact: 0xffd24a, ember: 0xffe680 })
 const ICICLE = basicBolt({ core: 0xeaffff, trail: 0x2aa0d8, impact: 0x8fe3ff, ember: 0xc4f0ff })
 const SLUDGE = basicBolt({ core: 0xd7ffcf, trail: 0x2f9e4f, impact: 0x6bd88a, ember: 0xa8f0b8 })
+
+/**
+ * Zap — Electricity's basic attack. A procedural lightning strike (not the
+ * shared bolt): a yellow-white core inside a purple glow bloom, regenerated
+ * every frame so it flickers and forks uniquely each cast, then a bright flash +
+ * spark burst + short crackling arcs at the target. Electricity's palette:
+ * yellow-white core, purple glow (see LightningSystem; reusable by Thunderdome /
+ * Thundering Fate later).
+ */
+const ZAP: EffectDefinition = {
+  lightning: {
+    durationMs: 210, // flickers briefly then gone
+    coreColor: 0xfff6c0, // yellow-white core
+    glowColor: 0xa855f7, // purple bloom
+    coreWidth: 3,
+    glowWidth: 12,
+    jaggedness: 0.32,
+    subdivisions: 5,
+    branchChance: 0.4,
+    impactArcs: 4, // crackling arcs at the hit
+  },
+  // Impact: a bright flash + a burst of yellow sparks + a short kick.
+  impact: { durationMs: 200, size: 74, color: 0xe6ccff, easing: 'easeOut' },
+  particles: {
+    count: 22,
+    speed: [220, 560],
+    spread: Math.PI,
+    lifetimeMs: 300,
+    size: 4,
+    color: 0xfff2a0,
+    gravity: 120,
+    fade: true,
+  },
+  shake: { magnitude: 5, durationMs: 150 },
+}
+
+/**
+ * Lightning Barrage — Electricity's charge-based attack. A scripted storm of
+ * procedural strikes whose intensity scales automatically with the charges
+ * spent (1–3): the framework ramps bolt count, branches, glow, sparks, impact,
+ * corona, and shake from these colours (see `playBarrage`). Same palette as Zap.
+ */
+const LIGHTNING_BARRAGE: EffectDefinition = {
+  barrage: {
+    coreColor: 0xfff6c0, // yellow-white
+    glowColor: 0xa855f7, // purple
+    flashColor: 0xe6ccff, // impact flash
+    sparkColor: 0xfff2a0, // airborne sparks
+  },
+}
 
 /**
  * Scorching Sun — Fire's powerful attack. A concentrated solar beam: a blazing
@@ -241,6 +290,8 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   // Water specials.
   waterfall: WATERFALL,
   flood: FLOOD,
+  // Electricity specials.
+  lightningBarrage: LIGHTNING_BARRAGE,
   // Synthetic (event-driven, not a server ability id).
   shieldBreak: SHIELD_BREAK,
 }
@@ -390,6 +441,20 @@ const MISTING_AURA: AuraDefinition = {
       fade: true,
     },
   ],
+}
+
+/**
+ * Thunderdome — Electricity's electrical cage. A persistent pentagon locked
+ * around the trapped target (status id `thunderdome`), built + collapsed by the
+ * ThunderdomeSystem, and surged whenever an Electricity attack hits inside it.
+ * Purple/yellow palette like Zap.
+ */
+export const THUNDERDOME_CONFIG: ThunderdomeConfig = {
+  radius: 135,
+  coreColor: 0xfff6c0, // yellow-white racing electricity / nodes
+  glowColor: 0xa855f7, // purple glow / interior field
+  buildMs: 800,
+  collapseMs: 500,
 }
 
 /** All registered status auras, keyed by status id. */

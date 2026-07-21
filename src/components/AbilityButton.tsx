@@ -246,7 +246,7 @@ export function AbilityButton({
 
           {/* Charge details: pool status, per-charge recharge timers, and the
               damage/cost table for spending 1, 2, or 3 at once. */}
-          {chargeSpec && (
+          {/* {chargeSpec && (
             <div className="ability-tooltip__charges">
               <div className="ability-tooltip__charge-row">
                 Charges ready: <strong>{availableCharges}/{chargeSpec.max}</strong>
@@ -271,7 +271,7 @@ export function AbilityButton({
                 timer; unspent charges fire immediately.
               </div>
             </div>
-          )}
+          )} */}
 
           {/* <div className="ability-tooltip__footer">
             <div className="ability-tooltip__level-info">

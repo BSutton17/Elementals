@@ -224,6 +224,98 @@ export interface AuraDefinition {
   behind?: boolean
 }
 
+/**
+ * A procedural lightning strike (Electricity's Zap; reusable by stronger
+ * Electricity abilities). The bolt is generated fresh every frame by recursive
+ * midpoint displacement so no two strikes — or even two frames — repeat, and it
+ * flickers over a very short life. Layered: a wide additive `glow` bloom under a
+ * thin bright `core`, with short unstable branches. Colours are explicit (two
+ * hues: core + glow), so `tintFrom` does NOT recolour it. Purely visual.
+ */
+export interface LightningConfig {
+  /** Total on-screen lifetime, ms (very short — ~60–120). */
+  durationMs: number
+  /** Bright core colour (yellow-white). */
+  coreColor: number
+  /** Blooming glow colour (purple), drawn wider + additive under the core. */
+  glowColor: number
+  /** Core stroke width in world units. */
+  coreWidth: number
+  /** Glow stroke width in world units (wider than the core). */
+  glowWidth: number
+  /** Max lateral kink as a fraction of a segment's length (jaggedness). */
+  jaggedness: number
+  /** Recursive midpoint subdivisions (more = finer chaos). */
+  subdivisions: number
+  /** Probability [0..1] each interior node spawns a short branch. */
+  branchChance: number
+  /** Short crackling arcs spawned at the impact point (default 0). */
+  impactArcs?: number
+}
+
+/**
+ * A charge-scaled lightning barrage (Electricity's Lightning Barrage). One
+ * scripted sequence whose intensity scales AUTOMATICALLY with the number of
+ * charges spent (1–3) — bolt count, branch density, glow/core width, spark
+ * count, impact size, corona, and screen shake all ramp from these colours plus
+ * per-charge multipliers in the framework, so there's no per-charge duplication.
+ * Reuses the same procedural LightningSystem and Zap's purple/yellow palette.
+ */
+export interface LightningBarrageConfig {
+  /** Bright core colour (yellow-white). */
+  coreColor: number
+  /** Glow bloom colour (purple). */
+  glowColor: number
+  /** Impact flash / shockwave ring colour. */
+  flashColor: number
+  /** Airborne spark colour. */
+  sparkColor: number
+}
+
+/**
+ * An electrical pentagon "cage" locked around a target (Electricity's
+ * Thunderdome). A persistent effect: five corner nodes pop in, lightning edges
+ * construct between them, then it idles with racing electricity, an interior
+ * field, gentle rotation/breathing, and reactive surges when Electricity hits
+ * the trapped target — collapsing into the corners when it expires. Purple/
+ * yellow palette; rendered above shields. Purely visual.
+ */
+export interface ThunderdomeConfig {
+  /** Radius of the pentagon around the target, in world units. */
+  radius: number
+  /** Bright racing-electricity / node-core colour (yellow-white). */
+  coreColor: number
+  /** Glow / interior-field colour (purple). */
+  glowColor: number
+  /** Build sequence length (nodes stagger in, then edges construct), ms. */
+  buildMs: number
+  /** Collapse sequence length on expiry, ms. */
+  collapseMs: number
+}
+
+/** One styled polyline layer of a lightning bolt (glow / branches / core). */
+export interface BoltLayer {
+  /** One or more polylines (world coords). */
+  paths: Vec2[][]
+  width: number
+  color: number
+  alpha: number
+}
+
+/**
+ * A node that redraws lightning polylines each frame (a jagged path, not a
+ * positioned sprite — so it isn't a `DisplayNode`). Pixi draws the strokes;
+ * tests inject a fake that records the layers. All bolt geometry is generated in
+ * pure logic, so the procedural path is unit-testable without a GPU.
+ */
+export interface BoltNode {
+  /** Clear and redraw the given styled layers (glow under, core over). */
+  draw(layers: BoltLayer[]): void
+  /** Hide and clear the geometry (for pooled reuse). */
+  clear(): void
+  destroy(): void
+}
+
 /** A decaying camera shake. Pure VFX — never affects gameplay or hitboxes. */
 export interface CameraShakeConfig {
   /** Peak offset in world units. */
@@ -248,6 +340,10 @@ export interface EffectDefinition {
   vortex?: VortexConfig
   /** A traveling water wave (gather → travel → splash). */
   wave?: WaveConfig
+  /** A procedural lightning strike (instant, flickering). */
+  lightning?: LightningConfig
+  /** A charge-scaled lightning barrage (uses `PlayArgs.charges`). */
+  barrage?: LightningBarrageConfig
   impact?: ImpactConfig
   particles?: ParticleBurstConfig
   shake?: CameraShakeConfig
