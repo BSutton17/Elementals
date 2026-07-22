@@ -127,6 +127,105 @@
   }
 }
 
+/* Frozen: a translucent block of ice encasing the castle (Ice's Freeze). Forms
+   in with a quick freeze, then a highlight shimmers across it for the duration.
+   Colours are fixed ice-blue regardless of the frozen kingdom's own colour. */
+.kingdom-site__frozen {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: frozen-form 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.kingdom-site__frozen-body {
+  fill: rgba(198, 232, 255, 0.26);
+  stroke: rgba(226, 246, 255, 0.72);
+  stroke-width: 2;
+}
+.kingdom-site__frozen-top {
+  fill: rgba(236, 249, 255, 0.34);
+}
+.kingdom-site__frozen-facet {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.45);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.kingdom-site__frozen-crystal {
+  fill: rgba(240, 250, 255, 0.55);
+}
+.kingdom-site__frozen-sheen {
+  fill: rgba(255, 255, 255, 0.32);
+  animation: frozen-sheen 3s ease-in-out infinite;
+}
+
+@keyframes frozen-form {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes frozen-sheen {
+  0%, 100% { opacity: 0.14; transform: translateX(-5px); }
+  50% { opacity: 0.5; transform: translateX(5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kingdom-site__frozen { animation: none; }
+  .kingdom-site__frozen-sheen { animation: none; }
+}
+
+/* Bird's Eye View emblem: an eagle that hovers above the castle for the buff's
+   whole duration — fading in on start, out on end (opacity animates separately
+   from the hover transform so they compose). Sizes are in SVG user units. */
+.kingdom-site__birdseye {
+  transform-origin: center;
+  filter: drop-shadow(0 0 6px rgba(183, 201, 255, 0.5));
+}
+
+.kingdom-site__birdseye--in {
+  animation:
+    birdseye-fade-in 0.5s ease-out both,
+    birdseye-hover 3.2s ease-in-out infinite;
+}
+
+.kingdom-site__birdseye--out {
+  animation:
+    birdseye-fade-out 0.7s ease-in forwards,
+    birdseye-hover 3.2s ease-in-out infinite;
+}
+
+@keyframes birdseye-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.95;
+  }
+}
+
+@keyframes birdseye-fade-out {
+  from {
+    opacity: 0.95;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes birdseye-hover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kingdom-site__birdseye--in,
+  .kingdom-site__birdseye--out {
+    animation-name: birdseye-fade-in;
+  }
+}
+
 /* Active shield bubble around a kingdom. The coloured shape gently breathes;
    cracks (added by ShieldOverlay as it nears breaking) flicker. Sizes are in
    SVG user units (the 1000×1000 viewBox). */
@@ -197,17 +296,22 @@
 @keyframes floating-number-rise {
   0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   12% {
     opacity: 1;
   }
+  /* Drift up only slightly, early, then mostly hold and fade away. */
+  45% {
+    transform: translateY(-22px);
+  }
   70% {
     opacity: 1;
+    transform: translateY(-26px);
   }
   100% {
     opacity: 0;
-    transform: translateY(-72px);
+    transform: translateY(-30px);
   }
 }
 

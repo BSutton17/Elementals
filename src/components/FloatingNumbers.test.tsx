@@ -29,6 +29,31 @@ test('damage number uses the attacker colour, sits to the right, and flags crits
   expect(n.color).toBe('#ff6b4a') // attacker 'a' is fire, not target 'b'
   expect(n.crit).toBe(true)
   expect(n.x).toBeGreaterThan(200) // to the RIGHT of target 'b' (x=200)
+  expect(n.anchor).toBe('start')
+})
+
+test('DoT (burn/poison) sits on the opposite side from direct damage and heals', () => {
+  const dot = buildNumber(
+    raw({ type: 'damage', tick: 1, sourceId: 'a', targetId: 'b', amount: 10, crit: false, cause: 'status:burn' }),
+    positionOf,
+    kingdomOf,
+    colorOf,
+    () => 1,
+  )!
+  // Burn is on the LEFT of the castle (x < 200), anchored to the right edge.
+  expect(dot.number.x).toBeLessThan(200)
+  expect(dot.number.anchor).toBe('end')
+
+  // Healing shares the RIGHT side with direct damage.
+  const heal = buildNumber(
+    raw({ type: 'heal', tick: 1, targetId: 'b', amount: 100, overheal: 0, cause: 'riptide' }),
+    positionOf,
+    kingdomOf,
+    colorOf,
+    () => 2,
+  )!
+  expect(heal.number.x).toBeGreaterThan(200)
+  expect(heal.number.anchor).toBe('start')
 })
 
 test('damage is delayed by its ability projectile travel time; DoT/self-heal are not', () => {
@@ -73,8 +98,9 @@ test('DoT ticks wait for the initiating hit to appear (Scorching Sun → Burn)',
       </svg>,
     )
 
-    // Scorching Sun hits 'b' (delayed by its 1.75s beam charge); a Burn tick on
-    // 'b' arrives in the same batch and must not beat the initial number.
+    // Scorching Sun hits 'b' (delayed by its beam charge); a Burn tick on 'b'
+    // arrives in the same batch and must not beat the initial number.
+    const charge = ABILITY_EFFECTS.scorchingSun!.beam!.chargeMs
     act(() => {
       applyEventBatch({
         tick: 1,
@@ -86,11 +112,11 @@ test('DoT ticks wait for the initiating hit to appear (Scorching Sun → Burn)',
     })
     const texts = () => Array.from(container.querySelectorAll('text.floating-number')).map((t) => t.textContent)
 
-    act(() => vi.advanceTimersByTime(1000)) // mid-charge
+    act(() => vi.advanceTimersByTime(Math.max(0, charge - 100))) // mid-charge
     expect(texts()).not.toContain('10') // Burn held back
     expect(texts()).not.toContain('300')
 
-    act(() => vi.advanceTimersByTime(1000)) // past the 1.75s charge
+    act(() => vi.advanceTimersByTime(200)) // past the beam charge
     expect(texts()).toContain('300') // initial hit shown
     expect(texts()).toContain('10') // …and Burn now allowed
   } finally {

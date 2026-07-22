@@ -17,6 +17,22 @@ export function makeCircleNode(parent: Container): DisplayNode {
   return g as unknown as DisplayNode
 }
 
+/**
+ * A unit spike (a sharp isosceles triangle) pointing along +x, so a projectile
+ * with `faceDirection` rotates its TIP toward the target — Ice's Icicle. Sized
+ * around UNIT_RADIUS so it scales by `size / baseRadius` exactly like the circle.
+ * Satisfies DisplayNode.
+ */
+export function makeTriangleNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // Tip forward (+x), a short flared base behind — a slim icicle silhouette.
+  g.poly([R * 1.9, 0, -R * 0.7, -R * 0.6, -R * 0.7, R * 0.6]).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
 /** A unit ring (hollow), used for impact shockwaves. Satisfies DisplayNode. */
 export function makeRingNode(parent: Container): DisplayNode {
   const g = new Graphics()
@@ -85,6 +101,21 @@ export function makeBoltNode(parent: Container): BoltNode {
 export function makeBeamNode(parent: Container): DisplayNode {
   const g = new Graphics()
   g.rect(0, -0.5, 1, 1).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * An ADDITIVE unit-length beam segment — same geometry as `makeBeamNode` but
+ * blended additively, so stacked beam layers (corona → plasma → inner → core)
+ * accumulate into a blinding white-hot centre (Fire's Scorching Sun solar laser).
+ * Satisfies DisplayNode; base size 1 like the plain beam.
+ */
+export function makeGlowBeamNode(parent: Container): DisplayNode {
+  const g = new Graphics()
+  g.rect(0, -0.5, 1, 1).fill(0xffffff)
+  g.blendMode = 'add'
   g.visible = false
   parent.addChild(g)
   return g as unknown as DisplayNode

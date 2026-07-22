@@ -61,9 +61,22 @@ test('every kingdom basic attack reuses the fireball bolt, differing only by col
   expect(ABILITY_EFFECTS.sludge!.impact!.color).not.toBe(fb.impact!.color)
 })
 
+test('ice icicle is a triangle spike; the other basics stay round blobs', () => {
+  expect(ABILITY_EFFECTS.icicle!.projectile!.shape).toBe('triangle')
+  expect(ABILITY_EFFECTS.icicle!.projectile!.faceDirection).toBe(true) // tip leads
+  // Everything else keeps the default (round) silhouette.
+  for (const id of ['fireball', 'waterBall', 'aLightBreeze', 'rockThrow', 'sludge']) {
+    expect(ABILITY_EFFECTS[id]!.projectile!.shape, id).toBeUndefined()
+  }
+})
+
 test('scorching sun charges a beam, then fires + bursts on the target', () => {
   const ss = ABILITY_EFFECTS.scorchingSun!
-  expect(ss.beam?.chargeMs).toBe(1500)
+  // A brief, dramatic charge (300–600ms) before the solar laser fires.
+  expect(ss.beam?.chargeMs).toBeGreaterThanOrEqual(300)
+  expect(ss.beam?.chargeMs).toBeLessThanOrEqual(600)
+  // The layered solar laser sets its distinct hues (white-hot core vs. corona).
+  expect(ss.beam?.coreColor).not.toBe(ss.beam?.coronaColor)
   expect(ss.shake).toBeDefined() // screen kick on impact
 
   const fw = new AnimationFramework(
@@ -76,17 +89,19 @@ test('scorching sun charges a beam, then fires + bursts on the target', () => {
   expect(fw.beams.active).toBe(1)
 
   // Charge almost fully (derive from the config so it survives retuning): still
-  // charging, nothing has fired yet.
+  // charging, nothing has fired yet — but solar energy converges into the orb.
   const chargeMs = ss.beam!.chargeMs
   fw.update(chargeMs - 40)
   expect(fw.impacts.active).toBe(0)
   expect(fw.camera.shaking).toBe(false)
+  expect(fw.beams.particleCount).toBeGreaterThan(0) // convergence sparks
 
-  // A small step crosses the charge threshold; the beam fires: burst + shake.
-  // (Small dt so the shake is observed before it decays.)
+  // A small step crosses the charge threshold; the beam fires: burst + shake,
+  // and the solar detonation throws its own flash/rings/flares/embers.
   fw.update(60)
   expect(fw.impacts.active).toBe(1)
   expect(fw.camera.shaking).toBe(true)
+  expect(fw.beams.particleCount).toBeGreaterThan(0) // detonation particles
 
   // Beam clears after its fire window elapses.
   let guard = 0
@@ -94,14 +109,25 @@ test('scorching sun charges a beam, then fires + bursts on the target', () => {
   expect(fw.beams.active).toBe(0)
 })
 
-test('flood reuses the vortex (water-coloured) like firenado', () => {
-  const fl = ABILITY_EFFECTS.flood!
+test('flood and hurricane reuse the vortex, differing only by palette', () => {
   const fn = ABILITY_EFFECTS.firenado!
-  // Same effect shape/timing as Firenado…
-  expect(fl.vortex?.durationMs).toBe(fn.vortex!.durationMs)
-  expect(fl.vortex?.arms).toBe(fn.vortex!.arms)
-  // …but a different (water) palette.
-  expect(fl.vortex!.color).not.toBe(fn.vortex!.color)
+  for (const id of ['flood', 'hurricane']) {
+    const def = ABILITY_EFFECTS[id]!
+    // Same effect shape/timing as Firenado…
+    expect(def.vortex?.durationMs).toBe(fn.vortex!.durationMs)
+    expect(def.vortex?.arms).toBe(fn.vortex!.arms)
+    // …but a different (kingdom) palette.
+    expect(def.vortex!.color).not.toBe(fn.vortex!.color)
+  }
+  // Air's Hurricane and Water's Flood are also distinct from each other.
+  expect(ABILITY_EFFECTS.hurricane!.vortex!.color).not.toBe(ABILITY_EFFECTS.flood!.vortex!.color)
+})
+
+test('thick fog travels like a wind gust: soft projectile + wispy trail, no shake', () => {
+  const tf = ABILITY_EFFECTS.thickFog!
+  expect(tf.projectile?.durationMs).toBeGreaterThan(0)
+  expect(tf.trail?.particles.count).toBeGreaterThan(0)
+  expect(tf.shake).toBeUndefined() // wind lands gently
 })
 
 test('waterfall gathers, travels, then splashes on arrival', () => {
@@ -131,6 +157,27 @@ test('waterfall gathers, travels, then splashes on arrival', () => {
   expect(fw.camera.shaking).toBe(true)
 })
 
+test('flood of frost is a freezing wave that flash-freezes on impact', () => {
+  const ff = ABILITY_EFFECTS.floodOfFrost!
+  expect(ff.wave?.gatherMs).toBeGreaterThan(0)
+  expect(ff.impact).toBeDefined() // the flash-freeze splash
+  expect(ff.shake).toBeDefined()
+
+  const fw = new AnimationFramework(
+    { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+    { defaultEffect: null },
+  )
+  fw.registry.registerMany(ABILITY_EFFECTS)
+
+  fw.playAbility('floodOfFrost', { from: { x: 0, y: 0 }, to: { x: 400, y: 0 }, sourceKingdom: 'ice' })
+  expect(fw.waves.active).toBe(1)
+  expect(fw.impacts.active).toBe(0) // nothing freezes until it lands
+
+  let guard = 0
+  while (fw.waves.active > 0 && guard++ < 500) fw.update(16)
+  expect(fw.impacts.active).toBe(1) // flash-freeze burst on arrival
+})
+
 test('firenado spins a vortex on the target and bursts immediately', () => {
   const fn = ABILITY_EFFECTS.firenado!
   expect(fn.vortex?.durationMs).toBe(2500)
@@ -157,6 +204,82 @@ test('firenado spins a vortex on the target and bursts immediately', () => {
   expect(fw.vortices.active).toBe(1)
   fw.update(1700) // total 2700ms > durationMs
   expect(fw.vortices.active).toBe(0)
+})
+
+test('meteor shower rains staggered meteors that each explode with a kick', () => {
+  const ms = ABILITY_EFFECTS.meteorShower!
+  expect(ms.meteorShower?.meteors).toBeGreaterThan(1) // a multi-impact barrage
+  expect(ms.projectile).toBeUndefined() // not a single bolt
+
+  const fw = new AnimationFramework(
+    { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+    { defaultEffect: null },
+  )
+  fw.registry.registerMany(ABILITY_EFFECTS)
+
+  fw.playAbility('meteorShower', { from: { x: 0, y: 0 }, to: { x: 500, y: 500 }, sourceKingdom: 'earth' })
+  // The meteors are SCHEDULED — nothing has spawned on the very first frame yet.
+  expect(fw.projectiles.active).toBe(0)
+
+  // Over the shower window, meteors fall (projectiles) then detonate (impacts +
+  // debris particles + shake). Track peaks since each is transient.
+  let sawMeteor = false
+  let sawDebris = false
+  let sawShake = false
+  for (let i = 0; i < 240; i++) {
+    fw.update(16) // ~3.8s: covers the 1.5s stagger + falls + impacts
+    if (fw.projectiles.active > 0) sawMeteor = true
+    if (fw.particles.active > 0) sawDebris = true
+    if (fw.camera.shaking) sawShake = true
+  }
+  expect(sawMeteor).toBe(true)
+  expect(sawDebris).toBe(true)
+  expect(sawShake).toBe(true)
+  // Everything resolves — no meteors left hanging in the air.
+  expect(fw.projectiles.active).toBe(0)
+})
+
+test('earthquake ruptures the primary then propagates seismic waves to neighbours', () => {
+  const fw = new AnimationFramework(
+    { projectile: fakeNode, impact: fakeNode, particle: fakeNode },
+    { defaultEffect: null },
+  )
+
+  const primary = { x: 500, y: 300 }
+  const neighbors = [
+    { x: 500, y: 700 }, // far
+    { x: 560, y: 320 }, // near
+  ]
+  fw.playEarthquake(primary, neighbors, {
+    buildupMs: 420,
+    waveSpeed: 900,
+    radius: 130,
+    glowColor: 0xd2691e,
+    coreColor: 0xffa64a,
+    rockColor: 0x6b5540,
+    dustColor: 0xa8977a,
+    gravelColor: 0x8a6f4a,
+  })
+  // Trembling buildup first — the ground rattles (shake) before the rupture.
+  fw.update(16)
+  expect(fw.camera.shaking).toBe(true)
+
+  // Through the buildup + rupture + wave travel, seismic waves are in flight
+  // (projectiles), impacts + debris fire, and everything eventually resolves.
+  let sawWave = false
+  let sawFracture = false
+  let sawDebris = false
+  for (let i = 0; i < 220; i++) {
+    fw.update(16) // ~3.5s: buildup + primary + waves to both neighbours
+    if (fw.projectiles.active > 0) sawWave = true // seismic ripples travelling
+    if (fw.lightning.active > 0) sawFracture = true // glowing ground fractures
+    if (fw.particles.active > 0) sawDebris = true // stone / dust / debris
+  }
+  expect(sawWave).toBe(true)
+  expect(sawFracture).toBe(true)
+  expect(sawDebris).toBe(true)
+  // No seismic waves left hanging — the propagation completed.
+  expect(fw.projectiles.active).toBe(0)
 })
 
 test('generateBolt preserves endpoints and subdivides into a jagged path', () => {

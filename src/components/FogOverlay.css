@@ -1,0 +1,12 @@
+/* Full-screen fog canvas for the fogged player. Covers the viewport above the
+   battlefield + UI, click-through so the player can still act while half-blind.
+   A light CSS blur softens the drifting blobs into volumetric cloud. */
+.fog-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 5000;
+  pointer-events: none;
+  filter: blur(6px);
+}

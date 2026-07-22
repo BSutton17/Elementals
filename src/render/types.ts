@@ -40,6 +40,10 @@ export type EasingName =
  *  effect definitions can share the common palette instead of hardcoding hues. */
 export type ThemeToken = 'primary' | 'secondary' | 'dark'
 
+/** Projectile sprite silhouette — a round blob (default) or a sharp spike
+ *  (Ice's Icicle). Selects which pooled node factory the system draws from. */
+export type ProjectileShape = 'circle' | 'triangle'
+
 /**
  * A projectile that travels in a STRAIGHT LINE from A to B over `durationMs`
  * (data-editable). Colour and size are visual only.
@@ -56,6 +60,9 @@ export interface ProjectileConfig {
   faceDirection?: boolean
   /** Spin rate in radians/sec (used when not facing direction). */
   spin?: number
+  /** Sprite silhouette (default 'circle'). 'triangle' draws a sharp spike whose
+   *  tip leads along the travel direction — Ice's Icicle. */
+  shape?: ProjectileShape
 }
 
 /** A one-shot burst at a point: grows from small to `size` while fading out. */
@@ -111,13 +118,27 @@ export interface BeamConfig {
   chargeMs: number
   /** How long the beam stays after firing before it's gone, in ms. */
   fireMs: number
-  /** Beam thickness in world units. */
+  /** Beam thickness in world units (the bright CORE width; outer layers scale up). */
   width: number
   color: number
   /** Radius the charge glow builds to, in world units (default width × 2). */
   chargeSize?: number
   /** Easing for the charge build-up (default 'easeIn'). */
   easing?: EasingName
+  // --- Solar-laser layering (Scorching Sun). When present, the beam renders as
+  // stacked additive layers (corona → plasma → inner → core) with an animated
+  // charge orb, converging sparks, along-beam plasma/embers, and a detonation.
+  // All optional; each falls back to `color` so a plain beam still works. ---
+  /** Blinding white-hot central-core colour. */
+  coreColor?: number
+  /** Bright inner-beam colour (yellow). */
+  innerColor?: number
+  /** Surrounding plasma colour (orange/gold). */
+  plasmaColor?: number
+  /** Outer solar-corona colour. */
+  coronaColor?: number
+  /** Peeling ember / spark / ash colour. */
+  emberColor?: number
 }
 
 /**
@@ -273,6 +294,65 @@ export interface LightningBarrageConfig {
 }
 
 /**
+ * A meteor bombardment (Earth's Meteor Shower). A scripted MULTI-HIT barrage:
+ * many glowing meteors fall from high above the target, staggered over the
+ * window so each impact registers distinctly, and each collides with its own
+ * explosion (shockwave ring + rock debris + molten fragments + rolling dust +
+ * pebbles + a screen kick). Meteors vary in size/speed/trajectory so it reads as
+ * a natural shower. Reusable by future Earth/impact abilities. Purely visual.
+ */
+export interface MeteorShowerConfig {
+  /** How many meteors fall (each produces its own impact). */
+  meteors: number
+  /** Total window the meteors are staggered across, in ms. */
+  durationMs: number
+  /** Height above the target the meteors start from, in world units. */
+  fallHeight: number
+  /** Horizontal spread of impacts around the target, in world units. */
+  spread: number
+  /** Base meteor radius in world units (varied per meteor). */
+  size: number
+  /** Molten glowing-core colour. */
+  coreColor: number
+  /** Dark rocky-exterior / debris colour. */
+  rockColor: number
+  /** Blazing orange-red trail colour. */
+  trailColor: number
+  /** Molten-ember colour. */
+  emberColor: number
+  /** Rolling dust-cloud colour. */
+  dustColor: number
+}
+
+/**
+ * A tectonic rupture (Earth's Earthquake). A heavy primary quake at the target —
+ * branching glowing ground fractures, stone eruptions, rolling dust, debris, and
+ * a hard screen kick — after a brief trembling buildup, then SEISMIC WAVES that
+ * visibly race outward to the other kingdoms, each triggering a lighter secondary
+ * impact on arrival so the damage clearly propagates from the origin. Reusable by
+ * future Earth abilities (fissures, cave-ins, landslides, tectonic events).
+ * Purely visual.
+ */
+export interface EarthquakeConfig {
+  /** Trembling-buildup time before the main rupture, in ms. */
+  buildupMs: number
+  /** Seismic-wave travel speed toward neighbours, in world units/sec. */
+  waveSpeed: number
+  /** Fracture reach around the primary target, in world units. */
+  radius: number
+  /** Faint underground-glow colour of the fractures. */
+  glowColor: number
+  /** Bright molten crack-core colour. */
+  coreColor: number
+  /** Stone / rock-debris colour. */
+  rockColor: number
+  /** Rolling dust-cloud colour. */
+  dustColor: number
+  /** Flying dirt / gravel colour. */
+  gravelColor: number
+}
+
+/**
  * An electrical pentagon "cage" locked around a target (Electricity's
  * Thunderdome). A persistent effect: five corner nodes pop in, lightning edges
  * construct between them, then it idles with racing electricity, an interior
@@ -291,6 +371,71 @@ export interface ThunderdomeConfig {
   buildMs: number
   /** Collapse sequence length on expiry, ms. */
   collapseMs: number
+}
+
+/**
+ * Acid Rain / Corroded (Nature, Epic 9). A persistent chemical-corrosion effect
+ * locked onto a target for the Corroded status: a toxic storm cloud gathers and
+ * churns overhead, glowing acidic rain falls and sizzles into bubbling puddles,
+ * and green vapor keeps rising off the chemically-weakened target — intensifying
+ * whenever a fresh Poison lands (the stacking synergy) and dissolving to drifting
+ * vapor when it expires. Reusable palette so future Nature chemical abilities can
+ * share the same systems; only these colours + dimensions change. Purely visual.
+ */
+export interface AcidRainConfig {
+  /** Dark, murky storm-cloud colour. */
+  cloudColor: number
+  /** Toxic yellow-green acid colour (rain, puddles, glow). */
+  acidColor: number
+  /** Bright luminescent highlight colour (rain sheen, sizzle flashes). */
+  glowColor: number
+  /** Green chemical-vapor colour. */
+  vaporColor: number
+  /** Radius of the ground zone the rain covers, in world units. */
+  radius: number
+  /** Height the cloud forms above the target (world units; positive = higher). */
+  cloudHeight: number
+  /** Cloud gather-in time before rain begins in earnest, ms. */
+  gatherMs: number
+  /** Cloud dissolve time on expiry, ms. */
+  dissolveMs: number
+  /**
+   * Render the overhead storm cloud + falling acid rain (default true). Set false
+   * for a ground-only corrosion aura — bubbling acid, toxic fumes, dripping, and
+   * sizzle over the target with no cloud/rain (Gastro Acid's poison idle, and any
+   * future toxin/venom/disease DoT that corrodes a target without a storm).
+   */
+  cloud?: boolean
+  /** Scales the corrosion emission rates — a denser, more dangerous poison
+   *  (default 1). */
+  intensity?: number
+}
+
+/**
+ * Frost aura (Ice's Flood of Frost, Epic 9). A persistent lingering frost on a
+ * target: crystalline frost creeps across the castle, snow drifts down, cold
+ * vapor curls upward, and crystals sparkle. When Chilling Retribution lands it
+ * switches to an ENHANCED mode — pale-blue magical energy flows through the ice
+ * with a pulsing rune ring — and `pulse()` flashes it brighter whenever the
+ * target's cooldowns are slowed. Melts to mist on expiry. Reusable palette so
+ * future Ice abilities (blizzard, frostbite, deep freeze) can share it.
+ */
+export interface FrostAuraConfig {
+  /** Creeping-frost / crystal colour (pale icy white-blue). */
+  frostColor: number
+  /** Bright crystal highlight / sparkle colour. */
+  iceColor: number
+  /** Cold-vapor colour. */
+  vaporColor: number
+  /** Chilling Retribution magical-energy / rune colour (pale blue). */
+  runeColor: number
+  /** Radius of the frosted zone around the target, in world units. */
+  radius: number
+  /** Base lingering time before the frost melts on its own (no Chilling
+   *  Retribution), in ms. Chilling Retribution keeps it alive until it expires. */
+  baseDurationMs: number
+  /** Melt time on expiry, in ms. */
+  dissolveMs: number
 }
 
 /** One styled polyline layer of a lightning bolt (glow / branches / core). */
@@ -314,6 +459,31 @@ export interface BoltNode {
   /** Hide and clear the geometry (for pooled reuse). */
   clear(): void
   destroy(): void
+}
+
+/**
+ * Air's projectile-deflection palette + timing (Epic 9). A UNIVERSAL redirect:
+ * any traveling projectile ability, current or future, is intercepted at the Air
+ * castle by an invisible wall of compressed wind, suspended briefly, then hurled
+ * at a new target — keeping ITS OWN visual identity the whole time. This config
+ * describes only the WIND dressing (barrier burst, gusts, feathers, linger
+ * spiral); the projectile itself comes from its own EffectDefinition, so no
+ * per-ability code is needed. Kingdom-agnostic by construction (Air passes it in;
+ * a future wind kingdom could reuse it).
+ */
+export interface WindDeflectionConfig {
+  /** Bright flash / compressed-air core colour. */
+  flash: number
+  /** Expanding wind-ring colour. */
+  ring: number
+  /** Primary swirling-gust particle colour (white). */
+  gust: number
+  /** Secondary gust colour (pale blue). */
+  gustAlt: number
+  /** Drifting-feather colour. */
+  feather: number
+  /** Milliseconds the projectile hangs suspended in the burst (100–200). */
+  pauseMs?: number
 }
 
 /** A decaying camera shake. Pure VFX — never affects gameplay or hitboxes. */
@@ -344,6 +514,8 @@ export interface EffectDefinition {
   lightning?: LightningConfig
   /** A charge-scaled lightning barrage (uses `PlayArgs.charges`). */
   barrage?: LightningBarrageConfig
+  /** A staggered multi-impact meteor bombardment (Earth's Meteor Shower). */
+  meteorShower?: MeteorShowerConfig
   impact?: ImpactConfig
   particles?: ParticleBurstConfig
   shake?: CameraShakeConfig

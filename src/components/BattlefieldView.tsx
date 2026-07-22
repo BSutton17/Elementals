@@ -6,6 +6,7 @@ import { KingdomSite } from './KingdomSite'
 // import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
 import { FloatingNumbers } from './FloatingNumbers'
+import { DustBunniesLayer } from './DustBunniesLayer'
 import { AbilityBar } from './AbilityBar'
 import { getAbilitiesForKingdom, getUpgradeCost } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
@@ -94,6 +95,14 @@ export function BattlefieldView({
 
   const yourTheme = getKingdomTheme(you.kingdomId)
   const hasAirVision = you.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
+  // Nature's Toxic Gas chemically seals the Repairs & Shields menu shut.
+  const shopLocked = you.statuses?.some((s) => s.id === 'toxicGas') ?? false
+  // Gastro Acid can poison the citizens, sapping income.
+  const citizensPoisoned = you.statuses?.some((s) => s.id === 'poisonedCitizens') ?? false
+  // Ice's Freeze ices over every action button and seals the shop.
+  const frozen = you.statuses?.some((s) => s.id === 'frozen') ?? false
+  // Chilling Retribution lengthens your cooldowns — snowflake the slowed cards.
+  const cooldownChilled = you.statuses?.some((s) => s.id === 'chillingRetribution') ?? false
   const cssVars = {
     '--kingdom-primary': yourTheme?.primary || '#4aa3ff',
     '--kingdom-secondary': yourTheme?.secondary || '#2193b0',
@@ -194,6 +203,9 @@ export function BattlefieldView({
           kingdomOf={(id) => roster.find((p) => p.id === id)?.kingdomId ?? null}
           colorOf={colorOf}
         />
+
+        {/* Dust Bunnies (#… Nature ultimate): hopping bunnies + brawl clouds. */}
+        <DustBunniesLayer positionOf={positionOf} />
       </svg>
       {/* PixiJS effects overlay (Epic 9): visualizes authoritative events;
           pointer-events:none keeps the SVG the interactive targeting surface. */}
@@ -220,6 +232,10 @@ export function BattlefieldView({
           shieldCost={500}
           repairsUsed={you.castle.repairs ?? 0}
           maxRepairs={3}
+          lockedOut={shopLocked}
+          citizensPoisoned={citizensPoisoned}
+          frozen={frozen}
+          cooldownChilled={cooldownChilled}
           incomePerSecond={you.economy.incomePerTick * tickRate}
           abilities={getAbilitiesForKingdom(you.kingdomId).map((metadata) => {
             // Bought abilities show as level 1; upgrade tiers stack on top.

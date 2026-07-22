@@ -3,12 +3,19 @@ import type {
   BoltNode,
   DisplayNode,
   EffectDefinition,
+  AcidRainConfig,
+  EarthquakeConfig,
+  FrostAuraConfig,
   LightningBarrageConfig,
   LightningConfig,
+  MeteorShowerConfig,
   ParticleBurstConfig,
+  ProjectileConfig,
   ThunderdomeConfig,
   Vec2,
+  WindDeflectionConfig,
 } from './types'
+import { angleBetween, distance } from './trajectory'
 import { ProjectileSystem } from './systems/projectiles'
 import { ImpactSystem } from './systems/impacts'
 import { ParticleSystem, type ParticleSystemOptions } from './systems/particles'
@@ -17,6 +24,8 @@ import { VortexSystem } from './systems/vortex'
 import { WaveSystem } from './systems/wave'
 import { LightningSystem } from './systems/lightning'
 import { ThunderdomeSystem } from './systems/thunderdome'
+import { AcidRainSystem } from './systems/acidRain'
+import { FrostAuraSystem } from './systems/frostAura'
 import { AuraSystem } from './systems/aura'
 import { Camera } from './camera'
 import { AnimationTimeline } from './timeline'
@@ -34,6 +43,9 @@ import { UNIT_RADIUS } from './nodeUtil'
 
 export interface NodeFactories {
   projectile: () => DisplayNode
+  /** Spike sprite for triangle-shaped projectiles (Ice's Icicle). Falls back to
+   *  the circle projectile pool when omitted. */
+  projectileTriangle?: () => DisplayNode
   impact: () => DisplayNode
   particle: () => DisplayNode
   /** Beam segment sprite. Falls back to the projectile factory if omitted. */
@@ -73,6 +85,20 @@ export interface PlayArgs {
   /** Charges spent (Lightning Barrage) — scales a `barrage` effect's intensity. */
   charges?: number
 }
+
+/**
+ * A redirected cast (Air's passive): the projectile flies attacker → `via` (the
+ * Air castle), is deflected there, then flies `via` → `to` (the new target).
+ */
+export interface RedirectArgs extends PlayArgs {
+  /** The Air castle where the attack is intercepted and turned. */
+  via: Vec2
+}
+
+/** Default pause the projectile hangs in the wind burst (ms), and how long the
+ *  lingering wind spiral is left behind at the deflection point. */
+const WIND_PAUSE_MS = 150
+const WIND_LINGER_MS = 520
 
 /** A bolt node that draws nothing — the lightning fallback when no factory is
  *  injected (keeps the system's timing/lifecycle working in tests). */
@@ -118,6 +144,8 @@ export class AnimationFramework {
   readonly waves: WaveSystem
   readonly lightning: LightningSystem
   readonly thunderdomes: ThunderdomeSystem
+  readonly acidRains: AcidRainSystem
+  readonly frostAuras: FrostAuraSystem
   readonly auras: AuraSystem
   readonly camera: Camera
   readonly timeline = new AnimationTimeline()
@@ -132,7 +160,12 @@ export class AnimationFramework {
 
   constructor(nodes: NodeFactories, options: FrameworkOptions = {}) {
     const baseRadius = options.baseRadius ?? UNIT_RADIUS
-    this.projectiles = new ProjectileSystem(nodes.projectile, baseRadius)
+    this.projectiles = new ProjectileSystem(
+      nodes.projectile,
+      baseRadius,
+      undefined,
+      nodes.projectileTriangle ? { triangle: nodes.projectileTriangle } : undefined,
+    )
     this.impacts = new ImpactSystem(nodes.impact, baseRadius)
     this.particles = new ParticleSystem(nodes.particle, baseRadius, options.particles)
     // The beam sprite is a rect scaled in absolute world units; only the charge
@@ -163,6 +196,19 @@ export class AnimationFramework {
       nodes.bolt ?? makeNoopBolt,
       baseRadius,
     )
+    // Acid Rain reuses the soft (smoke) + additive (glow) node factories, so it
+    // needs no new node types — its whole look is tint + scale like every system.
+    this.acidRains = new AcidRainSystem(
+      nodes.aura ?? nodes.particle,
+      nodes.auraGlow ?? nodes.particle,
+      baseRadius,
+    )
+    // Frost aura (Flood of Frost) reuses the same soft + additive factories.
+    this.frostAuras = new FrostAuraSystem(
+      nodes.aura ?? nodes.particle,
+      nodes.auraGlow ?? nodes.particle,
+      baseRadius,
+    )
     this.auras = new AuraSystem(
       nodes.aura ?? nodes.particle,
       nodes.auraGlow ?? nodes.particle,
@@ -185,6 +231,8 @@ export class AnimationFramework {
     this.waves.update(dtMs)
     this.lightning.update(dtMs)
     this.thunderdomes.update(dtMs)
+    this.acidRains.update(dtMs)
+    this.frostAuras.update(dtMs)
     this.auras.update(dtMs)
     this.timeline.update(dtMs)
     this.camera.update(dtMs)
@@ -217,6 +265,11 @@ export class AnimationFramework {
     // A charge-scaled lightning barrage — a scripted multi-strike sequence.
     if (def.barrage) {
       this.playBarrage(def.barrage, args.from, args.to, args.charges ?? 1)
+      return
+    }
+    // A meteor bombardment — a scripted multi-impact barrage on the target.
+    if (def.meteorShower) {
+      this.playMeteorShower(args.to, def.meteorShower)
       return
     }
     // A beam charges at the source, then fires + bursts at the target on impact.
@@ -258,6 +311,157 @@ export class AnimationFramework {
     } else {
       this.burst(def, args.to, color)
     }
+  }
+
+  /**
+   * Visualize an attack that Air's passive REDIRECTED. A universal framework:
+   * the projectile flies to the Air castle (`via`) EXACTLY as a normal shot would
+   * — same sprite, speed, trail — with nothing hinting at the redirect. On
+   * arrival it slams into an invisible wall of compressed wind, hangs suspended
+   * for a beat while it turns, and is then hurled at the new target (`to`),
+   * preserving its ORIGINAL speed, trail, rotation, impact, and damage-timing.
+   * Only TRAVELING (projectile) abilities are deflected; instant abilities
+   * (beam/vortex/lightning/wave/barrage) keep their own treatment and simply
+   * resolve at the final target. Works for any current/future projectile with no
+   * per-ability code — the wind dressing is the only thing Air adds.
+   */
+  playRedirectedAbility(abilityId: string, args: RedirectArgs, wind: WindDeflectionConfig): void {
+    const def = this.registry.resolve(abilityId) ?? this.defaultEffect
+    if (!def) return
+    const color = def.tintFrom ? themeColor(args.sourceKingdom, def.tintFrom) : undefined
+    const projectile = withColor(def.projectile, color)
+    // Non-projectile (instant) abilities aren't part of the deflection visual;
+    // just resolve them normally at the final target.
+    if (!projectile) {
+      this.playAbility(abilityId, {
+        from: args.from,
+        to: args.to,
+        sourceKingdom: args.sourceKingdom,
+        charges: args.charges,
+      })
+      return
+    }
+    const { from, via, to } = args
+    // Leg 1: attacker → Air castle, indistinguishable from a normal shot.
+    this.projectiles.spawn(
+      projectile,
+      from,
+      via,
+      () => this.deflectAtWindBarrier(projectile, def, color, from, via, to, wind),
+      this.makeTrailEmitter(def.trail, color),
+    )
+  }
+
+  /**
+   * The redirection EVENT at the Air castle, composed of small reusable modules:
+   * the wind-barrier burst (interception), the pause controller (projectile
+   * suspended + turning), the launch gust (forceful relaunch), and the lingering
+   * wind spiral left behind. Leg 2 preserves the projectile's original speed by
+   * matching leg 1's px/ms, and reuses the definition's own trail + impact burst.
+   */
+  private deflectAtWindBarrier(
+    projectile: ProjectileConfig,
+    def: EffectDefinition,
+    color: number | undefined,
+    from: Vec2,
+    via: Vec2,
+    to: Vec2,
+    wind: WindDeflectionConfig,
+  ): void {
+    this.windBarrierBurst(via, from, to, wind)
+    this.windLingerSpiral(via, wind)
+    const pauseMs = wind.pauseMs ?? WIND_PAUSE_MS
+    this.projectiles.hold(projectile, via, from, to, pauseMs, () => {
+      this.windLaunchGust(via, to, wind)
+      // Preserve the projectile's ORIGINAL speed: match leg 1's px/ms so the
+      // deflected shot travels at the same pace, just along a new segment.
+      const refSpeed = distance(from, via) / Math.max(1, projectile.durationMs)
+      const leg2: ProjectileConfig = {
+        ...projectile,
+        durationMs: Math.max(1, distance(via, to) / Math.max(1e-4, refSpeed)),
+      }
+      this.projectiles.spawn(
+        leg2,
+        via,
+        to,
+        (at) => this.burst(def, at, color),
+        this.makeTrailEmitter(def.trail, color),
+      )
+    })
+  }
+
+  /**
+   * The interception: the projectile collides with the wall of compressed wind
+   * around the castle. A bright compressed-air core, expanding wind rings,
+   * swirling white + pale-blue gusts, feathers + tiny air specks, a sharp
+   * directional flash along the NEW trajectory, a back-splash toward the
+   * attacker, and a small screen kick — all pale-air coloured from `wind`.
+   */
+  private windBarrierBurst(at: Vec2, from: Vec2, to: Vec2, wind: WindDeflectionConfig): void {
+    const outDir = angleBetween(at, to) // where it's about to go
+    const backDir = angleBetween(at, from) // splash back toward the attacker
+    // Compressed-air core burst.
+    this.impacts.spawn({ durationMs: 220, size: 62, color: wind.flash, easing: 'easeOut', startScale: 0.5 }, at)
+    // Expanding wind rings, staggered outward.
+    for (let i = 0; i < 3; i++) {
+      this.schedule(i * 55, () => {
+        this.impacts.spawn(
+          { durationMs: 380, size: 84 + i * 46, color: wind.ring, easing: 'easeOut', startScale: 0.3 },
+          at,
+        )
+      })
+    }
+    // Swirling white + pale-blue gusts (full circle).
+    this.particles.emit({ count: 22, speed: [140, 380], spread: Math.PI, lifetimeMs: 460, size: 7, color: wind.gust, fade: true }, at)
+    this.particles.emit({ count: 18, speed: [90, 300], spread: Math.PI, lifetimeMs: 560, size: 9, color: wind.gustAlt, gravity: -20, fade: true }, at)
+    // Feathers (slow float) + tiny air specks (quick).
+    this.particles.emit({ count: 10, speed: [40, 150], spread: Math.PI, lifetimeMs: 900, size: 8, color: wind.feather, gravity: 30, fade: true }, at)
+    this.particles.emit({ count: 16, speed: [260, 620], spread: Math.PI, lifetimeMs: 320, size: 3, color: wind.gust, fade: true }, at)
+    // Sharp directional flash along the new heading + a quick white core flash.
+    this.particles.emit({ count: 12, speed: [420, 780], spread: 0.28, direction: outDir, lifetimeMs: 260, size: 5, color: wind.flash, fade: true }, at)
+    this.impacts.spawn({ durationMs: 150, size: 40, color: 0xffffff, easing: 'easeOut', startScale: 0.6 }, at)
+    // Back-splash toward the attacker (the projectile rebounding off the wall).
+    this.particles.emit({ count: 8, speed: [150, 360], spread: 0.5, direction: backDir, lifetimeMs: 300, size: 5, color: wind.gustAlt, fade: true }, at)
+    this.camera.shake({ magnitude: 5, durationMs: 180 })
+  }
+
+  /**
+   * The relaunch: a forceful wind blast hurls the projectile along its new path.
+   * A concentrated blast behind it, motion streaks aligned with the trajectory,
+   * small quickly-dissipating spiraling gusts, and air distortion at the launch.
+   */
+  private windLaunchGust(at: Vec2, to: Vec2, wind: WindDeflectionConfig): void {
+    const outDir = angleBetween(at, to)
+    const back = outDir + Math.PI
+    // Concentrated blast behind the projectile (pushes it forward).
+    this.particles.emit({ count: 16, speed: [200, 520], spread: 0.5, direction: back, lifetimeMs: 340, size: 7, color: wind.gust, fade: true }, at)
+    // Motion streaks aligned with the new trajectory (fast, tight).
+    this.particles.emit({ count: 14, speed: [360, 760], spread: 0.2, direction: outDir, lifetimeMs: 300, size: 4, color: wind.gustAlt, fade: true }, at)
+    // Small spiraling gusts + air distortion at the launch point.
+    this.particles.emit({ count: 12, speed: [120, 360], spread: Math.PI, lifetimeMs: 380, size: 6, color: wind.gustAlt, gravity: -10, fade: true }, at)
+    this.impacts.spawn({ durationMs: 240, size: 54, color: wind.flash, easing: 'easeOut', startScale: 0.4 }, at)
+  }
+
+  /**
+   * The lingering wind spiral left where the deflection happened (~0.5s):
+   * rotating gusts + a faint circular distortion (a short-lived pale vortex) with
+   * a few drifting feathers, fading away naturally.
+   */
+  private windLingerSpiral(at: Vec2, wind: WindDeflectionConfig): void {
+    this.vortices.spawn(
+      {
+        durationMs: WIND_LINGER_MS,
+        size: 58,
+        color: wind.gust,
+        coreColor: wind.flash,
+        emberColor: wind.feather,
+        spin: 4.5,
+        arms: 14,
+        emberRate: 30,
+      },
+      at,
+    )
+    this.particles.emit({ count: 8, speed: [30, 120], spread: Math.PI, lifetimeMs: 950, size: 8, color: wind.feather, gravity: 24, fade: true }, at)
   }
 
   /**
@@ -347,6 +551,172 @@ export class AnimationFramework {
   }
 
   /**
+   * Meteor Shower (Earth): a scripted MULTI-IMPACT bombardment on the target.
+   * Meteors are staggered across the window (so each strike registers on its
+   * own), and each one falls from high above — accelerating under "gravity"
+   * (easeIn) with a blazing trail — then detonates with its own explosion +
+   * screen kick. Every meteor varies in size/speed/trajectory. Composed of small
+   * reusable modules: the drop (a falling projectile + trail) and the impact
+   * (ring + rock debris + molten fragments + rolling dust + pebbles + shake).
+   */
+  private playMeteorShower(at: Vec2, cfg: MeteorShowerConfig): void {
+    const n = Math.max(1, Math.round(cfg.meteors))
+    for (let i = 0; i < n; i++) {
+      const ramp = n > 1 ? i / (n - 1) : 0
+      // Stagger across the window with a little jitter so it's not metronomic.
+      const delay = ramp * cfg.durationMs + (Math.random() - 0.5) * (cfg.durationMs / n) * 0.7
+      this.schedule(Math.max(0, delay), () => this.dropMeteor(at, cfg))
+    }
+  }
+
+  /** One meteor: falls from high above the target, accelerating, trailing fire,
+   *  then explodes on arrival. */
+  private dropMeteor(at: Vec2, cfg: MeteorShowerConfig): void {
+    const sizeMul = 0.7 + Math.random() * 0.7
+    const impact = {
+      x: at.x + (Math.random() * 2 - 1) * cfg.spread,
+      y: at.y + (Math.random() * 2 - 1) * cfg.spread * 0.25,
+    }
+    const from = {
+      x: impact.x + (Math.random() * 2 - 1) * cfg.spread * 0.5, // slight angle
+      y: impact.y - cfg.fallHeight * (0.85 + Math.random() * 0.3),
+    }
+    const meteor: ProjectileConfig = {
+      durationMs: 300 + Math.random() * 240, // varied speed
+      size: cfg.size * sizeMul,
+      color: cfg.coreColor, // molten glowing core
+      easing: 'easeIn', // accelerate under gravity
+      faceDirection: true,
+    }
+    // A blazing orange-red trail of embers + molten fragments peeling off.
+    const onStep = this.makeTrailEmitter(
+      {
+        emitEveryMs: 15,
+        particles: {
+          count: 3,
+          speed: [20, 100],
+          spread: 0.8,
+          lifetimeMs: 360,
+          size: 5 * sizeMul,
+          color: cfg.trailColor,
+          gravity: -40, // embers linger/rise behind the falling rock
+          fade: true,
+        },
+      },
+      undefined,
+    )
+    this.projectiles.spawn(meteor, from, impact, (a) => this.meteorImpact(a, cfg, sizeMul), onStep)
+  }
+
+  /** A single meteor's ground explosion. */
+  private meteorImpact(at: Vec2, cfg: MeteorShowerConfig, sizeMul: number): void {
+    // Expanding shockwave ring.
+    this.impacts.spawn(
+      { durationMs: 360, size: 78 * sizeMul, color: cfg.coreColor, easing: 'easeOut', startScale: 0.2 },
+      at,
+    )
+    // A massive burst of rock + shattered stone flung out (falls under gravity).
+    this.particles.emit(
+      { count: Math.round(14 * sizeMul), speed: [160, 440], spread: Math.PI, lifetimeMs: 640, size: 5 * sizeMul, color: cfg.rockColor, gravity: 440, fade: true },
+      at,
+    )
+    // Molten fragments thrown outward (bright, hot).
+    this.particles.emit(
+      { count: Math.round(10 * sizeMul), speed: [180, 470], spread: Math.PI, lifetimeMs: 520, size: 4, color: cfg.emberColor, gravity: 320, fade: true },
+      at,
+    )
+    // Dust clouds rolling across the ground (slow, rise + linger).
+    this.particles.emit(
+      { count: Math.round(8 * sizeMul), speed: [40, 130], spread: Math.PI, lifetimeMs: 820, size: 12 * sizeMul, color: cfg.dustColor, gravity: -18, fade: true },
+      at,
+    )
+    // Flying pebbles (small, fast, fall quickly).
+    this.particles.emit(
+      { count: Math.round(10 * sizeMul), speed: [220, 520], spread: Math.PI, lifetimeMs: 460, size: 2.5, color: cfg.rockColor, gravity: 400, fade: true },
+      at,
+    )
+    // A satisfying kick per impact (bigger meteors hit harder).
+    this.camera.shake({ magnitude: 5 * sizeMul, durationMs: 170 })
+  }
+
+  /**
+   * Earthquake (Earth): a heavy primary rupture at the target, then SEISMIC WAVES
+   * that race to the other kingdoms and strike each with a lighter secondary
+   * impact — so the damage visibly propagates from the origin. Composed of small
+   * reusable modules: the trembling buildup, the layered quake impact (branching
+   * fractures + stone eruption + dust + debris + shockwave + shake), the traveling
+   * seismic wave (a rolling dust ripple), and the lingering settle.
+   */
+  playEarthquake(at: Vec2, neighbors: Vec2[], cfg: EarthquakeConfig): void {
+    // 1. Trembling buildup — the ground rattles: pebbles bounce, small tremors.
+    const tremors = 4
+    for (let i = 0; i < tremors; i++) {
+      this.schedule((i / tremors) * cfg.buildupMs, () => {
+        this.camera.shake({ magnitude: 2 + i * 0.8, durationMs: cfg.buildupMs / tremors + 40 })
+        this.particles.emit(
+          { count: 5, speed: [50, 150], spread: 0.9, direction: -Math.PI / 2, lifetimeMs: 460, size: 2.5, color: cfg.rockColor, gravity: 520, fade: true },
+          at,
+        )
+      })
+    }
+    // 2. Primary rupture after the buildup.
+    this.schedule(cfg.buildupMs, () => this.quakeImpact(at, cfg, 1))
+    // 3. A big ground shockwave ring rolling outward from the origin.
+    this.schedule(cfg.buildupMs + 30, () =>
+      this.impacts.spawn({ durationMs: 900, size: 360, color: cfg.dustColor, easing: 'easeOut', startScale: 0.05 }, at),
+    )
+    // 4. Seismic waves race to each other kingdom, striking it as they arrive.
+    for (const nb of neighbors) {
+      const travelMs = Math.max(120, (distance(at, nb) / cfg.waveSpeed) * 1000)
+      this.schedule(cfg.buildupMs + 120, () => {
+        const wave: ProjectileConfig = { durationMs: travelMs, size: 9, color: cfg.dustColor, easing: 'linear' }
+        const dustWake = this.makeTrailEmitter(
+          { emitEveryMs: 26, particles: { count: 4, speed: [20, 90], spread: Math.PI, lifetimeMs: 560, size: 11, color: cfg.dustColor, gravity: -8, fade: true } },
+          undefined,
+        )
+        this.projectiles.spawn(wave, at, nb, (arr) => this.quakeImpact(arr, cfg, 0.5), dustWake)
+      })
+    }
+  }
+
+  /**
+   * A single quake impact. `scale` 1 = the primary rupture (heavy), 0.5 = a
+   * secondary aftershock (clearly weaker but still dangerous): branching glowing
+   * fractures, erupting stone, flying gravel, rolling dust, a shockwave, a screen
+   * kick scaled to severity, and lingering debris that keeps falling after.
+   */
+  private quakeImpact(at: Vec2, cfg: EarthquakeConfig, scale: number): void {
+    const primary = scale >= 1
+    // Ground fractures: glowing branching cracks splitting outward (procedural
+    // jagged polylines, tinted like molten rock rather than electricity).
+    const cracks = Math.round(4 * scale) + 3
+    for (let i = 0; i < cracks; i++) {
+      const a = (i / cracks) * Math.PI * 2 + (Math.random() - 0.5) * 0.6
+      const reach = cfg.radius * scale * (0.7 + Math.random() * 0.6)
+      const end = { x: at.x + Math.cos(a) * reach, y: at.y + Math.sin(a) * reach * 0.55 }
+      this.lightning.spawn(
+        { durationMs: 240, coreColor: cfg.coreColor, glowColor: cfg.glowColor, coreWidth: 3 * scale, glowWidth: 10 * scale, jaggedness: 0.5, subdivisions: 4, branchChance: 0.6, impactArcs: 0 },
+        at,
+        end,
+      )
+    }
+    // Expanding shockwave ring across the ground.
+    this.impacts.spawn({ durationMs: 460, size: 130 * scale, color: cfg.rockColor, easing: 'easeOut', startScale: 0.2 }, at)
+    // Stone pillars / rock fragments erupting UPWARD, then falling under gravity.
+    this.particles.emit({ count: Math.round(16 * scale), speed: [220, 500], spread: 0.7, direction: -Math.PI / 2, lifetimeMs: 720, size: 6 * scale, color: cfg.rockColor, gravity: 540, fade: true }, at)
+    // Flying dirt + gravel thrown outward.
+    this.particles.emit({ count: Math.round(14 * scale), speed: [160, 420], spread: Math.PI, lifetimeMs: 600, size: 3, color: cfg.gravelColor, gravity: 470, fade: true }, at)
+    // Thick rolling dust clouds (slow, rise, and linger).
+    this.particles.emit({ count: Math.round(10 * scale), speed: [40, 140], spread: Math.PI, lifetimeMs: 1150, size: 16 * scale, color: cfg.dustColor, gravity: -14, fade: true }, at)
+    // Screen kick — heavy for the primary, lighter for aftershocks.
+    this.camera.shake({ magnitude: primary ? 16 : 7, durationMs: primary ? 540 : 240 })
+    // Loose debris keeps falling a beat after the eruption.
+    this.schedule(220, () =>
+      this.particles.emit({ count: Math.round(8 * scale), speed: [80, 200], spread: 0.9, direction: -Math.PI / 2, lifetimeMs: 820, size: 4 * scale, color: cfg.rockColor, gravity: 500, fade: true }, at),
+    )
+  }
+
+  /**
    * Builds a per-frame callback that streams a trail's particle puffs along a
    * projectile's path at a fixed cadence, or `undefined` when there's no trail.
    * The `tintFrom` colour override (if any) recolours the trail like every other
@@ -397,6 +767,71 @@ export class AnimationFramework {
     this.thunderdomes.surge(key)
   }
 
+  /** Begin Acid Rain / Corroded on a target (keyed per target). */
+  startAcidRain(key: string, at: Vec2, config: AcidRainConfig): void {
+    this.acidRains.start(key, at, config)
+  }
+
+  /** Dissolve Acid Rain (rain stops, cloud drifts to vapor) when Corroded ends. */
+  stopAcidRain(key: string): void {
+    this.acidRains.stop(key)
+  }
+
+  /** Intensify Acid Rain — a fresh Poison landed while Corroded. No-op if none. */
+  surgeAcidRain(key: string): void {
+    this.acidRains.surge(key)
+  }
+
+  /** True while a live (non-dissolving) Acid Rain cloud exists under `key`. */
+  hasAcidRain(key: string): boolean {
+    return this.acidRains.has(key)
+  }
+
+  /** Begin a Frost aura (Flood of Frost) on a target (keyed per target). */
+  startFrost(key: string, at: Vec2, config: FrostAuraConfig): void {
+    this.frostAuras.start(key, at, config)
+  }
+
+  /** Enhance a Frost aura — Chilling Retribution landed (magical energy + runes,
+   *  and it persists until stopped). No-op if none. */
+  enhanceFrost(key: string): void {
+    this.frostAuras.enhance(key)
+  }
+
+  /** Pulse a Frost aura — the target's cooldowns were slowed. No-op if none. */
+  pulseFrost(key: string): void {
+    this.frostAuras.pulse(key)
+  }
+
+  /** Melt a Frost aura (ice thaws to mist) when its status ends. */
+  stopFrost(key: string): void {
+    this.frostAuras.stop(key)
+  }
+
+  /** True while a live (non-melting) Frost aura exists under `key`. */
+  hasFrost(key: string): boolean {
+    return this.frostAuras.has(key)
+  }
+
+  /**
+   * Freeze to the Core cast: freezing energy spirals INWARD onto the target for a
+   * beat, then a brilliant icy-blue flash + explosive crystal growth erupts
+   * around it. The lingering encasement (ice cube + cold atmosphere) is driven
+   * separately by the `frozen` status, so this is just the dramatic freeze.
+   */
+  playFreezeCast(at: Vec2, config: FrostAuraConfig): void {
+    this.frostAuras.gather(at, config) // energy spirals in
+    this.camera.shake({ magnitude: 3, durationMs: 560 }) // rising buildup rumble
+    this.schedule(560, () => {
+      // Brilliant flash: a bright white core inside a wide icy-blue ring.
+      this.impacts.spawn({ durationMs: 200, size: 78, color: 0xffffff, easing: 'easeOut', startScale: 0.4 }, at)
+      this.impacts.spawn({ durationMs: 480, size: 168, color: config.frostColor, easing: 'easeOut' }, at)
+      // Explosive crystal growth + a heavy freeze kick.
+      this.frostAuras.erupt(at, config)
+      this.camera.shake({ magnitude: 12, durationMs: 440 })
+    })
+  }
+
   /**
    * Begin a persistent aura for a status (Heat Wave smoke, Blazing Determination
    * flames) at a castle. `key` is unique per (status, castle) so it can be
@@ -434,6 +869,8 @@ export class AnimationFramework {
     this.waves.clear()
     this.lightning.clear()
     this.thunderdomes.clear()
+    this.acidRains.clear()
+    this.frostAuras.clear()
     this.auras.clear()
     this.timeline.clear()
     this.camera.clear()

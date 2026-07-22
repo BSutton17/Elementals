@@ -36,6 +36,8 @@ interface FloatingNumber {
   text: string
   color: string
   crit: boolean
+  /** Text anchor — 'start' for right-of-castle, 'end' for left-of-castle. */
+  anchor: 'start' | 'end'
 }
 
 /** A number plus how long to wait before showing it (time-to-impact). */
@@ -126,7 +128,7 @@ export function FloatingNumbers({ positionOf, kingdomOf, colorOf }: FloatingNumb
           x={n.x}
           y={n.y}
           fill={n.color}
-          textAnchor="start"
+          textAnchor={n.anchor}
           className={`floating-number${n.crit ? ' floating-number--crit' : ''}`}
         >
           {n.text}
@@ -139,8 +141,9 @@ export function FloatingNumbers({ positionOf, kingdomOf, colorOf }: FloatingNumb
 /**
  * Translates one authoritative event into a floating number (plus its show
  * delay), or `null` for events this layer doesn't visualize (or zero-magnitude
- * ones). Exported for unit tests. The number is placed to the RIGHT of the
- * castle with a small vertical jitter so rapid hits fan out instead of stacking.
+ * ones). Exported for unit tests. Direct damage + healing sit to the RIGHT of
+ * the castle; damage-over-time (Burn, Poison) sits on the opposite (LEFT) side.
+ * A small vertical jitter keeps rapid hits from stacking exactly.
  */
 export function buildNumber(
   event: RawGameEvent,
@@ -155,18 +158,22 @@ export function buildNumber(
     if (amount <= 0) return null
     const at = positionOf(dmg.targetId)
     if (!at) return null
+    // Damage-over-time (Burn, Poison) sits on the LEFT of the castle, opposite
+    // the RIGHT where direct damage + healing appear.
+    const dot = isDot(dmg.cause)
     return {
       number: {
         key: nextKey(),
-        x: at.x + RIGHT_OFFSET,
+        x: at.x + (dot ? -RIGHT_OFFSET : RIGHT_OFFSET),
         y: at.y + VERTICAL_BIAS + jitter(),
         text: String(amount),
         color: colorOf(kingdomOf(dmg.sourceId)), // attacker's colour (#265)
         crit: dmg.crit === true,
+        anchor: dot ? 'end' : 'start',
       },
       delayMs: impactDelay(dmg.cause),
       targetId: dmg.targetId,
-      dot: isDot(dmg.cause),
+      dot,
     }
   }
   if (event.type === 'heal') {
@@ -178,11 +185,12 @@ export function buildNumber(
     return {
       number: {
         key: nextKey(),
-        x: at.x + RIGHT_OFFSET,
+        x: at.x + RIGHT_OFFSET, // healing sits on the RIGHT, with direct damage
         y: at.y + VERTICAL_BIAS + jitter(),
         text: `+${amount}`,
         color: HEAL_COLOR, // healing is always green (#266)
         crit: false,
+        anchor: 'start',
       },
       delayMs: impactDelay(heal.cause),
       targetId: heal.targetId,

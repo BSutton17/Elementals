@@ -1,0 +1,10 @@
+/* Global arctic-storm overlay (Ice's Blizzard). See BlizzardOverlay.tsx. A
+   full-screen, click-through weather layer covering the whole battlefield. */
+.blizzard-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none; /* purely atmospheric — gameplay stays interactive */
+  z-index: 4800;
+}

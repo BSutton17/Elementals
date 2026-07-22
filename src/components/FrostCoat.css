@@ -1,0 +1,223 @@
+/* Frost coating for Frozen action buttons (Ice, Epic 9). See FrostCoat.tsx. */
+
+.frost-coat {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: auto; /* intercept clicks: a frozen button never activates */
+  cursor: not-allowed;
+  z-index: 6;
+}
+.frost-coat--small {
+  border-radius: 10px;
+}
+
+/* Translucent ice fill — grows in behind the edge frost (button stays visible
+   beneath), then shimmers subtly for the whole freeze. */
+.frost-coat__ice {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(214, 240, 255, 0.5) 0%, rgba(150, 200, 240, 0.34) 60%, rgba(120, 175, 225, 0.4) 100%);
+  box-shadow: inset 0 0 12px rgba(140, 195, 240, 0.5);
+  opacity: 0;
+  transform-origin: center;
+  animation:
+    frost-fill 0.55s ease-out 0.16s forwards,
+    frost-breathe 3.6s ease-in-out 0.8s infinite;
+}
+@keyframes frost-fill {
+  from { opacity: 0; transform: scale(1.14); filter: blur(2px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+@keyframes frost-breathe {
+  0%, 100% { box-shadow: inset 0 0 12px rgba(140, 195, 240, 0.45); }
+  50% { box-shadow: inset 0 0 20px rgba(190, 225, 255, 0.7); }
+}
+
+/* Edge frost + condensation — forms FIRST, spreading across the borders. */
+.frost-coat__border {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 2px rgba(228, 246, 255, 0.85),
+    inset 0 0 9px rgba(200, 232, 255, 0.7);
+  opacity: 0;
+  animation: frost-edge 0.28s ease-out forwards;
+}
+@keyframes frost-edge {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Crystalline ice sprouting from each corner (staggered), then gently pulsing. */
+.frost-coat__crystal {
+  position: absolute;
+  width: 42%;
+  height: 42%;
+  background: radial-gradient(circle at var(--cx) var(--cy), rgba(255, 255, 255, 0.85) 0%, rgba(210, 238, 255, 0.35) 45%, rgba(210, 238, 255, 0) 72%);
+  opacity: 0;
+  transform: scale(0.3);
+  transform-origin: var(--cx) var(--cy);
+  animation: frost-crystal-grow 0.5s ease-out forwards, frost-crystal-pulse 3.2s ease-in-out infinite;
+}
+.frost-coat__crystal--tl { top: 0; left: 0; --cx: 0%; --cy: 0%; animation-delay: 0.24s, 0.9s; }
+.frost-coat__crystal--tr { top: 0; right: 0; --cx: 100%; --cy: 0%; animation-delay: 0.34s, 1.3s; }
+.frost-coat__crystal--bl { bottom: 0; left: 0; --cx: 0%; --cy: 100%; animation-delay: 0.44s, 1.7s; }
+.frost-coat__crystal--br { bottom: 0; right: 0; --cx: 100%; --cy: 100%; animation-delay: 0.3s, 1.1s; }
+@keyframes frost-crystal-grow {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes frost-crystal-pulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+/* Slow shimmering sheen sweeping across the frozen surface. */
+.frost-coat__sheen {
+  position: absolute;
+  top: -25%;
+  left: -60%;
+  width: 45%;
+  height: 150%;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
+  transform: skewX(-18deg);
+  opacity: 0;
+  animation: frost-sheen 3.4s ease-in-out 0.7s infinite;
+}
+@keyframes frost-sheen {
+  0% { left: -60%; opacity: 0; }
+  35% { opacity: 0.9; }
+  70% { left: 115%; opacity: 0; }
+  100% { left: 115%; opacity: 0; }
+}
+
+/* Tiny snow drifting down over the surface. */
+.frost-coat__snow {
+  position: absolute;
+  top: -12%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 3px rgba(220, 240, 255, 0.9);
+  opacity: 0;
+  animation: frost-snow-fall linear infinite;
+}
+.frost-coat__snow--1 { left: 22%; animation-duration: 3.4s; animation-delay: 0.6s; }
+.frost-coat__snow--2 { left: 54%; animation-duration: 4.2s; animation-delay: 1.7s; }
+.frost-coat__snow--3 { left: 78%; animation-duration: 3.8s; animation-delay: 1.1s; }
+@keyframes frost-snow-fall {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { transform: translateY(280%) translateX(-6px); opacity: 0; }
+}
+
+/* Occasional sparkling ice crystals (four-point twinkle). */
+.frost-coat__sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background:
+    linear-gradient(transparent 43%, rgba(255, 255, 255, 0.95) 43% 57%, transparent 57%),
+    linear-gradient(90deg, transparent 43%, rgba(255, 255, 255, 0.95) 43% 57%, transparent 57%);
+  opacity: 0;
+  transform: scale(0);
+  animation: frost-sparkle 3.6s ease-in-out infinite;
+}
+.frost-coat__sparkle--1 { top: 26%; left: 32%; animation-delay: 1.2s; }
+.frost-coat__sparkle--2 { top: 58%; left: 66%; animation-delay: 2.7s; }
+@keyframes frost-sparkle {
+  0%, 82%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  88% { opacity: 1; transform: scale(1) rotate(20deg); }
+  94% { opacity: 0; transform: scale(0.4) rotate(40deg); }
+}
+
+/* ---- Click crack burst (one-shot; the element is unmounted after ~700ms) --- */
+
+.frost-crack {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.frost-crack__flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.85) 0%, rgba(210, 238, 255, 0) 70%);
+  opacity: 0;
+  animation: frost-crack-flash 0.42s ease-out forwards;
+}
+@keyframes frost-crack-flash {
+  0% { opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.frost-crack__lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.frost-crack__lines path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.95);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgba(200, 235, 255, 0.9));
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: frost-crack-draw 0.22s ease-out forwards, frost-crack-fade 0.4s ease-in 0.3s forwards;
+}
+@keyframes frost-crack-draw { to { stroke-dashoffset: 0; } }
+@keyframes frost-crack-fade { to { opacity: 0; } }
+
+/* Ice fragments falling off. */
+.frost-crack__frag {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 4px;
+  height: 5px;
+  background: rgba(235, 248, 255, 0.95);
+  border-radius: 1px;
+  opacity: 0;
+  animation: frost-frag-fall 0.6s ease-in forwards;
+}
+.frost-crack__frag--1 { --fx: -22px; --fr: -60deg; }
+.frost-crack__frag--2 { --fx: -8px; --fr: 40deg; }
+.frost-crack__frag--3 { --fx: 10px; --fr: -30deg; }
+.frost-crack__frag--4 { --fx: 24px; --fr: 70deg; }
+@keyframes frost-frag-fall {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--fx), 130%) rotate(var(--fr)); }
+}
+
+/* Powdery snow burst. */
+.frost-crack__puff {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60%;
+  height: 60%;
+  transform: translate(-50%, -50%) scale(0.2);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.75) 0%, rgba(230, 245, 255, 0) 68%);
+  opacity: 0;
+  animation: frost-puff 0.55s ease-out forwards;
+}
+@keyframes frost-puff {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frost-coat__ice { animation: frost-fill 0.4s ease-out forwards; }
+  .frost-coat__sheen,
+  .frost-coat__snow,
+  .frost-coat__sparkle,
+  .frost-coat__crystal { animation: none; opacity: 0.85; }
+}

@@ -1,6 +1,16 @@
 import { useEffect, useRef } from 'react'
 import { PixiStage } from '../render/stage'
-import { ABILITY_EFFECTS, AURA_EFFECTS, THUNDERDOME_CONFIG } from '../render/effects'
+import {
+  ABILITY_EFFECTS,
+  ACID_RAIN_CONFIG,
+  AURA_EFFECTS,
+  EARTHQUAKE_CONFIG,
+  FROST_AURA_CONFIG,
+  FROZEN_ATMOSPHERE_CONFIG,
+  GASTRO_POISON_CONFIG,
+  THUNDERDOME_CONFIG,
+  WIND_DEFLECTION,
+} from '../render/effects'
 import { placeKingdoms } from '../game/placement'
 import { onGameEvents } from '../game/gameEvents'
 import type {
@@ -98,7 +108,7 @@ export function BattlefieldFx({ order }: { order: SeatOrder[] }) {
       const kingdomOf = (id: string) => seats.find((s) => s.id === id)?.kingdomId ?? null
 
       for (const event of events) {
-        dispatch(event, front, back, positionOf, kingdomOf)
+        dispatch(event, front, back, positionOf, kingdomOf, seats)
       }
     })
 
@@ -126,6 +136,7 @@ function dispatch(
   back: PixiStage | null,
   positionOf: (id: string) => { x: number; y: number } | undefined,
   kingdomOf: (id: string) => string | null,
+  seats: SeatOrder[],
 ): void {
   switch (event.type) {
     case 'abilityCast': {
@@ -133,6 +144,22 @@ function dispatch(
       const from = positionOf(cast.casterId)
       if (!from) return
       const sourceKingdom = kingdomOf(cast.casterId)
+
+      // Earthquake: a primary rupture at the target, then seismic waves race to
+      // every OTHER kingdom (the `otherEnemies` aftershock) and strike each on
+      // arrival — so the propagation is clearly visible from the origin.
+      if (cast.abilityId === 'earthquake') {
+        const primaryId = cast.targetIds[0]
+        const primary = primaryId ? positionOf(primaryId) : undefined
+        if (primary) {
+          const neighbors = seats
+            .filter((s) => s.id !== cast.casterId && s.id !== primaryId)
+            .map((s) => positionOf(s.id))
+            .filter((p): p is { x: number; y: number } => !!p)
+          front.framework.playEarthquake(primary, neighbors, EARTHQUAKE_CONFIG)
+        }
+        return
+      }
       // Water sustain abilities leave the CASTER's own castle bubbling for a
       // window (there's no self-status to drive it, so it's time-boxed here).
       const mistMs = MIST_ON_CAST_MS[cast.abilityId]
@@ -144,10 +171,49 @@ function dispatch(
       // castle ("hitting itself"). Those are shown by their status aura instead,
       // so skip the fallback for a self-target with no registered effect.
       const hasEffect = front.framework.registry.has(cast.abilityId)
+      // Air's passive turned some shots aside: map final target → the Air castle
+      // that intercepted it, so those play the two-leg wind-deflection sequence.
+      const interceptedBy = new Map((cast.redirects ?? []).map((r) => [r.to, r.via]))
       for (const targetId of cast.targetIds) {
         if (!hasEffect && targetId === cast.casterId) continue
         const to = positionOf(targetId)
         if (!to) continue
+        // Gastro Acid leaves a cloud-less corrosion aura on each (final) target
+        // for the strong Poison — bubbling acid, toxic fumes, drips — stopped
+        // when the Poison expires. Keyed apart from the Corroded storm.
+        if (cast.abilityId === 'gastroAcid') {
+          front.framework.startAcidRain(auraKey('gastroPoison', targetId), to, GASTRO_POISON_CONFIG)
+        }
+        // Flood of Frost leaves a lingering frost on each (final) target; if
+        // Chilling Retribution lands it's enhanced below and kept alive, else it
+        // melts on its own after the base window.
+        if (cast.abilityId === 'floodOfFrost') {
+          front.framework.startFrost(auraKey('frost', targetId), to, FROST_AURA_CONFIG)
+        }
+        // Freeze to the Core: the dramatic cast (energy gathers inward → icy-blue
+        // flash → explosive crystal eruption). The encasement + cold atmosphere
+        // follow from the guaranteed `frozen` status below.
+        if (cast.abilityId === 'freezeToTheCore') {
+          front.framework.playFreezeCast(to, FROZEN_ATMOSPHERE_CONFIG)
+        }
+        // Scorching Sun's guaranteed Burn shows as bright solar flames coating
+        // the target for the Burn window (5s). Self-stops on its own timer.
+        if (cast.abilityId === 'scorchingSun') {
+          front.framework.startAura('solarBurn', auraKey('solarBurn', targetId), to, 5000)
+        }
+        const viaId = interceptedBy.get(targetId)
+        const via = viaId ? positionOf(viaId) : undefined
+        if (via) {
+          // Redirected: attacker → Air castle → new target, with the wind
+          // deflection event between the two legs (instant abilities fall back
+          // to a normal cast inside the framework).
+          front.framework.playRedirectedAbility(
+            cast.abilityId,
+            { from, via, to, sourceKingdom, charges: cast.chargesUsed },
+            WIND_DEFLECTION,
+          )
+          continue
+        }
         // `chargesUsed` scales Lightning Barrage; harmless for other abilities.
         front.framework.playAbility(cast.abilityId, {
           from,
@@ -165,6 +231,33 @@ function dispatch(
       // Thunderdome: an electrical pentagon cage around the target.
       if (applied.statusId === 'thunderdome') {
         front.framework.startThunderdome(auraKey('thunderdome', applied.targetId), at, THUNDERDOME_CONFIG)
+        return
+      }
+      // Corroded (Nature's Acid Rain): a toxic storm cloud + acid rain + a
+      // persistent chemical-corrosion aura over the target for the status.
+      if (applied.statusId === 'corroded') {
+        front.framework.startAcidRain(auraKey('acidRain', applied.targetId), at, ACID_RAIN_CONFIG)
+        return
+      }
+      // Frozen (Ice's Freeze): a dense, oppressive cold atmosphere (mist, snow,
+      // vapor, sparkles) around the encased castle for the freeze's duration.
+      if (applied.statusId === 'frozen') {
+        front.framework.startFrost(auraKey('frozen', applied.targetId), at, FROZEN_ATMOSPHERE_CONFIG)
+        return
+      }
+      // Poison landing on an already-Corroded target is the stacking synergy —
+      // intensify its corrosion (no-op if the target isn't Corroded). Falls
+      // through so any future poison aura still resolves below.
+      if (applied.statusId === 'poison') {
+        front.framework.surgeAcidRain(auraKey('acidRain', applied.targetId))
+      }
+      // Chilling Retribution landed (Flood of Frost, 35%): enhance the lingering
+      // frost with magical energy + runes and keep it alive for the status.
+      if (applied.statusId === 'chillingRetribution') {
+        const key = auraKey('frost', applied.targetId)
+        // If the base frost already melted (unlikely — same cast), restart it.
+        if (!front.framework.hasFrost(key)) front.framework.startFrost(key, at, FROST_AURA_CONFIG)
+        front.framework.enhanceFrost(key)
         return
       }
       // Persistent auras (Heat Wave smoke, Blazing Determination flames, Burn
@@ -185,6 +278,26 @@ function dispatch(
       const expired = event as unknown as StatusExpiredEvent
       if (expired.statusId === 'thunderdome') {
         front.framework.stopThunderdome(auraKey('thunderdome', expired.playerId))
+        return
+      }
+      if (expired.statusId === 'corroded') {
+        front.framework.stopAcidRain(auraKey('acidRain', expired.playerId))
+        return
+      }
+      // The strong Poison faded — dissolve Gastro Acid's corrosion aura (bubbling
+      // slows, fumes thin, residue evaporates) rather than cutting it dead.
+      if (expired.statusId === 'poison') {
+        front.framework.stopAcidRain(auraKey('gastroPoison', expired.playerId))
+        return
+      }
+      // Chilling Retribution faded — melt the frost into cold mist.
+      if (expired.statusId === 'chillingRetribution') {
+        front.framework.stopFrost(auraKey('frost', expired.playerId))
+        return
+      }
+      // Freeze ended — thaw the frozen atmosphere into cold mist.
+      if (expired.statusId === 'frozen') {
+        front.framework.stopFrost(auraKey('frozen', expired.playerId))
         return
       }
       const key = auraKey(expired.statusId, expired.playerId)

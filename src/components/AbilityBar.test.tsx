@@ -229,4 +229,110 @@ describe('AbilityBar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close Shop' }))
     expect(screen.queryByTestId('shop-overlay')).toBeNull()
   })
+
+  it('Toxic Gas locks the Repairs & Shields menu shut', () => {
+    const { rerender } = render(
+      <AbilityBar
+        kingdomId="fire"
+        theme={null}
+        currency={5000}
+        citizens={10}
+        castleHp={8000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={20}
+        abilities={mockAbilities}
+        tickRate={20}
+        onCastAbility={() => {}}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />
+    )
+
+    // Open the menu, then toxic gas lands → it force-closes and cannot reopen.
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle Repairs and Shield Menu' }))
+    expect(screen.getByTestId('shop-overlay')).toBeTruthy()
+
+    rerender(
+      <AbilityBar
+        kingdomId="fire"
+        theme={null}
+        currency={5000}
+        citizens={10}
+        castleHp={8000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        lockedOut
+        incomePerSecond={20}
+        abilities={mockAbilities}
+        tickRate={20}
+        onCastAbility={() => {}}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />
+    )
+
+    // Menu force-closed; the button is disabled and shows the sealed label.
+    expect(screen.queryByTestId('shop-overlay')).toBeNull()
+    const sealed = screen.getByRole('button', { name: 'Repairs and Shields sealed by Toxic Gas' })
+    expect((sealed as HTMLButtonElement).disabled).toBe(true)
+
+    // Clicking the sealed button does nothing.
+    fireEvent.click(sealed)
+    expect(screen.queryByTestId('shop-overlay')).toBeNull()
+  })
+
+  it('Frozen ices over the action buttons and seals the shop', () => {
+    const onCast = vi.fn()
+    const { container } = render(
+      <AbilityBar
+        kingdomId="fire"
+        theme={null}
+        currency={5000}
+        citizens={10}
+        castleHp={8000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        frozen
+        incomePerSecond={20}
+        abilities={mockAbilities}
+        tickRate={20}
+        onCastAbility={onCast}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />
+    )
+
+    // A frost coat seals each ability card plus the shop toggle, and snow drifts
+    // over the whole bar.
+    expect(container.querySelectorAll('.frost-coat').length).toBeGreaterThan(0)
+    expect(container.querySelector('.ability-bar__frost-snow')).toBeTruthy()
+
+    // The shop toggle is frozen solid (disabled, can't open).
+    const shop = screen.getByRole('button', { name: 'Repairs and Shields frozen solid' })
+    expect((shop as HTMLButtonElement).disabled).toBe(true)
+    fireEvent.click(shop)
+    expect(screen.queryByTestId('shop-overlay')).toBeNull()
+
+    // Clicking a frozen ability card cracks the ice instead of casting: the
+    // frost coat intercepts the click, so no cast fires.
+    const coat = container.querySelector('.frost-coat')!
+    fireEvent.click(coat)
+    expect(onCast).not.toHaveBeenCalled()
+  })
 })

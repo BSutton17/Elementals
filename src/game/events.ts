@@ -14,6 +14,12 @@ export interface AbilityCastEvent {
   targetIds: string[]
   cost: number
   chargesUsed?: number
+  /**
+   * Attacks Air's wind passive turned aside (Epic 9). Each entry maps the Air
+   * castle that intercepted the shot (`via`) to where it was hurled instead
+   * (`to`, also present in `targetIds`). Absent when nothing was redirected.
+   */
+  redirects?: { via: string; to: string }[]
 }
 
 export interface DamageEvent {

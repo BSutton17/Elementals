@@ -1,7 +1,14 @@
 import { Application } from 'pixi.js'
 import { LayerManager } from './layers'
 import { AnimationFramework } from './framework'
-import { makeCircleNode, makeRingNode, makeBeamNode, makeGlowNode, makeBoltNode } from './nodes'
+import {
+  makeCircleNode,
+  makeRingNode,
+  makeGlowBeamNode,
+  makeGlowNode,
+  makeBoltNode,
+  makeTriangleNode,
+} from './nodes'
 
 // Pixi stage (Epic 9, ticket #210). Owns the Pixi Application, mounts a
 // transparent canvas BENEATH the existing HTML/CSS UI, and drives the framework
@@ -42,10 +49,13 @@ export class PixiStage {
     this.screenShake = options.screenShake ?? true
     this.framework = new AnimationFramework({
       projectile: () => makeCircleNode(this.layers.get('projectiles')),
+      projectileTriangle: () => makeTriangleNode(this.layers.get('projectiles')),
       impact: () => makeRingNode(this.layers.get('impacts')),
       particle: () => makeCircleNode(this.layers.get('particles')),
-      beam: () => makeBeamNode(this.layers.get('projectiles')),
-      beamGlow: () => makeCircleNode(this.layers.get('projectiles')),
+      // Solar-laser layers are additive (blinding white core); the charge orb +
+      // along-beam embers use the additive glow sprite too.
+      beam: () => makeGlowBeamNode(this.layers.get('projectiles')),
+      beamGlow: () => makeGlowNode(this.layers.get('projectiles')),
       vortex: () => makeCircleNode(this.layers.get('particles')),
       vortexGlow: () => makeGlowNode(this.layers.get('projectiles')),
       wave: () => makeCircleNode(this.layers.get('particles')),

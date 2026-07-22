@@ -174,6 +174,237 @@
   font-size: 0.8rem;
 }
 
+/* ---- Toxic Gas lockout (Nature) ----------------------------------------- */
+
+.ability-bar__shop-lock-wrap {
+  position: relative;
+  display: flex;
+}
+
+/* The sealed button reads as chemically contaminated — desaturated, sickly
+   green film, no hover lift — rather than a plain greyed-out disabled control. */
+.ability-bar__shop-toggle--locked,
+.ability-bar__shop-toggle--locked:hover {
+  filter: saturate(0.3) brightness(0.82);
+  background: linear-gradient(135deg, rgba(107, 216, 138, 0.14) 0%, rgba(60, 120, 70, 0.06) 100%);
+  border-color: rgba(107, 216, 138, 0.4);
+  color: #9fcaa6;
+  cursor: not-allowed;
+  box-shadow: inset 0 0 18px rgba(60, 120, 60, 0.35);
+  transform: none;
+}
+
+.ability-bar__shop-lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* the disabled button underneath owns interaction */
+}
+
+.ability-bar__shop-lock-icon {
+  font-size: 2.4rem;
+  color: #8dffa6;
+  line-height: 0;
+  /* Settle onto the button (drop in + overshoot), then breathe a soft pulse. */
+  animation:
+    shop-lock-settle 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both,
+    shop-lock-pulse 1.9s ease-in-out 0.5s infinite;
+}
+
+@keyframes shop-lock-settle {
+  0% { transform: translateY(-16px) scale(0.6); opacity: 0; }
+  70% { transform: translateY(2px) scale(1.1); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes shop-lock-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 8px rgba(120, 240, 150, 0.5));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 16px rgba(140, 255, 170, 0.9));
+  }
+}
+
+/* Tiny wisps of green vapor rising off the seal. */
+.ability-bar__shop-lock-wisp {
+  position: absolute;
+  top: 42%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(140, 255, 170, 0.65) 0%, rgba(140, 255, 170, 0) 70%);
+  opacity: 0;
+  animation: shop-wisp-rise 2.4s ease-in infinite;
+}
+.ability-bar__shop-lock-wisp:nth-child(1) { left: 38%; animation-delay: 0.3s; }
+.ability-bar__shop-lock-wisp:nth-child(2) { left: 50%; animation-delay: 1.1s; }
+.ability-bar__shop-lock-wisp:nth-child(3) { left: 62%; animation-delay: 1.8s; }
+
+@keyframes shop-wisp-rise {
+  0% { transform: translateY(8px) scale(0.6); opacity: 0; }
+  25% { opacity: 0.85; }
+  100% { transform: translateY(-30px) scale(1.5); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-bar__shop-lock-icon { animation: none; }
+  .ability-bar__shop-lock-wisp { display: none; }
+}
+
+/* ---- Poisoned Citizens contamination (Gastro Acid) ---------------------- */
+
+/* A sickly-green film over the citizen readout; the income figure below is
+   tinted toxic to show it's being sapped. */
+.ability-bar__stat-group--poisoned {
+  position: relative;
+  filter: saturate(0.85) brightness(0.95);
+  border-radius: 8px;
+  box-shadow: inset 0 0 14px rgba(90, 170, 70, 0.28);
+  animation: citizen-contam-breathe 2.6s ease-in-out infinite;
+}
+.ability-bar__stat-group--poisoned .ability-bar__stat-val,
+.ability-bar__stat-group--poisoned .ability-bar__stat-label {
+  color: #a9d98f;
+  text-shadow: 0 0 6px rgba(120, 220, 130, 0.4);
+}
+
+.ability-bar__stat-label--poisoned {
+  color: #8fe06a !important;
+  text-shadow: 0 0 7px rgba(140, 255, 150, 0.55);
+}
+/* A small downward marker so it reads as reduced income. */
+.ability-bar__stat-label--poisoned::before {
+  content: '▼ ';
+  font-size: 0.7em;
+  opacity: 0.85;
+}
+
+@keyframes citizen-contam-breathe {
+  0%, 100% { box-shadow: inset 0 0 12px rgba(90, 170, 70, 0.22); }
+  50% { box-shadow: inset 0 0 18px rgba(120, 220, 100, 0.4); }
+}
+
+.ability-bar__citizen-contam {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+}
+.ability-bar__citizen-contam-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #8dffa6;
+  line-height: 0;
+  filter: drop-shadow(0 0 5px rgba(120, 240, 150, 0.7));
+  animation:
+    citizen-contam-settle 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) both,
+    shop-lock-pulse 2.1s ease-in-out 0.5s infinite; /* reuse the toxic pulse */
+}
+@keyframes citizen-contam-settle {
+  0% { transform: translateY(-10px) scale(0.5); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+.ability-bar__citizen-contam-wisp {
+  position: absolute;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(140, 255, 170, 0.6) 0%, rgba(140, 255, 170, 0) 70%);
+  opacity: 0;
+  animation: shop-wisp-rise 2.4s ease-in infinite; /* reuse the rising-wisp motion */
+}
+.ability-bar__citizen-contam-wisp:nth-child(1) { left: 4px; animation-delay: 0.5s; }
+.ability-bar__citizen-contam-wisp:nth-child(2) { left: 11px; animation-delay: 1.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-bar__stat-group--poisoned { animation: none; }
+  .ability-bar__citizen-contam-icon { animation: none; }
+  .ability-bar__citizen-contam-wisp { display: none; }
+}
+
+/* ---- Frozen action bar (Ice) — drifting snow over the whole control bar --- */
+
+.ability-bar__frost-snow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 40;
+}
+.ability-bar__frost-flake {
+  position: absolute;
+  top: -10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 4px rgba(220, 240, 255, 0.9);
+  opacity: 0;
+  animation: ability-frost-snow linear infinite;
+}
+.ability-bar__frost-flake:nth-child(1) { left: 6%; animation-duration: 4.4s; animation-delay: 0.1s; }
+.ability-bar__frost-flake:nth-child(2) { left: 18%; animation-duration: 5.2s; animation-delay: 1.3s; }
+.ability-bar__frost-flake:nth-child(3) { left: 31%; animation-duration: 4.8s; animation-delay: 0.7s; }
+.ability-bar__frost-flake:nth-child(4) { left: 43%; animation-duration: 5.6s; animation-delay: 2.1s; }
+.ability-bar__frost-flake:nth-child(5) { left: 55%; animation-duration: 4.6s; animation-delay: 1.6s; }
+.ability-bar__frost-flake:nth-child(6) { left: 67%; animation-duration: 5.0s; animation-delay: 0.4s; }
+.ability-bar__frost-flake:nth-child(7) { left: 78%; animation-duration: 4.9s; animation-delay: 2.4s; }
+.ability-bar__frost-flake:nth-child(8) { left: 88%; animation-duration: 5.4s; animation-delay: 1.0s; }
+.ability-bar__frost-flake:nth-child(9) { left: 96%; animation-duration: 4.3s; animation-delay: 1.9s; }
+@keyframes ability-frost-snow {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  12% { opacity: 0.9; }
+  88% { opacity: 0.9; }
+  100% { transform: translateY(140px) translateX(-16px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-bar__frost-snow { display: none; }
+}
+
+/* ---- Chilling Retribution cooldown marker (Ice) -------------------------- */
+/* A snowflake in the card's top-right corner flags a cooldown the frost has
+   lengthened. Sits inside the corner so it clears the outer upgrade "+" button
+   and above the cooldown overlay. Ice's colours. */
+.ability-button__chilled {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 7;
+  display: flex;
+  font-size: 2.5rem;
+  line-height: 0;
+  color: #8fe3ff;
+  filter: drop-shadow(0 0 4px rgba(54, 209, 220, 0.9));
+  pointer-events: none;
+  animation:
+    ability-chill-spin 4.5s linear infinite,
+    ability-chill-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ability-chill-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ability-chill-pulse {
+  0%, 100% { opacity: 0.82; }
+  50% { opacity: 1; filter: drop-shadow(0 0 7px rgba(143, 227, 255, 1)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-button__chilled { animation: none; }
+}
+
 /* ==========================================================================
    Ability Button Styles
    ========================================================================== */

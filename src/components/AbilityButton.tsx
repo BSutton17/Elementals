@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { CiLock } from 'react-icons/ci'
+import { FaSnowflake } from 'react-icons/fa'
 import type { ClientAbilityMetadata } from '../game/abilities'
+import { FrostCoat } from './FrostCoat'
 import './AbilityBar.css'
 
 interface AbilityButtonProps {
@@ -11,6 +13,11 @@ interface AbilityButtonProps {
   currency: number // player's current gold
   enabled: boolean
   isUltimateCharged?: boolean
+  /** The caster is Frozen (Ice): the card ices over and can't be activated. */
+  frozen?: boolean
+  /** Chilling Retribution is extending the caster's cooldowns — flag this card's
+   *  slowed cooldown with a snowflake. */
+  chilled?: boolean
   cost: number // gold cost to cast
   /** Ticks until each spent charge regenerates (charge-based abilities). */
   rechargeTicks?: number[]
@@ -29,6 +36,8 @@ export function AbilityButton({
   currency,
   enabled,
   isUltimateCharged = true,
+  frozen = false,
+  chilled = false,
   cost,
   rechargeTicks,
   onCast,
@@ -82,7 +91,7 @@ export function AbilityButton({
           isCastingDisabled ? 'ability-button--disabled' : ''
         } ${metadata.kind === 'ultimate' ? 'ability-button--ultimate' : ''}`}
         style={{ '--gradient': metadata.gradient } as React.CSSProperties}
-        disabled={isCastingDisabled}
+        disabled={isCastingDisabled || frozen}
         onClick={() =>
           isLocked ? onUnlock?.() : onCast(chargeSpec ? 1 : undefined)
         }
@@ -117,6 +126,14 @@ export function AbilityButton({
                 ⚡
               </span>
             ))}
+          </span>
+        )}
+
+        {/* Chilling Retribution: a snowflake marks a cooldown the frost has
+            lengthened (top-right corner, in Ice's colours). */}
+        {chilled && isCooldown && (
+          <span className="ability-button__chilled" aria-hidden="true">
+            <FaSnowflake />
           </span>
         )}
 
@@ -227,8 +244,12 @@ export function AbilityButton({
         </>
       )}
 
-      {/* Floating Tooltip */}
-      {hovered && (
+      {/* Frozen coat — seals the whole card, intercepts clicks (cracks the ice
+          instead of casting), and animates for the freeze's duration. */}
+      {frozen && <FrostCoat />}
+
+      {/* Floating Tooltip (hidden while frozen). */}
+      {hovered && !frozen && (
         <div className="ability-tooltip">
           <div className="ability-tooltip__header">
             <span className="ability-tooltip__name">{metadata.name}</span>

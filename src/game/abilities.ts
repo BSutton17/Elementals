@@ -123,7 +123,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   scorchingSun: {
     id: 'scorchingSun',
     name: 'Scorching Sun',
-    description: 'Powerful Fire attack that guarantees Burn on the target.Burn deals damage over time and makes your Fire attacks hit harder.',
+    description: 'Powerful Fire attack that guarantees Burn on the target.',
     hotkey: 'W',
     kind: 'attack',
     element: 'fire',
@@ -136,7 +136,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   firenado: {
     id: 'firenado',
     name: 'Firenado',
-    description: 'Very powerful Fire attack with achance to apply Burn. Burning targets take damage over time and suffer extra from your Fire attacks.',
+    description: 'Very powerful Fire attack with a chance to apply Burn. Burning targets take damage over time and suffer extra from your Fire attacks.',
     hotkey: 'E',
     kind: 'attack',
     element: 'fire',
@@ -377,7 +377,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #f7ff00, #db36a4)',
     icon: GiThunderSkull,
-    baseCost: 600,
+    baseCost: 750,
     upgradeCosts: [],
   },
 
@@ -424,7 +424,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   snowman: {
     id: 'snowman',
     name: 'Snowman',
-    description: 'Raise a temporary snowman that boosts your income by 50% for 10 seconds.',
+    description: 'Constructs an army of snowmen that boosts your income by 50% for 10 seconds.',
     hotkey: 'R',
     kind: 'utility',
     element: 'ice',
@@ -478,7 +478,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   gastroAcid: {
     id: 'gastroAcid',
     name: 'Gastro Acid',
-    description: 'Powerful Nature attack that applies a strong Poison, with a coin-flip chance to Poison the citizens too — poisoned citizens produce far less gold.',
+    description: 'Powerful Nature attack that applies a strong Poison, with a chance to Poison the citizens too — poisoned citizens produce far less gold.',
     hotkey: 'E',
     kind: 'attack',
     element: 'nature',

@@ -81,8 +81,8 @@ describe('BattlefieldView', () => {
     expect(screen.getAllByTestId('kingdom-site')).toHaveLength(3)
     expect(screen.getAllByTestId('castle')).toHaveLength(3)
     expect(container.querySelector('.battlefield__layer-projectiles')).toBeTruthy()
-    expect(screen.getByText('Alice (You)')).toBeTruthy()
-    expect(screen.getByText('Bob')).toBeTruthy()
+    expect(screen.queryByText(/Alice/)).toBeNull() // your own name is hidden
+    expect(screen.getByText('Bob')).toBeTruthy() // opponents' names still show
   })
 
   it('renders health bars proportional to castle HP (#195)', () => {
