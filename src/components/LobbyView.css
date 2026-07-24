@@ -17,6 +17,28 @@
   overflow: hidden;
 }
 
+/* Small "How to Play" pill pinned to the lobby's top-right corner. */
+.lobby__howto {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  z-index: 5;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #aab3c5;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.lobby__howto:hover {
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.12);
+}
+
 /* The main content (players + kingdoms); becomes two columns when there's room. */
 .lobby__body {
   display: flex;

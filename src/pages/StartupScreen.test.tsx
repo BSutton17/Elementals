@@ -27,4 +27,15 @@ describe('StartupScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /join room/i }))
     expect(onJoin).toHaveBeenCalledTimes(1)
   })
+
+  it('opens and closes the How to Play walkthrough', () => {
+    render(<StartupScreen name="" onName={noop} onJoin={noop} />)
+    expect(screen.queryByRole('dialog', { name: /how to play/i })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /^how to play$/i }))
+    expect(screen.getByRole('dialog', { name: /how to play/i })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /close tutorial/i }))
+    expect(screen.queryByRole('dialog', { name: /how to play/i })).toBeNull()
+  })
 })

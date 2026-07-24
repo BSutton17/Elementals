@@ -1,5 +1,6 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { RoomCode } from './RoomCode'
+import { HowToPlay } from '../pages/HowToPlay'
 import { KINGDOMS, type KingdomId } from '../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../game/abilities'
@@ -71,6 +72,7 @@ export function LobbyView({
   onStart,
   onLeave,
 }: LobbyViewProps) {
+  const [showHowTo, setShowHowTo] = useState(false)
   const me = match.players.find((p) => p.id === youId)
   const isReady = me?.ready ?? false
   const isHost = youId != null && youId === match.hostId
@@ -94,6 +96,15 @@ export function LobbyView({
   return (
     <main className="lobby">
       <RoomCode code={match.roomCode} />
+      <button
+        type="button"
+        className="lobby__howto"
+        onClick={() => setShowHowTo(true)}
+        aria-label="How to play"
+      >
+        ? How to Play
+      </button>
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
 
       <div className="lobby__body">
       <section className="lobby__players" aria-label="Players">

@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { useSocket } from '../sockets/useSocket'
 import { useLobby } from '../game/useLobby'
 import { createRoom } from '../game/lobbyStore'
+import { HowToPlay } from './HowToPlay'
+import { hasSeenTutorial } from '../game/tutorial'
 import './StartupScreen.css'
 
 interface StartupScreenProps {
@@ -11,11 +14,15 @@ interface StartupScreenProps {
 
 /**
  * Main menu: set a name and either host a room or go to the join screen. Once in
- * a room, App routes to the lobby.
+ * a room, App routes to the lobby. Also hosts the How to Play walkthrough —
+ * with a gentle pulse on the button until it's been opened once.
  */
 export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
   const { connected } = useSocket()
   const { error } = useLobby()
+  const [showHowTo, setShowHowTo] = useState(false)
+  // Evaluated once per mount: nudge new players toward the tutorial.
+  const [nudge] = useState(() => !hasSeenTutorial())
 
   const nameOk = connected && name.trim().length > 0
 
@@ -46,6 +53,14 @@ export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
           Join Room
         </button>
 
+        <button
+          type="button"
+          className={`startup__secondary startup__howto${nudge && !showHowTo ? ' startup__howto--nudge' : ''}`}
+          onClick={() => setShowHowTo(true)}
+        >
+          How to Play
+        </button>
+
         {error && <p className="startup__error">{error}</p>}
 
         <div
@@ -53,6 +68,8 @@ export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
         >
         </div>
       </div>
+
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
     </main>
   )
 }
