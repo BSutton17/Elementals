@@ -545,6 +545,10 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   // Water specials.
   waterfall: WATERFALL,
   flood: FLOOD,
+  // Fluid Assimilation is a self-protection (Assimilated on every enemy) with
+  // no battlefield projectile — empty suppresses the generic fallback bolt it
+  // would otherwise fling at each enemy.
+  fluidAssimilation: {},
   // Air specials.
   hurricane: HURRICANE,
   thickFog: THICK_FOG,
@@ -556,9 +560,8 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   earthquake: {},
   // Electricity specials.
   lightningBarrage: LIGHTNING_BARRAGE,
-  // Hack has no battlefield effect (its whole visual is the victim's HackOverlay);
-  // an empty definition suppresses the generic fallback projectile.
-  hack: {},
+  // Hack keeps the generic fallback projectile (a themed bolt at the victim)
+  // on top of the victim's full-screen HackOverlay — no entry needed here.
   // Dust Bunnies is drawn by DustBunniesLayer (SVG bunnies + brawl clouds), so
   // suppress the generic fallback projectiles it would otherwise fire per enemy.
   dustBunnies: {},

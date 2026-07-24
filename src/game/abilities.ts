@@ -82,7 +82,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   fluidAssimilation: {
     id: 'fluidAssimilation',
     name: 'Fluid Assimilation',
-    description: 'Dissolve into the surrounding moisture: no enemy can attack you for 10 seconds.',
+    description: 'Dissolve into the surrounding moisture: no enemy can attack you for 5 seconds.',
     hotkey: 'R',
     kind: 'utility',
     element: 'water',
@@ -95,7 +95,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   riptide: {
     id: 'riptide',
     name: 'Riptide',
-    description: 'The tide turns in your favor: restore half your castle health and swell your population with new citizens.',
+    description: 'The tide turns in your favor: restore half your castle health and draw new citizens to your banner.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'water',
@@ -177,7 +177,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   aLightBreeze: {
     id: 'aLightBreeze',
     name: 'A Light Breeze',
-    description: 'Basic Air attack. Slices the target with compressed wind currents.',
+    description: 'Basic Air attack. Slices the target with compressed wind currents. While Bird\'s Eye View is active, a multi-kingdom cast ricochets between the selected kingdoms — full damage each landing, 50% to bounce again (up to 4 hits), never the same castle twice in a row.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'air',
@@ -236,7 +236,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#b7c9ff',
     gradient: 'linear-gradient(135deg, #3a7bd5, #3a6073)',
     icon: SiBunnydotnet,
-    baseCost: 1000,
+    baseCost: 800,
     upgradeCosts: [],
   },
 
@@ -364,7 +364,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #000000, #53346d)',
     icon: TbDeviceLaptop,
-    baseCost: 300,
+    baseCost: 350,
     upgradeCosts: [300, 500],
   },
   thunderingFate: {
@@ -444,7 +444,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #2193b0, #6dd5ed)',
     icon: GiSnowing,
-    baseCost: 500,
+    baseCost: 650,
     upgradeCosts: [],
   },
 
@@ -511,7 +511,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#6bd88a',
     gradient: 'linear-gradient(135deg, #00b4db, #0083b0)',
     icon: GiPoisonGas,
-    baseCost: 1000,
+    baseCost: 800,
     upgradeCosts: [],
   },
 }

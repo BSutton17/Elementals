@@ -12,6 +12,10 @@ export interface GameCastle {
   shield: number
   nextRepairCost?: number
   repairs?: number
+  /** Server-derived cost of the next shield (scales per purchase). */
+  nextShieldCost?: number
+  /** Number of shields purchased this match (drives the fallback shield cost). */
+  shieldsPurchased?: number
 }
 
 export interface GameEconomy {
@@ -36,6 +40,11 @@ export interface GamePlayer {
   /** Abilities the player has bought; bought = usable at base strength. */
   unlocked?: Record<string, boolean>
   statuses?: Array<{ id: string; remainingTicks: number; stacks: number }>
+  /**
+   * Effective cast cost per unlocked ability id, upgrade discounts applied —
+   * server-derived so HUD price tags match what a cast will actually charge.
+   */
+  abilityCosts?: Record<string, number>
   /** Active stat modifiers (buffs/debuffs). */
   modifiers?: Array<{ id: string; stat: string; remainingTicks: number | null }>
   /**

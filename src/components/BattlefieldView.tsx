@@ -260,7 +260,10 @@ export function BattlefieldView({
             you.castle.nextRepairCost ??
             Math.round(500 * Math.pow(1.25, you.castle.repairs ?? 0))
           }
-          shieldCost={500}
+          shieldCost={
+            you.castle.nextShieldCost ??
+            Math.round(500 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
+          }
           repairsUsed={you.castle.repairs ?? 0}
           maxRepairs={3}
           lockedOut={shopLocked}
@@ -276,7 +279,10 @@ export function BattlefieldView({
             const cooldownRemaining = you.cooldowns?.[metadata.id] ?? 0
             // Find if there is an active/enabled state from server snapshot
             const enabled = true // fallback to true
-            const cost = metadata.baseCost
+            // Server-derived effective cast cost (upgrade tiers can discount
+            // the price, e.g. cooldown tiers' costMultiplier) — fall back to
+            // the base cost until the first sync arrives.
+            const cost = you.abilityCosts?.[metadata.id] ?? metadata.baseCost
             const upgradeCost = isUnlocked ? getUpgradeCost(metadata.id, tier) : null
             const unlockCost = isUnlocked
               ? undefined
