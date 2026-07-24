@@ -27,6 +27,7 @@ export function KingdomSite({
   isYourTarget,
   tickRate,
   showStats = true,
+  ultShield = false,
   onSelect,
 }: {
   player: GamePlayer
@@ -37,6 +38,9 @@ export function KingdomSite({
   isYourTarget: boolean
   tickRate: number
   showStats?: boolean
+  /** This kingdom's shield came from its ULTIMATE (Earth's Brick Wall) — render
+   *  the fortress hexadecagon instead of the normal circle. */
+  ultShield?: boolean
   /** Called when this kingdom is clicked (used to select it as your target). */
   onSelect?: () => void
 }) {
@@ -55,8 +59,8 @@ export function KingdomSite({
   useEffect(() => {
     if (hasNaturalTerrain) setTerrain(true)
   }, [hasNaturalTerrain])
-  // Active shield: a ring around the kingdom in its colour. Earth's fortress
-  // shield renders as an octagon; every other shield is a circle.
+  // Active shield: a ring around the kingdom in its colour. Every shield is a
+  // circle except Earth's ultimate (Brick Wall), which is a hexadecagon.
   const shielded = player.castle.shield > 0 && !player.eliminated
 
   // Bird's Eye View: an eagle emblem hovers above the castle for the buff's
@@ -156,7 +160,7 @@ export function KingdomSite({
         <ShieldOverlay
           shield={player.castle.shield}
           color={color}
-          octagon={player.kingdomId === 'earth'}
+          sides={ultShield ? 16 : undefined}
         />
       )}
 

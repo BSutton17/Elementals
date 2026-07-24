@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { onGameEvents } from '../game/gameEvents'
+import type { AbilityCastEvent, ShieldDestroyedEvent } from '../game/events'
 import { KINGDOMS, canMultiTarget, multiTargetLimit } from '../game/kingdoms'
 import { placeKingdoms } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
@@ -66,6 +68,34 @@ export function BattlefieldView({
     KINGDOMS.find((k) => k.id === kingdomId)?.color ?? FALLBACK_COLOR
 
   const you = roster.find((p) => p.id === youId) || roster[0]
+
+  // Earth's ultimate (Brick Wall) raises a FORTRESS shield, drawn as a faceted
+  // hexadecagon instead of the normal circle. The shield itself carries no
+  // status to read, so track who last raised one: set on the cast, cleared when
+  // that shield shatters (and, defensively, whenever the pool reaches 0 below).
+  const [ultShieldIds, setUltShieldIds] = useState<ReadonlySet<string>>(new Set())
+  useEffect(
+    () =>
+      onGameEvents((events) => {
+        setUltShieldIds((prev) => {
+          let next = prev
+          const mutate = () => (next === prev ? (next = new Set(prev)) : next) as Set<string>
+          for (const event of events) {
+            if (event.type === 'abilityCast') {
+              const cast = event as unknown as AbilityCastEvent
+              if (cast.abilityId === 'brickWall' && !next.has(cast.casterId)) {
+                mutate().add(cast.casterId)
+              }
+            } else if (event.type === 'shieldDestroyed') {
+              const broken = event as unknown as ShieldDestroyedEvent
+              if (next.has(broken.playerId)) mutate().delete(broken.playerId)
+            }
+          }
+          return next
+        })
+      }),
+    [],
+  )
 
   // Air's "Embrace of Winds" (Epic 8): its attacks can strike several kingdoms
   // at once with the damage split evenly. For those kingdoms, targeting is a
@@ -184,6 +214,7 @@ export function BattlefieldView({
               isYourTarget={isTargeted(p.id)}
               tickRate={tickRate}
               showStats={p.id === youId || hasAirVision}
+              ultShield={ultShieldIds.has(p.id) && p.castle.shield > 0}
               onSelect={
                 p.id !== youId && !p.eliminated
                   ? () => toggleTarget(p.id)

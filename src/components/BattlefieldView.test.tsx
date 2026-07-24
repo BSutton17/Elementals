@@ -108,7 +108,11 @@ describe('BattlefieldView', () => {
     expect(alice.querySelector('[data-testid="income"]')!.textContent).toContain('$24.00/s')
   })
 
-  it('draws a target indicator per live targeting pair and rings your target (#199)', () => {
+  // SKIPPED: the target-indicator arrows are intentionally disabled — the
+  // `TargetIndicator` render block in BattlefieldView is commented out. The
+  // component itself is intact, so re-enable that block and drop these `.skip`s
+  // together when the arrows come back.
+  it.skip('draws a target indicator per live targeting pair and rings your target (#199)', () => {
     const { container } = render(<BattlefieldView match={match} youId="a" players={game()} />)
     const indicators = screen.getAllByTestId('target-indicator')
     expect(indicators).toHaveLength(2) // a→b and b→a; Cleo is eliminated
@@ -119,7 +123,8 @@ describe('BattlefieldView', () => {
     expect(site(container, 'a').querySelector('[data-testid="target-ring"]')).toBeNull()
   })
 
-  it('updates indicators when targets change', () => {
+  // SKIPPED with the above — depends on the disabled target-indicator arrows.
+  it.skip('updates indicators when targets change', () => {
     const { rerender } = render(<BattlefieldView match={match} youId="a" players={game()} />)
     rerender(
       <BattlefieldView match={match} youId="a" players={game([{ target: null }, {}, {}])} />,
@@ -199,14 +204,11 @@ describe('BattlefieldView — Air multi-select targeting', () => {
     fireEvent.click(screen.getByLabelText('Target Bob'))
     fireEvent.click(screen.getByLabelText('Target Cleo'))
 
-    // Both selected kingdoms carry the highlight ring and a target line from you.
+    // Both selected kingdoms carry the highlight ring.
     expect(site(container, 'b').querySelector('[data-testid="target-ring"]')).toBeTruthy()
     expect(site(container, 'c').querySelector('[data-testid="target-ring"]')).toBeTruthy()
-    const mine = screen
-      .getAllByTestId('target-indicator')
-      .filter((el) => el.getAttribute('data-from') === 'a')
-      .map((el) => el.getAttribute('data-to'))
-    expect(mine.sort()).toEqual(['b', 'c'])
+    // (The per-selection target-indicator arrows are asserted by the skipped
+    // #199 tests above — that render block is currently disabled.)
     // Multi-select is local — it never pushes a single server-side target.
     expect(changeTarget).not.toHaveBeenCalled()
   })

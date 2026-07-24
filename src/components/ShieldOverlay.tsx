@@ -2,29 +2,32 @@
  * Persistent shield overlay around a castle (state-driven, like the "Current"
  * submerge overlay). A translucent shape in the kingdom's colour with a darker
  * border marking the edge; cracks appear (and multiply) as it nears breaking.
- * Earth's fortress shield is an octagon that cracks earlier (bigger pool); every
- * other shield is a circle. The one-shot shatter when it hits 0 is handled by
- * the Pixi layer via the `shieldDestroyed` event (see BattlefieldFx).
+ * Every shield is a circle — EXCEPT Earth's ultimate (Brick Wall), whose
+ * fortress shield renders as a faceted hexadecagon that cracks later (bigger
+ * pool). The one-shot shatter when it hits 0 is handled by the Pixi layer via
+ * the `shieldDestroyed` event (see BattlefieldFx).
  */
 
 /** Shield radius in SVG user units, just inside the target ring (r=125). */
 const SHIELD_R = 116
-/** HP at/below which cracks start forming — higher for Earth's big shield. */
+/** HP at/below which cracks start forming — higher for the big fortress shield. */
 const CIRCLE_CRACK_HP = 500
-const OCTAGON_CRACK_HP = 1000
+const FORTRESS_CRACK_HP = 1000
 
 export function ShieldOverlay({
   shield,
   color,
-  octagon,
+  sides,
 }: {
   shield: number
   color: string
-  /** Earth's fortress shield renders as an octagon (else a circle). */
-  octagon: boolean
+  /** Render as a regular polygon with this many sides (Brick Wall = 16).
+   *  Omitted/0 renders the default circular shield. */
+  sides?: number
 }) {
   const R = SHIELD_R
-  const threshold = octagon ? OCTAGON_CRACK_HP : CIRCLE_CRACK_HP
+  const faceted = !!sides && sides > 2
+  const threshold = faceted ? FORTRESS_CRACK_HP : CIRCLE_CRACK_HP
   const cracked = shield <= threshold
   // 0.25 → 1 as the shield falls from the crack threshold toward 0.
   const intensity = cracked ? Math.min(1, Math.max(0.25, (threshold - shield) / threshold)) : 0
@@ -35,10 +38,10 @@ export function ShieldOverlay({
 
   return (
     <g className="kingdom-site__shield" data-testid="shield" aria-hidden="true">
-      {octagon ? (
+      {faceted ? (
         <polygon
           className="kingdom-site__shield-shape"
-          points={octagonPoints(R)}
+          points={polygonPoints(R, sides!)}
           fill={color}
           fillOpacity={0.12}
           stroke={edge}
@@ -73,11 +76,13 @@ export function ShieldOverlay({
   )
 }
 
-/** Vertices of a flat-topped octagon of circumradius `R`, centered on origin. */
-function octagonPoints(R: number): string {
+/** Vertices of a flat-topped regular `n`-gon of circumradius `R`, centered on
+ *  the origin (Brick Wall's fortress shield uses n = 16). */
+function polygonPoints(R: number, n: number): string {
   const pts: string[] = []
-  for (let i = 0; i < 8; i++) {
-    const a = Math.PI / 8 + (i * Math.PI) / 4
+  const step = (Math.PI * 2) / n
+  for (let i = 0; i < n; i++) {
+    const a = step / 2 + i * step // half-step offset → flat top, not a vertex
     pts.push(`${(Math.cos(a) * R).toFixed(1)},${(Math.sin(a) * R).toFixed(1)}`)
   }
   return pts.join(' ')

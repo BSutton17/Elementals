@@ -649,7 +649,7 @@ export class AnimationFramework {
    */
   playEarthquake(at: Vec2, neighbors: Vec2[], cfg: EarthquakeConfig): void {
     // 1. Trembling buildup — the ground rattles: pebbles bounce, small tremors.
-    const tremors = 4
+    const tremors = 12
     for (let i = 0; i < tremors; i++) {
       this.schedule((i / tremors) * cfg.buildupMs, () => {
         this.camera.shake({ magnitude: 2 + i * 0.8, durationMs: cfg.buildupMs / tremors + 40 })

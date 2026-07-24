@@ -176,7 +176,7 @@ export function LobbyView({
           className={`lobby__ready-btn${isReady ? ' lobby__ready-btn--on' : ''}`}
           onClick={onToggleReady}
         >
-          {isReady ? "I'm Ready ✓" : 'Ready Up'}
+          {isReady ? "I'm Ready" : 'Ready Up'}
         </button>
         <button type="button" className="lobby__leave-btn" onClick={onLeave}>
           Leave

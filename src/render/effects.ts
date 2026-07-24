@@ -519,7 +519,7 @@ const METEOR_SHOWER: EffectDefinition = {
  * `framework.playEarthquake` (BattlefieldFx supplies the neighbour positions).
  */
 export const EARTHQUAKE_CONFIG: EarthquakeConfig = {
-  buildupMs: 420, // ground trembles before the rupture
+  buildupMs: 1820, // ground trembles before the rupture
   waveSpeed: 900, // seismic waves race outward at this speed
   radius: 130, // fracture reach around the primary
   glowColor: 0xd2691e, // faint molten underground glow
