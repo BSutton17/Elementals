@@ -1,0 +1,90 @@
+/* The glowing damage-stored counter orbiting just outside Space's Black Hole.
+   Centered on the arena box (a sibling of the Pixi canvases); the badge itself
+   orbits a small circle around that center via a rotating pivot + a
+   counter-rotation on the badge so its text always stays upright. */
+
+.black-hole-accumulator {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 3; /* above the front Pixi canvas (z-index 2) */
+  opacity: 1;
+  transition: opacity 0.9s ease;
+}
+
+.black-hole-accumulator--closing {
+  opacity: 0;
+}
+
+.black-hole-accumulator__orbit {
+  position: relative;
+  width: 1px;
+  height: 1px;
+  animation: bh-orbit-spin 7s linear infinite;
+}
+
+.black-hole-accumulator__badge {
+  position: absolute;
+  /* Orbit radius as a fraction of the arena's contain-fit box. */
+  left: 26%;
+  top: 0;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(5, 2, 12, 0.85), rgba(20, 6, 40, 0.85));
+  border: 1px solid rgba(157, 75, 255, 0.6);
+  box-shadow:
+    0 0 14px rgba(157, 75, 255, 0.7),
+    0 0 28px rgba(58, 208, 255, 0.35);
+  /* Counter-rotate against the parent's spin so the text stays upright. */
+  animation:
+    bh-orbit-counterspin 7s linear infinite,
+    bh-badge-pulse 0.5s ease-out;
+  white-space: nowrap;
+}
+
+.black-hole-accumulator__label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #cbb8ff;
+  text-shadow: 0 0 6px rgba(157, 75, 255, 0.8);
+}
+
+.black-hole-accumulator__value {
+  font-size: 16px;
+  font-weight: 900;
+  font-family: 'Courier New', monospace;
+  color: #fff;
+  text-shadow:
+    0 0 8px rgba(58, 208, 255, 0.9),
+    0 0 16px rgba(157, 75, 255, 0.7);
+}
+
+@keyframes bh-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bh-orbit-counterspin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+
+@keyframes bh-badge-pulse {
+  0% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.95), 0 0 50px rgba(157, 75, 255, 0.9); scale: 1.18; }
+  100% { box-shadow: 0 0 14px rgba(157, 75, 255, 0.7), 0 0 28px rgba(58, 208, 255, 0.35); scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .black-hole-accumulator__orbit,
+  .black-hole-accumulator__badge {
+    animation: none;
+  }
+}

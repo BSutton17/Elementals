@@ -1175,6 +1175,131 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================================================
+   Half Past 12 — temporal scramble of the victim's ability bar (Time).
+   Purely cosmetic: the whole bar wobbles and its buttons jitter, drift as if
+   swapping places, and leave golden afterimages; stat/cost numbers flicker as
+   though flipping to older values. Buttons stay fully clickable throughout.
+   ========================================================================== */
+
+.ability-bar-wrapper--scrambled .ability-bar {
+  animation: scramble-bar-wobble 2.6s ease-in-out infinite;
+}
+
+@keyframes scramble-bar-wobble {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-2px, 1px) rotate(-0.25deg); }
+  45% { transform: translate(2px, -1px) rotate(0.3deg); }
+  70% { transform: translate(-1px, 2px) rotate(-0.15deg); }
+  85% { transform: translate(1px, -1px) rotate(0.2deg); }
+}
+
+/* Buttons drift toward their neighbours and back — reads as them trading
+   places — with a per-slot phase offset so the whole row shimmers unstably. */
+.ability-bar-wrapper--scrambled .ability-button-container {
+  animation: scramble-btn-drift 3.1s ease-in-out infinite;
+  will-change: transform, filter;
+}
+.ability-bar-wrapper--scrambled .ability-button-container:nth-child(2n) {
+  animation-name: scramble-btn-drift-alt;
+  animation-duration: 2.7s;
+}
+.ability-bar-wrapper--scrambled .ability-button-container:nth-child(3n) {
+  animation-delay: -1.1s;
+}
+.ability-bar-wrapper--scrambled .ability-button-container:nth-child(4n) {
+  animation-delay: -0.6s;
+}
+
+@keyframes scramble-btn-drift {
+  0%, 100% { transform: translateX(0) scale(1); filter: none; }
+  30% { transform: translateX(14px) scale(1.02); filter: drop-shadow(-10px 0 6px rgba(217, 178, 90, 0.35)); }
+  55% { transform: translateX(-6px); filter: drop-shadow(6px 0 5px rgba(159, 208, 255, 0.3)); }
+  75% { transform: translateX(4px) skewX(-2deg); }
+}
+
+@keyframes scramble-btn-drift-alt {
+  0%, 100% { transform: translateX(0) scale(1); filter: none; }
+  30% { transform: translateX(-14px) scale(0.99); filter: drop-shadow(10px 0 6px rgba(217, 178, 90, 0.35)); }
+  55% { transform: translateX(6px); filter: drop-shadow(-6px 0 5px rgba(159, 208, 255, 0.3)); }
+  75% { transform: translateX(-4px) skewX(2deg); }
+}
+
+/* Stat readouts, costs, and hotkeys flicker — numbers slipping between values. */
+.ability-bar-wrapper--scrambled .ability-bar__stat-val,
+.ability-bar-wrapper--scrambled .ability-bar__stat-label,
+.ability-bar-wrapper--scrambled .ability-button__cost {
+  animation: scramble-number-flicker 1.7s steps(1, jump-none) infinite;
+}
+.ability-bar-wrapper--scrambled .ability-bar__stat-val--gold {
+  animation-duration: 1.3s;
+  animation-delay: -0.4s;
+}
+.ability-bar-wrapper--scrambled .ability-button__cost {
+  animation-duration: 2.1s;
+  animation-delay: -0.9s;
+}
+
+@keyframes scramble-number-flicker {
+  0%, 62%, 100% { opacity: 1; transform: translateY(0); }
+  66% { opacity: 0.35; transform: translateY(-1px) skewX(6deg); }
+  70% { opacity: 1; transform: translateY(1px); }
+  74% { opacity: 0.5; }
+}
+
+/* The stat panel + shop toggle wobble a touch out of phase with the bar. */
+.ability-bar-wrapper--scrambled .ability-bar__stats,
+.ability-bar-wrapper--scrambled .ability-bar__controls {
+  animation: scramble-panel-wobble 3.4s ease-in-out infinite;
+}
+.ability-bar-wrapper--scrambled .ability-bar__controls {
+  animation-delay: -1.5s;
+}
+
+@keyframes scramble-panel-wobble {
+  0%, 100% { transform: translateY(0) skewX(0); }
+  40% { transform: translateY(-1.5px) skewX(-1.5deg); }
+  70% { transform: translateY(1.5px) skewX(1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-bar-wrapper--scrambled .ability-bar,
+  .ability-bar-wrapper--scrambled .ability-button-container,
+  .ability-bar-wrapper--scrambled .ability-bar__stat-val,
+  .ability-bar-wrapper--scrambled .ability-bar__stat-label,
+  .ability-bar-wrapper--scrambled .ability-button__cost,
+  .ability-bar-wrapper--scrambled .ability-bar__stats,
+  .ability-bar-wrapper--scrambled .ability-bar__controls {
+    animation: none;
+  }
+}
+
+/* Father Time's Mark: a pulsing golden clock over each damaging attack — the
+   attacks that reset the punishing countdown. Centered, glowing, non-blocking. */
+.ability-button__ft-clock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  font-size: 2.1rem;
+  color: #f3d27a;
+  filter: drop-shadow(0 0 8px rgba(243, 210, 122, 0.9));
+  pointer-events: none;
+  animation: ability-ft-clock 1.5s ease-in-out infinite;
+}
+
+@keyframes ability-ft-clock {
+  0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(0.92) rotate(0deg); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(8deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-button__ft-clock {
+    animation: none;
+  }
+}
+
 /* Mid-size landscape windows (small laptops, tablets sideways): shrink the
    buttons and stat readouts so the bar stays a single row that fits the
    arena's 11rem height budget. */

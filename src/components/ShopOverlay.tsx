@@ -17,6 +17,8 @@ interface ShopOverlayProps {
   /** Repairs already purchased this match (capped at maxRepairs). */
   repairsUsed: number
   maxRepairs: number
+  /** Seconds left on the buy-shield break cooldown (0 = ready). */
+  shieldCooldownSeconds?: number
   theme: KingdomTheme | null
   onBuyItem: (id: 'citizen' | 'repair' | 'shield') => void
   onClose: () => void
@@ -34,6 +36,7 @@ export function ShopOverlay({
   shieldCost,
   repairsUsed,
   maxRepairs,
+  shieldCooldownSeconds = 0,
   theme,
   onBuyItem,
   onClose,
@@ -43,10 +46,11 @@ export function ShopOverlay({
   const isFullHp = castleHp >= maxCastleHp
   const hasActiveShield = shieldHp > 0
   const repairsExhausted = repairsUsed >= maxRepairs
+  const shieldOnCooldown = shieldCooldownSeconds > 0
 
   const canAffordCitizen = currency >= nextCitizenCost
   const canAffordRepair = currency >= nextRepairCost && !isFullHp && !repairsExhausted
-  const canAffordShield = currency >= shieldCost && !hasActiveShield
+  const canAffordShield = currency >= shieldCost && !hasActiveShield && !shieldOnCooldown
 
   const themeVars = {
     '--bar-primary': theme?.primary || '#4aa3ff',
@@ -138,19 +142,30 @@ export function ShopOverlay({
             <span className="shop-item__stat">
               Active Shield: {shieldHp > 0 ? `${shieldHp} HP` : 'None'}
             </span>
-            {!hasActiveShield && !canAffordShield && (
+            {shieldOnCooldown ? (
               <span className="shop-item__cost-needed">
-                Need {(shieldCost - currency).toFixed(0)}g more
+                Shield broken — ready in {Math.ceil(shieldCooldownSeconds)}s
               </span>
+            ) : (
+              !hasActiveShield &&
+              !canAffordShield && (
+                <span className="shop-item__cost-needed">
+                  Need {(shieldCost - currency).toFixed(0)}g more
+                </span>
+              )
             )}
           </div>
           <button
             type="button"
             className="shop-item__buy-btn"
-            disabled={!canAffordShield || hasActiveShield}
+            disabled={!canAffordShield || hasActiveShield || shieldOnCooldown}
             onClick={() => onBuyItem('shield')}
           >
-            {hasActiveShield ? 'Active' : `Buy (${shieldCost}g)`}
+            {hasActiveShield
+              ? 'Active'
+              : shieldOnCooldown
+                ? `${Math.ceil(shieldCooldownSeconds)}s`
+                : `Buy (${shieldCost}g)`}
           </button>
         </div>
       </div>

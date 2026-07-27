@@ -11,6 +11,8 @@ export interface LobbyPlayer {
   ready: boolean
   connected: boolean
   socketId: string | null
+  /** A spectator watches without a kingdom/castle (the 8th seat). */
+  spectator?: boolean
 }
 
 export interface MatchConfig {
@@ -28,6 +30,8 @@ export interface LobbyMatch {
   players: LobbyPlayer[]
   playerCount: number
   maxPlayers: number
+  /** Max kingdom-playing participants (7); seats beyond this must spectate. */
+  maxActivePlayers?: number
   tick: number
   winnerId: string | null
   config?: MatchConfig | null
@@ -42,6 +46,7 @@ export interface MatchSnapshot {
   hostId: string | null
   winnerId: string | null
   maxPlayers: number
+  maxActivePlayers?: number
   config: MatchConfig | null
   you: LobbyPlayer | null
   players: LobbyPlayer[]
@@ -57,6 +62,7 @@ export function matchFromSnapshot(s: MatchSnapshot): LobbyMatch {
     players: s.players,
     playerCount: s.players.length,
     maxPlayers: s.maxPlayers,
+    maxActivePlayers: s.maxActivePlayers,
     tick: s.tick,
     winnerId: s.winnerId,
     config: s.config,

@@ -1,10 +1,15 @@
 import type {
   AcidRainConfig,
   AuraDefinition,
+  BffsConfig,
+  BlackHoleConfig,
+  CupidsArrowConfig,
   EarthquakeConfig,
   EffectDefinition,
   FrostAuraConfig,
+  OrionsBeltConfig,
   ProjectileShape,
+  SupernovaConfig,
   ThunderdomeConfig,
   WindDeflectionConfig,
 } from './types'
@@ -89,6 +94,66 @@ const ROCK_THROW = basicBolt({ core: 0xe8d3a8, trail: 0x7a5325, impact: 0xc9a56b
 // Ice's Icicle is the shared bolt drawn as a sharp spike instead of a round blob.
 const ICICLE = basicBolt({ core: 0xeaffff, trail: 0x2aa0d8, impact: 0x8fe3ff, ember: 0xc4f0ff }, 'triangle')
 const SLUDGE = basicBolt({ core: 0xd7ffcf, trail: 0x2f9e4f, impact: 0x6bd88a, ember: 0xa8f0b8 })
+// Time's Tik Tok — the shared bolt in grandfather-clock brown & beige.
+const TIK_TOK = basicBolt({ core: 0xf0e2c0, trail: 0x5c4326, impact: 0xa9834e, ember: 0xd9c39a })
+// Space's Shooting Star — the shared bolt in deep void-violet with starlight-cyan embers.
+const SHOOTING_STAR = basicBolt({ core: 0xc9b8ff, trail: 0x3a1a8e, impact: 0x6a2fd0, ember: 0x3ad0ff })
+// Love's Tough Love — the shared bolt drawn as a flying HEART in rose pink.
+const TOUGH_LOVE = basicBolt({ core: 0xffd1e3, trail: 0xb8265c, impact: 0xff4d8d, ember: 0xff6fa8 }, 'heart')
+
+// Time's Half Past 12 — the "temporal pulse" that lands on the victim: a fast
+// faint strike, a massive expanding ring of distorted space (pale-blue), and a
+// burst of golden/silver clock-and-gear fragments blown from the impact, with a
+// heavy screen kick. The 12-second UI SCRAMBLE that follows is the victim-only
+// ScrambleOverlay (driven by the `scrambled` status), not this cast effect.
+const HALF_PAST_12: EffectDefinition = {
+  projectile: {
+    durationMs: 300,
+    size: 11,
+    color: 0xd9b25a,
+    easing: 'easeIn',
+    faceDirection: true,
+  },
+  impact: { durationMs: 560, size: 128, color: 0x9fd0ff, easing: 'easeOut' },
+  particles: {
+    count: 36,
+    speed: [200, 580],
+    spread: Math.PI, // full-circle fragment blast
+    lifetimeMs: 820,
+    size: 5,
+    color: 0xd9b25a,
+    gravity: 140,
+    fade: true,
+  },
+  shake: { magnitude: 11, durationMs: 400 },
+}
+
+// Time's Father Time — the heavy strike that summons Father Time and marks the
+// victim: a brilliant golden flash, a wide temporal shockwave, and an eruption
+// of clock fragments, gear teeth, and falling sand. (The lingering per-second
+// pressure is the victim-only FatherTimeOverlay, driven by the `fatherTimeMark`
+// status — not this cast effect.)
+const FATHER_TIME_STRIKE: EffectDefinition = {
+  projectile: {
+    durationMs: 340,
+    size: 12,
+    color: 0xf5e6b0,
+    easing: 'easeIn',
+    faceDirection: true,
+  },
+  impact: { durationMs: 620, size: 150, color: 0xf3d27a, easing: 'easeOut' },
+  particles: {
+    count: 44,
+    speed: [160, 620],
+    spread: Math.PI, // full-circle eruption of fragments + sand
+    lifetimeMs: 900,
+    size: 5,
+    color: 0xd9b25a,
+    gravity: 260, // fragments + sand fall away
+    fade: true,
+  },
+  shake: { magnitude: 13, durationMs: 460 },
+}
 
 /**
  * Zap — Electricity's basic attack. A procedural lightning strike (not the
@@ -512,6 +577,160 @@ const METEOR_SHOWER: EffectDefinition = {
 }
 
 /**
+ * Saturn's Rings — Space's medium attack, a relentless celestial bombardment. A
+ * scripted MULTI-HIT barrage: after a brief Saturn summon at the caster, nine
+ * tilted, spinning rings break away one after another and slam into the target
+ * ~100–200 ms apart — each shedding orbiting asteroids, cosmic dust, and stars,
+ * then collapsing into a compact impact (gravitational shockwave + lensing halo +
+ * dust + fragments + starlight + a kick), with a stellar-energy stream peeling
+ * back to feed the Supernova. The final ring is dramatically larger and heavier.
+ * Dark-purple palette; see `framework.playRingBarrage`.
+ */
+const SATURNS_RINGS_FX: EffectDefinition = {
+  ringBarrage: {
+    rings: 9, // nine distinct ring impacts (the multi-hit barrage)
+    minGapMs: 100, // rapid-fire cadence: a ring every 100–200 ms
+    maxGapMs: 200,
+    size: 34, // base ring radius (varied per ring; final ring is far larger)
+    ringColor: 0x9d6bff, // glowing violet ring band
+    dustColor: 0x5b3aa6, // translucent cosmic dust
+    asteroidColor: 0x7a5a9e, // rocky orbiting debris
+    starColor: 0xe6d8ff, // sparkling embedded starlight
+    glowColor: 0x3ad0ff, // nebula glow / gravitational lensing (starlight cyan)
+    energyColor: 0x8be3ff, // stellar-energy stream feeding the Supernova
+  },
+}
+
+/**
+ * Supernova — Space's ultimate and signature ability. NOT a bolt of fire,
+ * lightning, or magic: a star ignites at the caster, brightens while pulling in
+ * dust/nebula/asteroids/starlight/plasma (visible lensing), then goes unstable
+ * and detonates outward before immediately reversing into a collapse that
+ * streams the wreckage onto the target, culminating in one devastating final
+ * impact. Charge level (1–3) scales every phase bigger/brighter/heavier; a
+ * successful gravitational redirect (level 2/3) turns the victim into a
+ * singularity that bends every in-flight attack toward it. Driven directly by
+ * `framework.playSupernova` from the `supernovaFired` event (needs the
+ * server's charge level, which a plain ability-cast lookup doesn't carry) —
+ * this entry only suppresses the generic fallback bolt on `abilityCast`.
+ * See `framework.playSupernova` for the full phase breakdown.
+ */
+export const SUPERNOVA_CONFIG: SupernovaConfig = {
+  chargeMs: 480,
+  explosionMs: 460,
+  collapseMs: 520,
+  impactMs: 420,
+  size: 70, // base explosion shell radius at level 1
+  flashColor: 0xffffff, // blinding stellar-white
+  goldColor: 0xffd76a, // golden stellar flame
+  blueColor: 0x8fbaff, // blue stellar flame
+  nebulaColor: 0x6a2fd6, // nebula cloud
+  dustColor: 0x5b3aa6, // cosmic dust
+  asteroidColor: 0x4a3a72, // rocky fragments
+  starColor: 0xe6d8ff, // sparkling starlight
+  lensColor: 0x3ad0ff, // gravitational lensing / space distortion
+  plasmaColor: 0xb98bff, // stellar plasma
+  wellColor: 0x9d6bff, // singularity ring / lensing (levels 2/3)
+  wellRadius: 130, // base gravity-well radius at level 1
+  wellStrength: 46, // base projectile-bending strength at the well's edge
+}
+
+/**
+ * Black Hole — Space's other ultimate, one of the biggest and longest-running
+ * effects in the game. Forms at the ARENA CENTER (not the caster) and grows
+ * into a dominating, ever-rotating body — dark event horizon, layered
+ * accretion disk, orbiting asteroid/meteor debris, drifting nebula, and heavy
+ * gravitational lensing — that intercepts EVERY attack from EVERY kingdom for
+ * its whole duration. On collapse it fires a colossal Judgment Beam at
+ * whichever kingdom the server names as the last to feed it. Driven directly
+ * by `framework.openBlackHole`/`pulseBlackHole`/`collapseBlackHole`/
+ * `interceptIntoBlackHole` from the matching server events (needs exact
+ * durations/positions a plain ability-cast lookup doesn't carry) — this entry
+ * only suppresses the generic fallback bolt on the owner's own `abilityCast`.
+ * See `framework`'s Black Hole module block for the full phase breakdown.
+ */
+export const BLACK_HOLE_CONFIG: BlackHoleConfig = {
+  growMs: 900,
+  radius: 250, // full event-horizon radius — dominates the arena center
+  horizonColor: 0x05020c, // perfectly dark
+  flashColor: 0xffffff, // blinding white-hot
+  plasmaBlue: 0x6fb8ff,
+  plasmaPurple: 0x9d4bff,
+  plasmaOrange: 0xff9a4a,
+  asteroidColor: 0x4a3a72,
+  nebulaColor: 0x6a2fd6,
+  lensColor: 0x3ad0ff,
+  starColor: 0xe6d8ff,
+  singularityHoldMs: 2600, // 2–3s crackling pause before the beam
+  beamChargeMs: 500,
+  beamFireMs: 5000, // the largest, longest beam in the game
+  beamWidth: 60, // core width — outer corona spans ~4x this
+}
+
+/**
+ * Orion's Belt — Space's utility (the interception half; the persistent
+ * orbiting-asteroid ring is `OrionsBeltRing`, an SVG layer mirroring Earth's
+ * Natural Terrain). Driven directly by `framework.deflectByOrionsBelt` from a
+ * correlated `attackMissed` event in BattlefieldFx (needs the exact same-tick
+ * miss, which a plain ability-cast lookup doesn't carry).
+ */
+export const ORIONS_BELT_CONFIG: OrionsBeltConfig = {
+  interceptAt: 0.82, // "until the very last moment"
+  deflectOffset: 46, // how far off-center the near-miss lands
+  asteroidColor: 0x7a5a9e,
+  glowColor: 0x3ad0ff, // gravitational ripple / lensing
+  starColor: 0xe6d8ff,
+  energyColor: 0x8be3ff, // stream back to the Supernova meter
+  flashColor: 0xffffff,
+}
+
+/**
+ * Cupid's Arrow — Love's medium attack. Charming on the surface, unsettling
+ * underneath: a crystal-and-blossom bow gathers at the caster, then looses an
+ * arrow that weaves gracefully to the target trailing ribbons/hearts/petals,
+ * dissolving into a heart sigil on impact. Registered through the normal
+ * `playAbility` dispatch (`def.cupidsArrow`) like Saturn's Rings — the two
+ * follow-on beats (citizen spirits, shared-pain ribbon) are driven separately
+ * from `resourceTransfer`/`damage` events in BattlefieldFx, since they aren't
+ * part of the cast itself. See `framework.playCupidsArrow`.
+ */
+export const CUPIDS_ARROW_CONFIG: CupidsArrowConfig = {
+  bowGatherMs: 420,
+  arrowSegments: 4,
+  arrowDurationMs: 480,
+  weaveAmplitude: 34,
+  spiritDurationMs: 700,
+  goldColor: 0xe8c66a,
+  crystalColor: 0xff8fc0,
+  ribbonColor: 0xff4d8d,
+  heartColor: 0xff6fa8,
+  petalColor: 0xffd1e3,
+  dustColor: 0xfff0f6,
+  sigilColor: 0xffffff,
+  spiritColor: 0xffe27a,
+}
+const CUPIDS_ARROW_FX: EffectDefinition = { cupidsArrow: CUPIDS_ARROW_CONFIG }
+
+/**
+ * BFFS!!! — Love's heavy attack. Two heart pendants fly to BOTH selected
+ * kingdoms and a ribbon of friendship snaps between them. Driven directly by
+ * `framework.playBffs` from the `abilityCast` event (needs BOTH targetIds,
+ * which the normal single-`to` playAbility dispatch can't express); the
+ * persistent link ribbon is the `BffsLinkLayer` SVG overlay. See
+ * `framework.playBffs`.
+ */
+export const BFFS_CONFIG: BffsConfig = {
+  gatherMs: 380,
+  pendantDurationMs: 560,
+  ribbonColor: 0xff4d8d,
+  goldColor: 0xe8c66a,
+  heartColor: 0xff6fa8,
+  petalColor: 0xffd1e3,
+  dustColor: 0xfff0f6,
+  emblemColor: 0xffb3cf,
+}
+
+/**
  * Earthquake — Earth's heavy attack. A tectonic rupture at the primary target
  * (branching glowing fractures, erupting stone, rolling dust, debris, heavy
  * shake) after a trembling buildup, then seismic waves that race to every other
@@ -535,6 +754,10 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   fireball: FIREBALL,
   waterBall: WATER_BALL,
   aLightBreeze: A_LIGHT_BREEZE,
+  tikTok: TIK_TOK,
+  shootingStar: SHOOTING_STAR,
+  halfPassed12: HALF_PAST_12,
+  fatherTime: FATHER_TIME_STRIKE,
   rockThrow: ROCK_THROW,
   zap: ZAP,
   icicle: ICICLE,
@@ -554,6 +777,24 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   thickFog: THICK_FOG,
   // Earth specials.
   meteorShower: METEOR_SHOWER,
+  // Space specials.
+  saturnsRings: SATURNS_RINGS_FX,
+  // Supernova's whole visual is the orchestrated star→explosion→collapse→
+  // singularity sequence (framework.playSupernova, driven from the
+  // 'supernovaFired' event in BattlefieldFx, which alone carries the charge
+  // level); empty suppresses the generic fallback projectile on abilityCast.
+  supernova: {},
+  // Black Hole's whole visual is driven directly from its own server events
+  // (blackHoleOpened/Absorbed/Collapsed) in BattlefieldFx; empty suppresses
+  // the generic fallback projectile on the owner's own abilityCast.
+  blackHole: {},
+  // Love specials.
+  toughLove: TOUGH_LOVE,
+  cupidsArrow: CUPIDS_ARROW_FX,
+  // BFFS!!!'s cast (twin pendants → ribbon snap) is driven directly from the
+  // abilityCast event in BattlefieldFx (needs BOTH targetIds); empty suppresses
+  // the generic fallback projectile. The persistent link ribbon is BffsLinkLayer.
+  bffs: {},
   // Earthquake's whole visual is the orchestrated rupture + seismic waves
   // (framework.playEarthquake, driven from BattlefieldFx); empty suppresses the
   // generic fallback projectile.

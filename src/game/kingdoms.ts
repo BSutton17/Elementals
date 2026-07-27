@@ -9,6 +9,9 @@ export const KINGDOMS = [
   { id: 'electricity', label: 'Electricity', color: '#a855f7' },
   { id: 'ice', label: 'Ice', color: '#8fe3ff' },
   { id: 'nature', label: 'Nature', color: '#6bd88a' },
+  { id: 'time', label: 'Time', color: '#a9834e' }, // grandfather-clock brass
+  { id: 'space', label: 'Space', color: '#5b21b6' }, // deep void-violet
+  { id: 'love', label: 'Love', color: '#ff4d8d' }, // rose pink
 ] as const
 
 export type KingdomId = (typeof KINGDOMS)[number]['id']
@@ -32,3 +35,29 @@ export function canMultiTarget(kingdomId: string | null): boolean {
 export function multiTargetLimit(kingdomId: string | null): number {
   return canMultiTarget(kingdomId) ? 3 : 1
 }
+
+/**
+ * Kingdoms whose targeting is a LOCAL click-to-toggle selection (client-only,
+ * cap = the value here) rather than a single server-tracked target:
+ *  - Air (3): its passive spreads EVERY attack across the whole selected set.
+ *  - Love (2): only BFFS!!! consumes both; every other Love ability uses the
+ *    FIRST selection and drops the rest (see `MULTI_SELECT_ABILITIES`).
+ */
+export const LOCAL_SELECT_LIMITS: Readonly<Record<string, number>> = { air: 3, love: 2 }
+
+export function usesLocalTargeting(kingdomId: string | null): boolean {
+  return kingdomId != null && kingdomId in LOCAL_SELECT_LIMITS
+}
+
+export function localSelectLimit(kingdomId: string | null): number {
+  return (kingdomId != null && LOCAL_SELECT_LIMITS[kingdomId]) || 1
+}
+
+/**
+ * Abilities that consume MORE than one selected target on cast. Air spreads all
+ * its attacks (handled by kingdom, not here); this set is for one-off
+ * multi-target abilities on otherwise single-target kingdoms — currently just
+ * Love's BFFS!!! (needs exactly two). Mirrors the server's
+ * `targeting.secondTarget`.
+ */
+export const MULTI_SELECT_ABILITIES: ReadonlySet<string> = new Set(['bffs'])

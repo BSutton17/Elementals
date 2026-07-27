@@ -4,9 +4,9 @@ import { KINGDOMS, type KingdomId } from '../../../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../../../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../../../game/abilities'
 
-// Page 8 — meet the seven kingdoms: tap through each one's personality,
-// passives, and signature ultimate. All copy comes straight from the real
-// game data, so this can never drift from the lobby.
+// Page 8 — meet the ten kingdoms (incl. Time, Space, Love): tap through each
+// one's personality, passives, and signature ultimate. Fully data-driven off
+// KINGDOMS/kingdomInfo/abilities, so it can never drift from the lobby.
 
 const FLAVOR: Record<KingdomId, string> = {
   water: 'Patient, prosperous, and very hard to drown.',
@@ -16,6 +16,9 @@ const FLAVOR: Record<KingdomId, string> = {
   electricity: 'Fast hands, faster attacks.',
   ice: 'Freeze them solid. Take your time.',
   nature: 'Everything is poisonous. Everything.',
+  time: 'Speeds up, slows down, and rewinds the clock.',
+  space: 'The void between stars — vast, cold, inevitable.',
+  love: 'Charming, manipulative, and impossible to hate.',
 }
 
 export function KingdomsStep() {

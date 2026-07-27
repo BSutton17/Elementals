@@ -1,15 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
-import type { AbilityCastEvent, ShieldDestroyedEvent } from '../game/events'
-import { KINGDOMS, canMultiTarget, multiTargetLimit } from '../game/kingdoms'
+import type { AbilityCastEvent, AttackUndoneEvent, ShieldDestroyedEvent } from '../game/events'
+import {
+  KINGDOMS,
+  canMultiTarget,
+  usesLocalTargeting,
+  localSelectLimit,
+  MULTI_SELECT_ABILITIES,
+} from '../game/kingdoms'
 import { placeKingdoms } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
 // import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
+import { BlackHoleAccumulator } from './BlackHoleAccumulator'
 import { FloatingNumbers } from './FloatingNumbers'
+import { EmpathyReaction } from './EmpathyReaction'
+import { BffsLinkLayer } from './BffsLinkLayer'
 import { DustBunniesLayer } from './DustBunniesLayer'
 import { AbilityBar } from './AbilityBar'
+import { useScrambleValues } from './scramble/useScrambleValues'
 import { getAbilitiesForKingdom, getUpgradeCost } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
 import type { GamePlayer } from '../game/gameState'
@@ -18,6 +28,8 @@ import './BattlefieldView.css'
 
 const FALLBACK_COLOR = '#3a4152'
 const DEFAULT_TICK_RATE = 20
+/** How long a Blip travel-attack rewind streak takes to fly back (ms). */
+const REWIND_MS = 700
 
 /**
  * The primary battlefield renderer (ticket #192): a responsive, square SVG
@@ -32,16 +44,20 @@ export function BattlefieldView({
   match,
   youId,
   players,
+  spectator = false,
 }: {
   match: LobbyMatch
   youId: string | null
   players: GamePlayer[]
+  /** Watch-only mode: fullscreen arena, no header, no controls, no targeting. */
+  spectator?: boolean
 }) {
   const tickRate = match.config?.tickRate ?? DEFAULT_TICK_RATE
 
   // Join the lobby roster with live gameplay state; before the first sync,
   // fall back to the configured starting values so the arena renders at once.
-  const roster: GamePlayer[] = match.players.map((p) => {
+  // Spectators never occupy a battlefield site, so they're filtered out here.
+  const roster: GamePlayer[] = match.players.filter((p) => !p.spectator).map((p) => {
     const live = players.find((g) => g.id === p.id)
     if (live) return { ...live, name: p.name, kingdomId: p.kingdomId }
     return {
@@ -97,24 +113,63 @@ export function BattlefieldView({
     [],
   )
 
-  // Air's "Embrace of Winds" (Epic 8): its attacks can strike several kingdoms
-  // at once with the damage split evenly. For those kingdoms, targeting is a
-  // local multi-select (click to toggle); everyone else keeps the single,
-  // server-tracked target. Only living opponents can stay selected.
+  // Blip! travel-attack rewind (Epic — Time): when a kingdom undoes an attack,
+  // a mote in the attacker's colour streaks from the victim BACK to the caster,
+  // so the shot visibly "un-happens" on the shared battlefield. Driven by a rAF
+  // that interpolates each streak's position (SMIL doesn't reliably play on
+  // dynamically-inserted nodes), then prunes it.
+  const rewindKey = useRef(0)
+  const [rewinds, setRewinds] = useState<{ key: number; from: string; to: string; start: number }[]>([])
+  const [, forceRewindFrame] = useState(0)
+  useEffect(
+    () =>
+      onGameEvents((events) => {
+        for (const event of events) {
+          if (event.type !== 'attackUndone') continue
+          const undo = event as unknown as AttackUndoneEvent
+          const key = ++rewindKey.current
+          setRewinds((prev) => [
+            ...prev,
+            { key, from: undo.playerId, to: undo.sourceId, start: performance.now() },
+          ])
+        }
+      }),
+    [],
+  )
+  // Animate + prune active streaks (~700ms each) while any are in flight.
+  useEffect(() => {
+    if (rewinds.length === 0) return
+    let raf = 0
+    const loop = () => {
+      const now = performance.now()
+      setRewinds((prev) => prev.filter((r) => now - r.start < REWIND_MS))
+      forceRewindFrame((f) => f + 1)
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [rewinds.length])
+
+  // Local click-to-toggle multi-select (Air's "Embrace of Winds" spreads every
+  // attack across the set; Love picks up to two for BFFS!!!). Everyone else
+  // keeps the single, server-tracked target. Only living opponents stay
+  // selected. `multiTarget` (Air, spreads ALL attacks) is a narrower flag than
+  // `localSelect` (Air OR Love) — Love only spreads BFFS.
   const multiTarget = canMultiTarget(you.kingdomId)
-  const targetLimit = multiTargetLimit(you.kingdomId)
+  const localSelect = usesLocalTargeting(you.kingdomId)
+  const selectLimit = localSelectLimit(you.kingdomId)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const activeSelected = selectedIds.filter((id) =>
     roster.some((p) => p.id === id && p.id !== youId && !p.eliminated),
   )
   const isTargeted = (id: string) =>
-    multiTarget ? activeSelected.includes(id) : you?.target === id
+    localSelect ? activeSelected.includes(id) : you?.target === id
   const toggleTarget = (id: string) => {
-    if (multiTarget) {
+    if (localSelect) {
       setSelectedIds((prev) =>
         prev.includes(id)
           ? prev.filter((x) => x !== id)
-          : prev.length >= targetLimit // Embrace of Winds cap (server-authoritative)
+          : prev.length >= selectLimit // cap (Air 3, Love 2)
             ? prev
             : [...prev, id],
       )
@@ -122,6 +177,18 @@ export function BattlefieldView({
       void changeTarget(id)
     }
   }
+
+  // A brief on-screen hint (e.g. "BFFS!!! needs two kingdoms"). Self-clearing.
+  const [castHint, setCastHint] = useState<string | null>(null)
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flashHint = (msg: string) => {
+    setCastHint(msg)
+    if (hintTimer.current) clearTimeout(hintTimer.current)
+    hintTimer.current = setTimeout(() => setCastHint(null), 2600)
+  }
+  useEffect(() => () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current)
+  }, [])
 
   const yourTheme = getKingdomTheme(you.kingdomId)
   const hasAirVision = you.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
@@ -133,6 +200,14 @@ export function BattlefieldView({
   const frozen = you.statuses?.some((s) => s.id === 'frozen') ?? false
   // Chilling Retribution lengthens your cooldowns — snowflake the slowed cards.
   const cooldownChilled = you.statuses?.some((s) => s.id === 'chillingRetribution') ?? false
+  // Time's Half Past 12 scrambles the victim's UI — the bar wobbles/jitters and
+  // every one of your OWN numbers churns randomly (cosmetic only; real values
+  // still drive all gating). Other kingdoms (incl. Bird's Eye reveals) untouched.
+  const scrambled = you.statuses?.some((s) => s.id === 'scrambled') ?? false
+  const scramble = useScrambleValues(scrambled)
+  // Time's Father Time: while marked, badge your damaging attacks with a clock
+  // (landing one resets the punishing idle countdown).
+  const fatherTimeMarked = you.statuses?.some((s) => s.id === 'fatherTimeMark') ?? false
   const cssVars = {
     '--kingdom-primary': yourTheme?.primary || '#4aa3ff',
     '--kingdom-secondary': yourTheme?.secondary || '#2193b0',
@@ -140,14 +215,19 @@ export function BattlefieldView({
   } as React.CSSProperties
 
   return (
-    <main className="battlefield" style={cssVars}>
+    <main
+      className={`battlefield${spectator ? ' battlefield--spectator' : ''}`}
+      style={cssVars}
+    >
       <h1 className="battlefield__sr-title">Battlefield</h1>
-      <div className="battlefield__kingdom-header">
-        <div className="battlefield__level-circle">
-          {you.unlocked ? Object.values(you.unlocked).filter(Boolean).length : 0}
+      {!spectator && (
+        <div className="battlefield__kingdom-header">
+          <div className="battlefield__level-circle">
+            {you.unlocked ? Object.values(you.unlocked).filter(Boolean).length : 0}
+          </div>
+          <h2>{yourTheme?.name || 'Kingdom'}</h2>
         </div>
-        <h2>{yourTheme?.name || 'Kingdom'}</h2>
-      </div>
+      )}
       <div className="battlefield__arena-box">
       <svg
         className="battlefield__arena"
@@ -203,29 +283,85 @@ export function BattlefieldView({
 
         {/* Layer: kingdoms (#193–#198) */}
         <g className="battlefield__layer-kingdoms">
-          {roster.map((p, i) => (
-            <KingdomSite
-              key={p.id}
-              player={p}
-              color={colorOf(p.kingdomId)}
-              x={positions[i]!.x}
-              y={positions[i]!.y}
-              isYou={p.id === youId}
-              isYourTarget={isTargeted(p.id)}
-              tickRate={tickRate}
-              showStats={p.id === youId || hasAirVision}
-              ultShield={ultShieldIds.has(p.id) && p.castle.shield > 0}
-              onSelect={
-                p.id !== youId && !p.eliminated
-                  ? () => toggleTarget(p.id)
-                  : undefined
-              }
-            />
-          ))}
+          {roster.map((p, i) => {
+            const isYou = p.id === youId
+            // Half Past 12: scramble ONLY your own HP/shield bars (shield only
+            // when one is actually up). Everyone else — and any Bird's Eye
+            // reveal of them — keeps their real values.
+            const displayPlayer =
+              isYou && scramble
+                ? {
+                    ...p,
+                    castle: {
+                      ...p.castle,
+                      hp: scramble.castleHp,
+                      shield: p.castle.shield > 0 ? scramble.shieldHp : 0,
+                    },
+                  }
+                : p
+            return (
+              <KingdomSite
+                key={p.id}
+                player={displayPlayer}
+                color={colorOf(p.kingdomId)}
+                x={positions[i]!.x}
+                y={positions[i]!.y}
+                isYou={isYou}
+                isYourTarget={!spectator && isTargeted(p.id)}
+                tickRate={tickRate}
+                showStats={spectator || isYou || hasAirVision}
+                ultShield={ultShieldIds.has(p.id) && p.castle.shield > 0}
+                onSelect={
+                  !spectator && !isYou && !p.eliminated
+                    ? () => toggleTarget(p.id)
+                    : undefined
+                }
+              />
+            )
+          })}
         </g>
 
         {/* Layer: projectiles & effects — populated by later tickets. */}
         <g className="battlefield__layer-projectiles" data-testid="projectile-layer" />
+
+        {/* Layer: Blip! travel-attack rewinds — a mote in the attacker's colour
+            streaks from the victim back to the caster (the shot un-happening).
+            Positions are interpolated per frame by the rAF above. */}
+        <g className="battlefield__layer-rewinds" data-testid="rewind-layer">
+          {rewinds.map((r) => {
+            const from = positionOf(r.from)
+            const to = positionOf(r.to)
+            if (!from || !to) return null
+            const attacker = roster.find((p) => p.id === r.to)
+            const color = colorOf(attacker?.kingdomId ?? null)
+            const p = Math.min(1, (performance.now() - r.start) / REWIND_MS)
+            const ease = 1 - (1 - p) * (1 - p) // easeOut
+            const x = from.x + (to.x - from.x) * ease
+            const y = from.y + (to.y - from.y) * ease
+            const op = 1 - p
+            return (
+              <g key={r.key}>
+                {/* The path already travelled fades behind the returning mote. */}
+                <line
+                  x1={x}
+                  y1={y}
+                  x2={from.x}
+                  y2={from.y}
+                  stroke={color}
+                  strokeWidth={2}
+                  strokeDasharray="8 10"
+                  opacity={0.35 * op}
+                />
+                <circle cx={x} cy={y} r={11} fill={color} opacity={0.35 * op} />
+                <circle cx={x} cy={y} r={6} fill="#fff" opacity={0.9 * op} />
+              </g>
+            )
+          })}
+        </g>
+
+        {/* Layer: Love's BFFS!!! link ribbons spanning paired castles. Below
+            the floating numbers so damage values still read on top. */}
+        <BffsLinkLayer positionOf={positionOf} />
 
         {/* Layer: floating combat numbers (#265–#266) — topmost so damage and
             healing values read clearly above the castles. */}
@@ -233,17 +369,31 @@ export function BattlefieldView({
           positionOf={positionOf}
           kingdomOf={(id) => roster.find((p) => p.id === id)?.kingdomId ?? null}
           colorOf={colorOf}
+          youId={youId}
         />
 
         {/* Dust Bunnies (#… Nature ultimate): hopping bunnies + brawl clouds. */}
         <DustBunniesLayer positionOf={positionOf} />
+
+        {/* Love's "Have some Empathy!" — a grinning-hearts face over Love and
+            the attacker each time a hit is reflected back. */}
+        <EmpathyReaction positionOf={positionOf} />
       </svg>
       {/* PixiJS effects overlay (Epic 9): visualizes authoritative events;
           pointer-events:none keeps the SVG the interactive targeting surface. */}
-      <BattlefieldFx order={match.players.map((p) => ({ id: p.id, kingdomId: p.kingdomId }))} />
+      <BattlefieldFx
+        order={match.players.map((p) => ({ id: p.id, kingdomId: p.kingdomId }))}
+        tickRate={tickRate}
+      />
+      <BlackHoleAccumulator />
+      {castHint && (
+        <div className="battlefield__cast-hint" role="status">
+          {castHint}
+        </div>
+      )}
       </div>
 
-      {you && (
+      {!spectator && you && (
         <AbilityBar
           kingdomId={you.kingdomId}
           theme={yourTheme}
@@ -264,13 +414,20 @@ export function BattlefieldView({
             you.castle.nextShieldCost ??
             Math.round(500 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
           }
+          shieldCooldownSeconds={(you.castle.shieldCooldownRemaining ?? 0) / tickRate}
           repairsUsed={you.castle.repairs ?? 0}
           maxRepairs={3}
           lockedOut={shopLocked}
           citizensPoisoned={citizensPoisoned}
           frozen={frozen}
+          scrambled={scrambled}
+          scramble={scramble}
+          fatherTimeMarked={fatherTimeMarked}
           cooldownChilled={cooldownChilled}
           incomePerSecond={you.economy.incomePerTick * tickRate}
+          // Space only: show the Supernova charge meter once Supernova is
+          // unlocked (undefined for every other kingdom hides it).
+          supernovaMeter={you.unlocked?.supernova ? you.supernovaMeter ?? 0 : null}
           abilities={getAbilitiesForKingdom(you.kingdomId).map((metadata) => {
             // Bought abilities show as level 1; upgrade tiers stack on top.
             const isUnlocked = you.unlocked?.[metadata.id] ?? false
@@ -305,10 +462,31 @@ export function BattlefieldView({
           })}
           tickRate={tickRate}
           onCastAbility={(abilityId, chargesToUse) => {
-            // Multi-target kingdoms (Air) send the whole selected set; the
-            // server spreads an attack's damage across them and ignores the
-            // list for self/all-target abilities.
-            const target = multiTarget ? activeSelected : you.target
+            // Air spreads every attack across the whole selected set. Love picks
+            // up to two but only BFFS!!! consumes both — every other Love
+            // ability uses the FIRST selection and DROPS the rest. Everyone
+            // else uses their single server-tracked target.
+            let target: string | string[] | null
+            if (multiTarget) {
+              target = activeSelected // Air: whole set, always
+            } else if (localSelect) {
+              if (MULTI_SELECT_ABILITIES.has(abilityId)) {
+                // BFFS!!! needs exactly two — reject early with a hint rather
+                // than a silent server rejection.
+                if (activeSelected.length < 2) {
+                  flashHint('BFFS!!! needs two kingdoms — select a second.')
+                  return
+                }
+                target = activeSelected.slice(0, 2)
+              } else {
+                // Single-target Love ability: use the first selection and drop
+                // any extra so the leftover BFFS pick doesn't linger.
+                target = activeSelected[0] ?? null
+                if (activeSelected.length > 1) setSelectedIds(activeSelected.slice(0, 1))
+              }
+            } else {
+              target = you.target
+            }
             void castAbility(abilityId, target, chargesToUse)
           }}
           onUpgradeAbility={(abilityId) => {

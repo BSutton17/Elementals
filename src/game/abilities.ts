@@ -1,14 +1,17 @@
 import type { IconType } from 'react-icons'
 import { PiDropFill, PiFireFill, PiWindFill, PiEyeFill, PiMeteorFill, PiLightningFill, PiBiohazardFill, PiSkullFill } from 'react-icons/pi'
-import { BsWater } from 'react-icons/bs'
+import { BsWater, BsArrowThroughHeartFill, BsEmojiHeartEyesFill } from 'react-icons/bs'
 import { MdFlood } from 'react-icons/md'
-import { FaSun, FaIcicles, FaMountain, FaSnowman } from 'react-icons/fa'
+import { FaSun, FaIcicles, FaMountain, FaSnowman, FaHeart } from 'react-icons/fa'
 import { FaBottleWater, FaHurricane } from 'react-icons/fa6'
-import { GiWaveSurfer, GiFireDash, GiStonePile, GiDefensiveWall, GiLightningFlame, GiLightningDome, GiThunderSkull, GiMeltingIceCube, GiSnowing, GiAppleCore, GiPoisonGas } from 'react-icons/gi'
-import { TbTornado, TbTemperatureMinusFilled, TbDeviceLaptop, TbCloudRain } from 'react-icons/tb'
+import { GiWaveSurfer, GiFireDash, GiStonePile, GiDefensiveWall, GiLightningFlame, GiLightningDome, GiThunderSkull, GiMeltingIceCube, GiSnowing, GiAppleCore, GiPoisonGas, GiTimeSynchronization, GiBlackHoleBolas, GiFallingStar, GiStoneSphere, GiLoveInjection, GiChainedHeart } from 'react-icons/gi'
+import { TbTornado, TbTemperatureMinusFilled, TbDeviceLaptop, TbCloudRain, TbBrandSupernova } from 'react-icons/tb'
 import { WiFog } from 'react-icons/wi'
-import { SiBunnydotnet } from 'react-icons/si'
-import { RiEarthquakeFill, RiSnowflakeFill } from 'react-icons/ri'
+import { SiBunnydotnet, SiSaturn } from 'react-icons/si'
+import { RiEarthquakeFill, RiSnowflakeFill, RiRewindStartFill } from 'react-icons/ri'
+import { CiClock2 } from 'react-icons/ci'
+import { CgSandClock } from 'react-icons/cg'
+import { LiaUserTimesSolid } from 'react-icons/lia'
 
 export interface ClientAbilityMetadata {
   id: string
@@ -513,6 +516,210 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     icon: GiPoisonGas,
     baseCost: 800,
     upgradeCosts: [],
+  },
+
+  // Time Abilities (grandfather-clock theme: brown & beige)
+  tikTok: {
+    id: 'tikTok',
+    name: 'Tik Tok',
+    description: 'Basic Time attack. A steady tick-tock strike that never misses a beat.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'time',
+    color: '#a9834e',
+    gradient: 'linear-gradient(135deg, #3d2b1a, #7a5a34, #d9c39a)',
+    icon: CiClock2,
+    baseCost: 100,
+    upgradeCosts: [150, 250, 400],
+  },
+  halfPassed12: {
+    id: 'halfPassed12',
+    name: 'Half Passed 12',
+    description: 'Devastating Time attack that scrambles the target\'s UI for 12 seconds.',
+    hotkey: 'W',
+    kind: 'attack',
+    element: 'time',
+    color: '#a9834e',
+    gradient: 'linear-gradient(135deg, #5c4326, #a9834e)',
+    icon: GiTimeSynchronization,
+    baseCost: 250,
+    upgradeCosts: [200, 300, 400, 500],
+  },
+  fatherTime: {
+    id: 'fatherTime',
+    name: 'Father Time',
+    description: 'Heavy Time attack. Father Time hates wasting time: the victim takes damage each second they have not landed a damaging attack.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'time',
+    color: '#a9834e',
+    gradient: 'linear-gradient(135deg, #2e2013, #8b5a2b)',
+    icon: LiaUserTimesSolid,
+    baseCost: 400,
+    upgradeCosts: [250, 400, 500, 600],
+  },
+  blip: {
+    id: 'blip',
+    name: 'Blip!',
+    description: 'The most recent attack done to you is undone — including status effects and status-based damage.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'time',
+    color: '#a9834e',
+    gradient: 'linear-gradient(135deg, #7a5a34, #d9c39a)',
+    icon: CgSandClock,
+    baseCost: 200,
+    upgradeCosts: [300, 400],
+  },
+  backToTheFuture: {
+    id: 'backToTheFuture',
+    name: 'Back to the Future',
+    description: 'Rewind every castle\'s gold by 10 seconds',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'time',
+    color: '#a9834e',
+    gradient: 'linear-gradient(135deg, #3d2b1a, #b08d5a)',
+    icon: RiRewindStartFill,
+    baseCost: 1000,
+    upgradeCosts: [1000, 1500],
+  },
+
+  // Space Abilities (dark purple & black) — the bully. Three abilities feed a
+  // shared Supernova meter that the heavy attack spends, hitting harder the more
+  // it has charged.
+  shootingStar: {
+    id: 'shootingStar',
+    name: 'Shooting Star',
+    description: 'Basic Space attack. Hurls a shooting star at your target and trickles charge into your Supernova.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'space',
+    color: '#5b21b6',
+    gradient: 'linear-gradient(135deg, #0a0518, #4b2fae, #5b21b6)',
+    icon: GiFallingStar,
+    baseCost: 100,
+    upgradeCosts: [150, 250, 400],
+  },
+  saturnsRings: {
+    id: 'saturnsRings',
+    name: "Saturn's Rings",
+    description: 'Bombards a single kingdom with a relentless barrage of 9 planetary rings. Every ring that lands charges your Supernova.',
+    hotkey: 'W',
+    kind: 'attack',
+    element: 'space',
+    color: '#5b21b6',
+    gradient: 'linear-gradient(135deg, #0a0518, #4a1a9e)',
+    icon: SiSaturn,
+    baseCost: 250,
+    upgradeCosts: [200, 300, 400],
+  },
+  supernova: {
+    id: 'supernova',
+    name: 'Supernova',
+    description: 'Unleashes your Supernova at its CURRENT charge — you can’t pick the level. Higher charge means far more damage and, once charged enough, hijacks the whole field onto your victim. Empties the meter.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'space',
+    color: '#5b21b6',
+    gradient: 'linear-gradient(135deg, #1a0033, #7a1fd6, #d94bff)',
+    icon: TbBrandSupernova,
+    baseCost: 400,
+    upgradeCosts: [250, 400, 600],
+  },
+  orionsBeltAbility: {
+    id: 'orionsBeltAbility',
+    name: "Orion's Belt",
+    description: 'Surrounds you with a celestial ring of orbiting asteroids: incoming attacks have a 50% chance to miss for 10s, and every miss charges your Supernova.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'space',
+    color: '#5b21b6',
+    gradient: 'linear-gradient(135deg, #0a0518, #3a2a7e, #5b21b6)',
+    icon: GiStoneSphere,
+    baseCost: 200,
+    upgradeCosts: [300, 400],
+  },
+  blackHole: {
+    id: 'blackHole',
+    name: 'Black Hole',
+    description: 'Ultimate. Opens a black hole that swallows every attack on the field for 10s, then dumps all of it on the last kingdom that fed it.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'space',
+    color: '#5b21b6',
+    gradient: 'linear-gradient(135deg, #000000, #2a1a5e)',
+    icon: GiBlackHoleBolas,
+    baseCost: 1000,
+    upgradeCosts: [1000, 1500],
+  },
+
+  // Love Abilities (rose pink & blush) — a social, manipulative kit: it
+  // borrows resources, redirects damage, and ties enemy fates together.
+  toughLove: {
+    id: 'toughLove',
+    name: 'Tough Love',
+    description: 'Basic Love attack. A firm, caring smack to get the point across.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'love',
+    color: '#ff4d8d',
+    gradient: 'linear-gradient(135deg, #5c1030, #b8265c, #ff4d8d)',
+    icon: FaHeart,
+    baseCost: 100,
+    upgradeCosts: [150, 250, 400],
+  },
+  cupidsArrow: {
+    id: 'cupidsArrow',
+    name: "Cupid's Arrow",
+    description: 'Moderate damage that marks the target "infatuated": they lend you citizens and feel a share of whatever damage you take, for a while.',
+    hotkey: 'W',
+    kind: 'attack',
+    element: 'love',
+    color: '#ff4d8d',
+    gradient: 'linear-gradient(135deg, #ff4d8d, #ffd1e3)',
+    icon: BsArrowThroughHeartFill,
+    baseCost: 250,
+    upgradeCosts: [200, 300, 400],
+  },
+  bffs: {
+    id: 'bffs',
+    name: 'BFFS!!!',
+    description: 'Deals damage to your target and a second, random enemy, then links their fates: damage and status effects hitting either one hit both.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'love',
+    color: '#ff4d8d',
+    gradient: 'linear-gradient(135deg, #b8265c, #ff4d8d, #ffb3cf)',
+    icon: BsEmojiHeartEyesFill,
+    baseCost: 400,
+    upgradeCosts: [250, 400, 500],
+  },
+  empathy: {
+    id: 'empathy',
+    name: 'Have some Empathy!',
+    description: 'For a while, any damage you take is felt right back by the attacker, in full.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'love',
+    color: '#ff4d8d',
+    gradient: 'linear-gradient(135deg, #5c1030, #ff4d8d)',
+    icon: GiLoveInjection,
+    baseCost: 200,
+    upgradeCosts: [300, 400],
+  },
+  loveGalore: {
+    id: 'loveGalore',
+    name: 'Love Galore',
+    description: 'Ultimate. Incoming damage never lands — it secretly heals you for half instead. Attackers see normal damage until it reveals (after 15s or 1500 healing), then all damage openly becomes healing for another 15s.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'love',
+    color: '#ff4d8d',
+    gradient: 'linear-gradient(135deg, #ff4d8d, #ff85ac, #ffd1e3)',
+    icon: GiChainedHeart,
+    baseCost: 1000,
+    upgradeCosts: [1000, 1500],
   },
 }
 

@@ -1,6 +1,6 @@
 import { LobbyView } from '../components/LobbyView'
 import { useLobby } from '../game/useLobby'
-import { leaveRoom, selectKingdom, startMatch, toggleReady } from '../game/lobbyStore'
+import { leaveRoom, selectKingdom, spectate, startMatch, toggleReady } from '../game/lobbyStore'
 
 /**
  * Lobby container: wires the socket-backed lobby store to the presentational
@@ -16,6 +16,7 @@ export function LobbyScreen() {
       youId={youId}
       onToggleReady={() => void toggleReady()}
       onSelectKingdom={(k) => void selectKingdom(k)}
+      onSpectate={() => void spectate()}
       onStart={() => void startMatch()}
       onLeave={() => void leaveRoom()}
     />

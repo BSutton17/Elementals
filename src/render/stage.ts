@@ -4,10 +4,13 @@ import { AnimationFramework } from './framework'
 import {
   makeCircleNode,
   makeRingNode,
+  makeSaturnRingNode,
   makeGlowBeamNode,
   makeGlowNode,
   makeBoltNode,
   makeTriangleNode,
+  makeHeartNode,
+  makeArrowNode,
 } from './nodes'
 
 // Pixi stage (Epic 9, ticket #210). Owns the Pixi Application, mounts a
@@ -50,6 +53,9 @@ export class PixiStage {
     this.framework = new AnimationFramework({
       projectile: () => makeCircleNode(this.layers.get('projectiles')),
       projectileTriangle: () => makeTriangleNode(this.layers.get('projectiles')),
+      projectileRing: () => makeSaturnRingNode(this.layers.get('projectiles')),
+      projectileHeart: () => makeHeartNode(this.layers.get('projectiles')),
+      projectileArrow: () => makeArrowNode(this.layers.get('projectiles')),
       impact: () => makeRingNode(this.layers.get('impacts')),
       particle: () => makeCircleNode(this.layers.get('particles')),
       // Solar-laser layers are additive (blinding white core); the charge orb +

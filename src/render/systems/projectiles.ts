@@ -4,6 +4,24 @@ import { ease } from '../easing'
 import { angleBetween, lerpPoint } from '../trajectory'
 import { UNIT_RADIUS, resetDisplayNode } from '../nodeUtil'
 
+/**
+ * A gravitational singularity (Space's Supernova, levels 2/3): while active,
+ * EVERY in-flight projectile — any kingdom's, any ability, already airborne or
+ * launched while the well is up — visibly bends toward `at` as it passes within
+ * `radius`, without altering its own arrival time or target. This is the
+ * "projectile path bending" primitive the whole framework shares; a well is
+ * keyed so several (future) abilities could park independent wells.
+ */
+export interface GravityWell {
+  at: Vec2
+  /** Influence radius, world units — no pull at or beyond this distance. */
+  radius: number
+  /** Peak inward displacement at the well's edge, world units. Fades linearly
+   *  toward the well's center at the SAME rate it fades near the projectile's
+   *  own arrival, so a projectile still lands exactly on its real target. */
+  strength: number
+}
+
 // Projectile system (Epic 9, ticket #210). An attack travels in a STRAIGHT LINE
 // from A to B over a data-defined `durationMs`, then invokes `onArrive` (which
 // the framework uses to trigger the impact/particles at B). Nodes are pooled,
@@ -52,6 +70,7 @@ export class ProjectileSystem {
   private readonly items: ActiveProjectile[] = []
   private readonly holds: HeldProjectile[] = []
   private readonly baseRadius: number
+  private readonly wells = new Map<string, GravityWell>()
 
   constructor(
     createNode: () => DisplayNode,
@@ -145,12 +164,48 @@ export class ProjectileSystem {
     })
   }
 
+  /** Parks (or replaces) a gravity well under `id`. */
+  addWell(id: string, well: GravityWell): void {
+    this.wells.set(id, well)
+  }
+
+  /** Removes a gravity well; projectiles fly straight again immediately. */
+  removeWell(id: string): void {
+    this.wells.delete(id)
+  }
+
+  /** Number of gravity wells currently bending flight paths. */
+  get wellCount(): number {
+    return this.wells.size
+  }
+
+  /** Displaces `pos` toward any nearby wells — in place — fading to zero both
+   *  at the well's edge and as the projectile nears its OWN arrival (`raw`→1),
+   *  so bending is visible mid-flight but every projectile still lands exactly
+   *  on its real target. */
+  private bendTowardWells(pos: Vec2, raw: number): void {
+    if (this.wells.size === 0) return
+    const arrivalFade = 1 - raw
+    if (arrivalFade <= 0) return
+    for (const well of this.wells.values()) {
+      const dx = well.at.x - pos.x
+      const dy = well.at.y - pos.y
+      const d = Math.hypot(dx, dy)
+      if (d <= 0 || d >= well.radius) continue
+      const proximity = 1 - d / well.radius
+      const pull = well.strength * proximity * arrivalFade
+      pos.x += (dx / d) * pull
+      pos.y += (dy / d) * pull
+    }
+  }
+
   update(dtMs: number): void {
     for (let i = this.items.length - 1; i >= 0; i--) {
       const p = this.items[i]!
       p.elapsed += dtMs
       const raw = p.config.durationMs <= 0 ? 1 : Math.min(1, p.elapsed / p.config.durationMs)
       const pos = lerpPoint(p.from, p.to, ease(p.config.easing, raw))
+      this.bendTowardWells(pos, raw)
       p.node.x = pos.x
       p.node.y = pos.y
       if (!p.config.faceDirection && p.config.spin) {
@@ -195,5 +250,6 @@ export class ProjectileSystem {
     this.items.length = 0
     for (const h of this.holds) h.pool.release(h.node)
     this.holds.length = 0
+    this.wells.clear()
   }
 }

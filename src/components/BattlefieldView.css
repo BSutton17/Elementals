@@ -24,6 +24,17 @@
   box-sizing: border-box;
 }
 
+/* Spectator mode: no header, no ability bar — the arena box already flexes to
+   fill all remaining space, so with those chrome elements gone the battlefield
+   circle expands to the full viewport. Trim the top padding so it's edge-to-edge. */
+.battlefield--spectator {
+  padding: 0;
+}
+
+.battlefield--spectator .battlefield__arena-box {
+  padding: 0.5rem;
+}
+
 .battlefield__sr-title {
   position: absolute;
   width: 1px;
@@ -63,6 +74,36 @@
 
 .battlefield__fx--back {
   z-index: 0;
+}
+
+/* Transient cast hint (e.g. "BFFS!!! needs two kingdoms") — floats near the top
+   of the arena, above the effects canvas, and fades itself out. */
+.battlefield__cast-hint {
+  position: absolute;
+  top: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+  padding: 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(92, 16, 48, 0.95), rgba(184, 38, 92, 0.95));
+  border: 1px solid rgba(255, 209, 227, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 14px rgba(255, 77, 141, 0.5);
+  color: #ffe3ee;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+  max-width: calc(100% - 2rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: cast-hint-in 0.2s ease-out;
+}
+
+@keyframes cast-hint-in {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .battlefield__fx canvas {
@@ -293,6 +334,30 @@
   font-weight: 900;
 }
 
+/* Orion's Belt dodge (Space): a large glowing "MISS" above the defender,
+   cyan/violet to read as gravitational/cosmic rather than a plain whiff. */
+.floating-number--miss {
+  font-size: 42px;
+  font-weight: 900;
+  font-style: normal;
+  letter-spacing: 2px;
+  fill: #8be3ff;
+  stroke: #3a1a8e;
+  stroke-width: 4px;
+}
+
+/* Cupid's Arrow shared-pain redirect (Love): a soft heart-pink "Shared Pain"
+   above the infatuated kingdom, communicating the magical bond over a raw hit. */
+.floating-number--shared-pain {
+  font-size: 26px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  fill: #ff6fa8;
+  stroke: #5c1030;
+  stroke-width: 3px;
+}
+
 @keyframes floating-number-rise {
   0% {
     opacity: 0;
@@ -315,8 +380,42 @@
   }
 }
 
+/* Love's "Have some Empathy!" reaction — a grinning-hearts face blooms over
+   both castles when a hit is reflected, then floats up and fades over 2.5s. */
+.empathy-face {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: empathy-face-pop 2.5s ease-out forwards;
+  filter: drop-shadow(0 0 8px rgba(255, 77, 141, 0.65));
+}
+
+@keyframes empathy-face-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.3);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15);
+  }
+  28% {
+    transform: translateY(-4px) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-16px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.95);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .floating-number {
+    animation: floating-number-fade 2.5s ease-out forwards;
+  }
+  .empathy-face {
     animation: floating-number-fade 2.5s ease-out forwards;
   }
   @keyframes floating-number-fade {

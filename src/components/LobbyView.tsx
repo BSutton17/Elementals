@@ -12,6 +12,7 @@ interface LobbyViewProps {
   youId: string | null
   onToggleReady: () => void
   onSelectKingdom: (kingdom: KingdomId) => void
+  onSpectate: () => void
   onStart: () => void
   onLeave: () => void
 }
@@ -69,18 +70,25 @@ export function LobbyView({
   youId,
   onToggleReady,
   onSelectKingdom,
+  onSpectate,
   onStart,
   onLeave,
 }: LobbyViewProps) {
   const [showHowTo, setShowHowTo] = useState(false)
   const me = match.players.find((p) => p.id === youId)
   const isReady = me?.ready ?? false
+  const isSpectator = me?.spectator === true
   const isHost = youId != null && youId === match.hostId
-  const connected = match.players.filter((p) => p.connected)
+  // Spectators don't gate the start and aren't counted as players.
+  const connected = match.players.filter((p) => p.connected && !p.spectator)
   const enoughPlayers = connected.length >= MIN_PLAYERS_TO_START
   const allHaveKingdom = connected.every((p) => p.kingdomId !== null)
   const allReady = connected.every((p) => p.ready)
   const canStart = enoughPlayers && allHaveKingdom && allReady
+  // The kingdom-playing seats are capped; once full, only spectating is left.
+  const maxActive = match.maxActivePlayers ?? 7
+  const activeCount = match.players.filter((p) => !p.spectator && p.kingdomId !== null).length
+  const playersFull = activeCount >= maxActive && !(me && !me.spectator && me.kingdomId !== null)
 
   // Tell the host exactly what's blocking the start.
   const startLabel = canStart
@@ -149,7 +157,7 @@ export function LobbyView({
                 type="button"
                 className={`lobby__kingdom-btn${selected ? ' lobby__kingdom-btn--selected' : ''}${takenByOther ? ' lobby__kingdom-btn--taken' : ''}`}
                 style={{ '--k': k.color } as CSSProperties}
-                disabled={takenByOther}
+                disabled={takenByOther || (playersFull && !selected)}
                 onClick={() => onSelectKingdom(k.id)}
               >
                 {k.label}
@@ -159,7 +167,27 @@ export function LobbyView({
           })}
         </div>
 
-        {me?.kingdomId ? (
+        <div className="lobby__spectate-row">
+          <button
+            type="button"
+            className={`lobby__spectate-btn${isSpectator ? ' lobby__spectate-btn--on' : ''}`}
+            onClick={onSpectate}
+            aria-pressed={isSpectator}
+          >
+            {isSpectator ? 'Spectating' : 'Spectate'}
+          </button>
+          <span className="lobby__spectate-hint">
+            {playersFull && !isSpectator
+              ? `All ${maxActive} kingdom seats are full — join as a spectator.`
+              : 'Watch the battle without playing.'}
+          </span>
+        </div>
+
+        {isSpectator ? (
+          <p className="lobby__kingdom-hint">
+            You're spectating — you'll see the full battlefield with no controls.
+          </p>
+        ) : me?.kingdomId ? (
           <KingdomDetails kingdomId={me.kingdomId} />
         ) : (
           <p className="lobby__kingdom-hint">

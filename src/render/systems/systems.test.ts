@@ -62,6 +62,48 @@ test('projectile travels straight A→B over durationMs, then arrives', () => {
   expect(sys.active).toBe(0)
 })
 
+test('a gravity well bends an in-flight projectile toward it, but it still lands exactly on target', () => {
+  const sys = new ProjectileSystem(fakeNode, 16, { prewarm: 0 })
+  let arrived: Vec2 | null = null
+  const from = { x: 0, y: 0 }
+  const to = { x: 200, y: 0 }
+  sys.spawn(
+    { durationMs: 1000, size: 16, color: 0x112233, easing: 'linear' },
+    from,
+    to,
+    (at) => { arrived = at },
+  )
+  const node = (sys as unknown as { items: { node: DisplayNode }[] }).items[0]!.node
+
+  // No well yet: the straight-line midpoint is exactly on the line.
+  sys.update(500)
+  expect(node.x).toBeCloseTo(100)
+  expect(node.y).toBeCloseTo(0)
+
+  // A well pulls the well's whole neighbourhood off the straight line — parked
+  // well off the flight path (below it) so any bend is unambiguous.
+  sys.addWell('supernovaWell:1', { at: { x: 100, y: -60 }, radius: 90, strength: 40 })
+  expect(sys.wellCount).toBe(1)
+  sys.update(1) // re-evaluate at ~the same position, now under the well's pull
+  // Bent toward the well (negative y), off the pure straight line.
+  expect(node.y).toBeLessThan(-0.5)
+
+  // Removing the well releases it back to a straight line immediately.
+  sys.removeWell('supernovaWell:1')
+  expect(sys.wellCount).toBe(0)
+  sys.update(1)
+  expect(node.y).toBeCloseTo(0)
+
+  // Re-add the well and ride the projectile all the way to arrival: even with
+  // the well active, it still lands EXACTLY on its real target (bending fades
+  // to zero as its own flight completes) — gameplay is untouched, purely visual.
+  sys.addWell('supernovaWell:2', { at: { x: 100, y: -60 }, radius: 90, strength: 40 })
+  sys.update(499) // back to just under raw=1
+  let guard = 0
+  while (sys.active > 0 && guard++ < 10) sys.update(1)
+  expect(arrived).toEqual({ x: 200, y: 0 })
+})
+
 test('travel time is data-driven and nodes are pooled/reused', () => {
   const created: DisplayNode[] = []
   const sys = new ProjectileSystem(

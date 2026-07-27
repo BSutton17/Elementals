@@ -20,7 +20,7 @@ export function TargetStep() {
     >
       <div className={`howto-target${locked ? ' howto-target--locked' : ''}`}>
         <DemoDummyCastle
-          name="Sir Practiceton"
+          name="Fire"
           kingdomId="fire"
           color="#ff6b4a"
           hp={sandbox.dummy.hp}

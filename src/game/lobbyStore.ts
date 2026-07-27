@@ -144,7 +144,13 @@ export async function toggleReady(): Promise<void> {
 }
 
 export async function selectKingdom(kingdom: KingdomId): Promise<void> {
-  await socket.emitWithAck('lobby:selectKingdom', { kingdom })
+  const res = (await socket.emitWithAck('lobby:selectKingdom', { kingdom })) as Ack
+  if (!res.ok) setState({ error: res.error?.message ?? 'Cannot pick that kingdom' })
+}
+
+/** Opt this seat out of playing — watch the match as a spectator instead. */
+export async function spectate(): Promise<void> {
+  await socket.emitWithAck('lobby:selectKingdom', { kingdom: 'spectator' })
 }
 
 export async function startMatch(): Promise<Ack> {

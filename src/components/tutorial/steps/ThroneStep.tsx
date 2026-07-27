@@ -1,11 +1,13 @@
-import { FaCrown, FaMountain, FaLeaf } from 'react-icons/fa'
+import { FaCrown, FaMountain, FaLeaf, FaHeart } from 'react-icons/fa'
 import { PiDropFill, PiFireFill, PiWindFill, PiLightningFill } from 'react-icons/pi'
 import { RiSnowflakeFill } from 'react-icons/ri'
+import { CgSandClock } from 'react-icons/cg'
+import { GiBlackHoleBolas } from 'react-icons/gi'
 import type { IconType } from 'react-icons'
 import { TutorialStep } from '../TutorialStep'
 import { KINGDOMS } from '../../../game/kingdoms'
 
-// Page 1 — the hook. Seven elements circle one throne.
+// Page 1 — the hook. Ten elements circle one throne.
 
 const ELEMENT_ICONS: Record<string, IconType> = {
   water: PiDropFill,
@@ -15,13 +17,16 @@ const ELEMENT_ICONS: Record<string, IconType> = {
   electricity: PiLightningFill,
   ice: RiSnowflakeFill,
   nature: FaLeaf,
+  time: CgSandClock,
+  space: GiBlackHoleBolas,
+  love: FaHeart,
 }
 
 export function ThroneStep() {
   return (
     <TutorialStep
       kicker="Welcome to Elementals"
-      title="Seven Kingdoms. One Throne."
+      title="Ten Kingdoms. One Throne."
       lead="Every match is a free-for-all between elemental kingdoms. Alliances are temporary. Grudges are forever. The last castle standing takes the throne."
     >
       <div className="howto-orbit" aria-hidden="true">

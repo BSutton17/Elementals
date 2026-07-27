@@ -40,9 +40,11 @@ export type EasingName =
  *  effect definitions can share the common palette instead of hardcoding hues. */
 export type ThemeToken = 'primary' | 'secondary' | 'dark'
 
-/** Projectile sprite silhouette — a round blob (default) or a sharp spike
- *  (Ice's Icicle). Selects which pooled node factory the system draws from. */
-export type ProjectileShape = 'circle' | 'triangle'
+/** Projectile sprite silhouette — a round blob (default), a sharp spike (Ice's
+ *  Icicle), a tilted spinning ring (Space's Saturn's Rings), a heart (Love's
+ *  Tough Love), or an arrow (Love's Cupid's Arrow). Selects which pooled node
+ *  factory the system draws from. */
+export type ProjectileShape = 'circle' | 'triangle' | 'ring' | 'heart' | 'arrow'
 
 /**
  * A projectile that travels in a STRAIGHT LINE from A to B over `durationMs`
@@ -325,6 +327,238 @@ export interface MeteorShowerConfig {
 }
 
 /**
+ * Saturn's Rings (Space) — a relentless bombardment of planetary rings. A
+ * scripted MULTI-HIT barrage: after a brief Saturn "summon" (a ringed planet
+ * blooms at the caster, debris spiralling in), `rings` tilted, spinning rings
+ * break away one after another and slam into the target every `minGapMs`–
+ * `maxGapMs`, each shedding orbiting asteroids, cosmic dust, and starlight and
+ * collapsing into a compact impact (gravitational shockwave + lensing + dust +
+ * fragments + stars + a light kick). Every ring varies in size/spin/speed so it
+ * reads as an endless celestial storm; the FINAL ring is dramatically larger and
+ * heavier. Each impact peels a stellar-energy stream back toward the caster to
+ * feed the Supernova meter. Purely visual.
+ */
+export interface RingBarrageConfig {
+  /** How many rings are fired (each produces its own impact). */
+  rings: number
+  /** Shortest gap between consecutive ring launches, in ms (~100). */
+  minGapMs: number
+  /** Longest gap between consecutive ring launches, in ms (~200). */
+  maxGapMs: number
+  /** Base ring radius in world units (varied per ring). */
+  size: number
+  /** Glowing ring-band core colour. */
+  ringColor: number
+  /** Translucent cosmic-dust colour (the ring's dust band + impact dust). */
+  dustColor: number
+  /** Orbiting asteroid / rocky-debris colour. */
+  asteroidColor: number
+  /** Sparkling embedded-star colour (additive). */
+  starColor: number
+  /** Soft nebula-glow / gravitational-lensing colour. */
+  glowColor: number
+  /** Stellar-energy stream colour (impact → caster, feeding the Supernova). */
+  energyColor: number
+}
+
+/**
+ * Supernova (Space's ultimate) — the reusable foundation for every large-scale
+ * cosmic Space effect (future planets/black holes/galaxies/wormholes share the
+ * same primitives: stellar formation, lensing, orbital particles, collapse,
+ * singularity). FOUR phases, timed by `chargeMs`/`explosionMs`/`collapseMs`/
+ * `impactMs` and scaled bigger/brighter/heavier by charge LEVEL (1–3):
+ *   1. Stellar formation at the CASTER — a star ignites and brightens, pulling
+ *      in dust/nebula/asteroids/starlight/plasma with visible lensing.
+ *   2. Explosion — the star goes unstable and detonates outward (plasma shell,
+ *      flash, stellar flames, nebula, shockwave, space distortion).
+ *   3. Gravitational collapse — the blast reverses, streaming material from the
+ *      caster to the TARGET, accelerating the whole way.
+ *   4. Final impact — everything crashes into the target at once (flash,
+ *      shockwave, distortion, dust, nebula, stars, debris, lingering ripples).
+ * On a successful redirect (level 2/3, server-confirmed) the target becomes a
+ * singularity for the redirect's duration: a lensing/orbiting gravity well that
+ * visibly BENDS every in-flight projectile toward it (see `GravityWell` in the
+ * projectile system) before dissolving into drifting starlight.
+ */
+export interface SupernovaConfig {
+  /** Star ignition + brightening time at the caster, ms (level 1 baseline). */
+  chargeMs: number
+  /** Outward-explosion time before the reversal begins, ms. */
+  explosionMs: number
+  /** Collapse travel time, caster → target, ms (accelerating the whole way). */
+  collapseMs: number
+  /** Final-impact burst lifetime, ms. */
+  impactMs: number
+  /** Base explosion shell radius, world units, at level 1 (scales with level). */
+  size: number
+  /** Blinding white-hot flash colour. */
+  flashColor: number
+  /** Golden stellar-flame colour. */
+  goldColor: number
+  /** Blue stellar-flame colour. */
+  blueColor: number
+  /** Nebula-cloud colour. */
+  nebulaColor: number
+  /** Cosmic-dust colour. */
+  dustColor: number
+  /** Asteroid / rocky-fragment colour. */
+  asteroidColor: number
+  /** Sparkling star-particle colour. */
+  starColor: number
+  /** Gravitational-lensing / space-distortion colour. */
+  lensColor: number
+  /** Stellar-plasma colour (charge-up streams + collapse streams). */
+  plasmaColor: number
+  /** Gravity-well ring / singularity lensing colour (levels 2/3 only). */
+  wellColor: number
+  /** Base gravity-well radius, world units, at level 1 (scales with level). */
+  wellRadius: number
+  /** Base peak projectile-bending strength at the well's edge, world units. */
+  wellStrength: number
+}
+
+/**
+ * Black Hole (Space's other ultimate) — the biggest, longest-running cosmic
+ * effect in the game, built on the same procedural-cosmic primitives as
+ * Supernova (and, like it, the reusable foundation for future large-scale
+ * Space effects: wormholes, quasars, neutron stars, galaxy-scale events).
+ * THREE independently server-timed phases:
+ *   1. Open (`blackHoleOpened`) — a singularity ignites at the ARENA CENTER
+ *      (not the caster) and grows into a dominating, ever-rotating body:
+ *      event horizon, layered accretion disk, orbiting asteroid/meteor
+ *      debris, drifting nebula, gravitational lensing, and inward-spiraling
+ *      particle streams. EVERY attack-kind cast from EVERY kingdom for its
+ *      whole duration is intercepted (`interceptIntoBlackHole` for traveling
+ *      attacks, `absorbInstantIntoBlackHole` for instant ones) instead of
+ *      landing normally. Each confirmed absorption (`blackHoleAbsorbed`)
+ *      fires a charging pulse; instability escalates near expiration.
+ *   2. Collapse (`blackHoleCollapsed`) — implosion → a brief crackling
+ *      singularity hold → (if the server names a victim) a colossal 5s
+ *      Judgment Beam with continuous escalating screen shake and victim-side
+ *      space fractures → a recovery/dissipation sequence.
+ */
+export interface BlackHoleConfig {
+  /** Time to grow from a pinprick to full size once opened, ms. */
+  growMs: number
+  /** Full event-horizon radius once grown, world units. */
+  radius: number
+  /** Near-black event-horizon colour. */
+  horizonColor: number
+  /** Blinding white-hot colour (accretion core, flashes, max instability). */
+  flashColor: number
+  /** Blue accretion-disk / stellar-gas plasma. */
+  plasmaBlue: number
+  /** Purple accretion-disk / event-horizon-energy plasma. */
+  plasmaPurple: number
+  /** Orange accretion-disk plasma. */
+  plasmaOrange: number
+  /** Rocky orbiting asteroid / broken-meteor colour. */
+  asteroidColor: number
+  /** Drifting nebula-cloud colour. */
+  nebulaColor: number
+  /** Gravitational-lensing / space-distortion colour. */
+  lensColor: number
+  /** Sparkling star-particle colour. */
+  starColor: number
+  /** How long the collapsed singularity crackles before firing (or
+   *  dissipating with no victim), ms — 2000–3000 per spec. */
+  singularityHoldMs: number
+  /** Judgment Beam charge (singularity → aimed beam) time, ms. */
+  beamChargeMs: number
+  /** Judgment Beam sustained-fire time, ms — ~5000 per spec. */
+  beamFireMs: number
+  /** Beam core width, world units (the biggest beam in the game). */
+  beamWidth: number
+}
+
+/**
+ * Orion's Belt (Space utility) — the miss/deflection half of the ability (the
+ * persistent orbiting-asteroid ring is a separate SVG layer, `OrionsBeltRing`,
+ * matching Earth's Natural Terrain). Driven by `framework.deflectByOrionsBelt`
+ * per intercepted `attackMissed` event: an incoming attack travels exactly as
+ * normal until the very last moment, then gravity bends it off — a nearby
+ * celestial stone "swings into its path" — before it deflects away, streaming
+ * stellar energy back into the Supernova meter. Every attack keeps its OWN
+ * projectile identity the whole time; this only adds the late bend + deflection
+ * dressing, so it works for any current or future attack with no per-ability
+ * code (mirrors `GravityWell`/Black Hole's interception shape).
+ */
+export interface OrionsBeltConfig {
+  /** Fraction along the attack's ORIGINAL flight where gravity takes hold and
+   *  the late bend begins (0–1, near the very end — e.g. 0.82). */
+  interceptAt: number
+  /** How far the deflection point sits from the true castle center, world
+   *  units — the "near miss" offset an intercepting stone knocks it to. */
+  deflectOffset: number
+  /** Rocky asteroid/stone colour (the intercepting body, debris). */
+  asteroidColor: number
+  /** Gravitational-ripple / lensing-distortion colour. */
+  glowColor: number
+  /** Sparkle-of-starlight colour. */
+  starColor: number
+  /** Stellar-energy stream colour (deflection point → Supernova meter). */
+  energyColor: number
+  /** Bright deflection-flash colour. */
+  flashColor: number
+}
+
+/**
+ * Cupid's Arrow (Love's medium attack) — charming on the surface, unsettling
+ * underneath. A magical bow of crystal, vines, and blossom materializes at the
+ * caster and draws an enchanted arrow that WEAVES gracefully to the target
+ * (built from short alternating-offset hops, not a rigid straight line),
+ * trailing ribbons, hearts, and petals, before dissolving into a heart sigil
+ * that fades into the "infatuated" mark. Also covers the mark's two follow-on
+ * beats: the citizen SPIRITS that skip between the two castles when it's
+ * applied/expires, and the shared-pain RIBBON that flashes whenever a share of
+ * Love's damage redirects to the infatuated kingdom. The persistent ambient
+ * aura on the infatuated castle itself is a separate SVG layer
+ * (`InfatuatedAura`, mirroring `OrionsBeltRing`), not part of this config.
+ */
+export interface CupidsArrowConfig {
+  /** Bow-summon telegraph time at the caster, ms. */
+  bowGatherMs: number
+  /** How many short weaving hops make up the arrow's flight (3–4 reads best). */
+  arrowSegments: number
+  /** Total arrow flight time, ms, across all hops. */
+  arrowDurationMs: number
+  /** Perpendicular offset of each weave hop, world units. */
+  weaveAmplitude: number
+  /** How long one citizen spirit takes to skip between the castles, ms. */
+  spiritDurationMs: number
+  goldColor: number // arrow shaft
+  crystalColor: number // heart-shaped arrowhead
+  ribbonColor: number // trailing ribbons + the shared-pain ribbon
+  heartColor: number // floating hearts
+  petalColor: number // rose petals
+  dustColor: number // sparkling magical dust
+  sigilColor: number // the heart sigil at impact / redirect flashes
+  spiritColor: number // citizen spirit glow
+}
+
+/**
+ * BFFS!!! (Love's heavy attack) — the CAST dressing. Two heart pendants
+ * materialize at the caster, orbit each other, then fly to the two selected
+ * kingdoms trailing ribbons/hearts/petals, circle each castle, and embed as
+ * friendship emblems; a ribbon then snaps taut between the two. The PERSISTENT
+ * link ribbon (swaying line + shared-damage/status flashes for the whole
+ * duration) is a separate SVG battlefield overlay (`BffsLinkLayer`), not part
+ * of this cast config. An unbreakable magical friendship.
+ */
+export interface BffsConfig {
+  /** Pendants orbit-and-gather at the caster before flying out, ms. */
+  gatherMs: number
+  /** Each pendant's flight time to its kingdom, ms. */
+  pendantDurationMs: number
+  ribbonColor: number // pink friendship ribbon
+  goldColor: number // golden magical thread
+  heartColor: number // floating hearts
+  petalColor: number // flower petals
+  dustColor: number // sparkling dust
+  emblemColor: number // the embedded friendship emblem glow
+}
+
+/**
  * A tectonic rupture (Earth's Earthquake). A heavy primary quake at the target —
  * branching glowing ground fractures, stone eruptions, rolling dust, debris, and
  * a hard screen kick — after a brief trembling buildup, then SEISMIC WAVES that
@@ -516,6 +750,14 @@ export interface EffectDefinition {
   barrage?: LightningBarrageConfig
   /** A staggered multi-impact meteor bombardment (Earth's Meteor Shower). */
   meteorShower?: MeteorShowerConfig
+  /** A relentless ring bombardment (Space's Saturn's Rings). */
+  ringBarrage?: RingBarrageConfig
+  /** A star-collapse cosmic bombardment (Space's Supernova). Driven directly by
+   *  `framework.playSupernova` (needs the server's charge level), not resolved
+   *  through the normal `playAbility` registry lookup. */
+  supernova?: SupernovaConfig
+  /** A weaving enchanted-arrow cast (Love's Cupid's Arrow). */
+  cupidsArrow?: CupidsArrowConfig
   impact?: ImpactConfig
   particles?: ParticleBurstConfig
   shake?: CameraShakeConfig

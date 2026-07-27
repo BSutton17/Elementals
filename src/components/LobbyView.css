@@ -302,6 +302,41 @@
   border-radius: 0.75rem;
 }
 
+.lobby__spectate-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.lobby__spectate-btn {
+  flex: 0 0 auto;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #cbd2e0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.lobby__spectate-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lobby__spectate-btn--on {
+  color: #0b0e16;
+  background: #9db2ff;
+  border-color: #9db2ff;
+}
+
+.lobby__spectate-hint {
+  font-size: 0.82rem;
+  color: #8b93a7;
+}
+
 .lobby__kingdom-details {
   margin-top: 1rem;
   padding: 1.25rem;

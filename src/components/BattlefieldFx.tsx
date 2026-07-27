@@ -4,22 +4,34 @@ import {
   ABILITY_EFFECTS,
   ACID_RAIN_CONFIG,
   AURA_EFFECTS,
+  BFFS_CONFIG,
+  BLACK_HOLE_CONFIG,
+  CUPIDS_ARROW_CONFIG,
   EARTHQUAKE_CONFIG,
   FROST_AURA_CONFIG,
   FROZEN_ATMOSPHERE_CONFIG,
   GASTRO_POISON_CONFIG,
+  ORIONS_BELT_CONFIG,
+  SUPERNOVA_CONFIG,
   THUNDERDOME_CONFIG,
   WIND_DEFLECTION,
 } from '../render/effects'
+import { hexToNumber } from '../render/colors'
 import { placeKingdoms } from '../game/placement'
 import { onGameEvents } from '../game/gameEvents'
+import { ABILITY_METADATA } from '../game/abilities'
 import type {
   AbilityCastEvent,
+  AttackMissedEvent,
+  BlackHoleCollapsedEvent,
+  BlackHoleOpenedEvent,
   DamageEvent,
   RawGameEvent,
+  ResourceTransferEvent,
   ShieldDestroyedEvent,
   StatusAppliedEvent,
   StatusExpiredEvent,
+  SupernovaFiredEvent,
 } from '../game/events'
 
 // Battlefield VFX layer (Epic 9). Mounts PixiJS as transparent overlays on the
@@ -50,7 +62,7 @@ function webglAvailable(): boolean {
   }
 }
 
-export function BattlefieldFx({ order }: { order: SeatOrder[] }) {
+export function BattlefieldFx({ order, tickRate = 20 }: { order: SeatOrder[]; tickRate?: number }) {
   const frontHostRef = useRef<HTMLDivElement>(null)
   const backHostRef = useRef<HTMLDivElement>(null)
   const frontRef = useRef<PixiStage | null>(null)
@@ -59,6 +71,12 @@ export function BattlefieldFx({ order }: { order: SeatOrder[] }) {
   // event handler without re-subscribing.
   const orderRef = useRef(order)
   orderRef.current = order
+  const tickRateRef = useRef(tickRate)
+  tickRateRef.current = tickRate
+  // Whether a Black Hole is currently open (between its 'blackHoleOpened' and
+  // 'blackHoleCollapsed' events) — while true, every attack-kind cast from
+  // every kingdom is intercepted instead of dispatched normally.
+  const blackHoleOpenRef = useRef(false)
 
   useEffect(() => {
     const frontHost = frontHostRef.current
@@ -107,8 +125,38 @@ export function BattlefieldFx({ order }: { order: SeatOrder[] }) {
       }
       const kingdomOf = (id: string) => seats.find((s) => s.id === id)?.kingdomId ?? null
 
+      // Pre-scan: Supernova's forced-redirect (levels 2/3, when the server's
+      // chance roll actually succeeds) shows up as `supernovaLock` statusApplied
+      // events on the BYSTANDERS it hijacked — same tick as the `supernovaFired`
+      // event, but naming them, not the victim. Correlate by (caster, tick) so
+      // the whole charge→explosion→collapse→singularity sequence can be handed
+      // to the framework as ONE continuous call, timed off its own internal
+      // phases rather than guessed from here.
+      const supernovaWellMs = new Map<string, number>()
+      for (const e of events) {
+        if (e.type !== 'statusApplied') continue
+        const applied = e as unknown as StatusAppliedEvent
+        if (applied.statusId !== 'supernovaLock') continue
+        const key = `${applied.sourceId}:${applied.tick}`
+        if (!supernovaWellMs.has(key)) {
+          supernovaWellMs.set(key, (applied.durationTicks / tickRateRef.current) * 1000)
+        }
+      }
+
+      // Pre-scan: Orion's Belt causes the server to silently drop a hit's
+      // effects on its target — the `abilityCast` that launched it still names
+      // that target normally (it doesn't know it whiffed). A same-tick
+      // `attackMissed` names exactly which (attacker, target, ability) leg of
+      // this batch should play the deflection instead of a normal impact.
+      const orionsMisses = new Set<string>()
+      for (const e of events) {
+        if (e.type !== 'attackMissed') continue
+        const missed = e as unknown as AttackMissedEvent
+        orionsMisses.add(`${missed.attackerId}:${missed.tick}:${missed.playerId}:${missed.abilityId}`)
+      }
+
       for (const event of events) {
-        dispatch(event, front, back, positionOf, kingdomOf, seats)
+        dispatch(event, front, back, positionOf, kingdomOf, seats, supernovaWellMs, blackHoleOpenRef, tickRateRef.current, orionsMisses)
       }
     })
 
@@ -137,6 +185,10 @@ function dispatch(
   positionOf: (id: string) => { x: number; y: number } | undefined,
   kingdomOf: (id: string) => string | null,
   seats: SeatOrder[],
+  supernovaWellMs: Map<string, number>,
+  blackHoleOpenRef: { current: boolean },
+  tickRate: number,
+  orionsMisses: Set<string>,
 ): void {
   switch (event.type) {
     case 'abilityCast': {
@@ -144,6 +196,39 @@ function dispatch(
       const from = positionOf(cast.casterId)
       if (!from) return
       const sourceKingdom = kingdomOf(cast.casterId)
+
+      // Supernova's whole visual is owned by the later 'supernovaFired' event
+      // (which alone carries the charge level); suppress the generic fallback
+      // bolt this event would otherwise fire.
+      if (cast.abilityId === 'supernova') return
+
+      // BFFS!!!: twin heart pendants fly to BOTH selected kingdoms, then a
+      // ribbon snaps between them. Needs both targetIds, which only this cast
+      // event carries. (The persistent link ribbon is BffsLinkLayer, driven by
+      // the bffsLink status events.)
+      if (cast.abilityId === 'bffs') {
+        const toA = cast.targetIds[0] ? positionOf(cast.targetIds[0]) : undefined
+        const toB = cast.targetIds[1] ? positionOf(cast.targetIds[1]) : undefined
+        if (toA && toB) front.framework.playBffs(from, toA, toB, BFFS_CONFIG)
+        return
+      }
+
+      // Black Hole open: EVERY attack-kind cast from EVERY kingdom (including
+      // this one) is intercepted instead of resolving normally — a traveling
+      // attack curves into it mid-flight, an instant one is generically torn
+      // apart and dragged in. Utility/ultimate self-casts are untouched.
+      if (blackHoleOpenRef.current && cast.abilityId !== 'blackHole') {
+        const meta = ABILITY_METADATA[cast.abilityId]
+        if (meta?.kind === 'attack') {
+          const fallbackColor = hexToNumber(meta.color)
+          for (const targetId of cast.targetIds) {
+            const to = positionOf(targetId)
+            if (!to) continue
+            front.framework.interceptIntoBlackHole(cast.abilityId, from, to, sourceKingdom, BLACK_HOLE_CONFIG, fallbackColor)
+          }
+          return
+        }
+      }
 
       // Earthquake: a primary rupture at the target, then seismic waves race to
       // every OTHER kingdom (the `otherEnemies` aftershock) and strike each on
@@ -178,6 +263,23 @@ function dispatch(
         if (!hasEffect && targetId === cast.casterId) continue
         const to = positionOf(targetId)
         if (!to) continue
+        // Orion's Belt: this specific leg whiffed — the attack travels exactly
+        // as normal, then gravity bends it off to a nearby stone instead of
+        // landing, streaming stellar energy back into the defender's meter.
+        // Replaces the normal impact treatment for JUST this target; any other
+        // targets in a multi-target cast still resolve normally.
+        if (orionsMisses.has(`${cast.casterId}:${cast.tick}:${targetId}:${cast.abilityId}`)) {
+          const missMeta = ABILITY_METADATA[cast.abilityId]
+          front.framework.deflectByOrionsBelt(
+            cast.abilityId,
+            from,
+            to,
+            sourceKingdom,
+            ORIONS_BELT_CONFIG,
+            hexToNumber(missMeta?.color ?? '#ffffff'),
+          )
+          continue
+        }
         // Gastro Acid leaves a cloud-less corrosion aura on each (final) target
         // for the strong Poison — bubbling acid, toxic fumes, drips — stopped
         // when the Poison expires. Keyed apart from the Corroded storm.
@@ -312,6 +414,64 @@ function dispatch(
       if (dmg.element === 'electricity') {
         front.framework.surgeThunderdome(auraKey('thunderdome', dmg.targetId))
       }
+      // Love's Cupid's Arrow: a share of Love's damage redirected onto an
+      // infatuated kingdom — the shared-pain ribbon snaps taut between them.
+      if (dmg.cause === 'infatuated') {
+        const loveAt = positionOf(dmg.sourceId)
+        const targetAt = positionOf(dmg.targetId)
+        if (loveAt && targetAt) front.framework.playSharedPainRibbon(loveAt, targetAt, CUPIDS_ARROW_CONFIG)
+      }
+      return
+    }
+    case 'resourceTransfer': {
+      // Love's Cupid's Arrow: citizen spirits skip between the two castles —
+      // outward when "infatuated" is applied (cause: the ability id) and home
+      // again when it expires naturally (cause: 'infatuated'). Both directions
+      // read straight off fromId → toId, no special-casing needed.
+      const transfer = event as unknown as ResourceTransferEvent
+      if (transfer.resource === 'citizens' && (transfer.cause === 'cupidsArrow' || transfer.cause === 'infatuated')) {
+        const from = positionOf(transfer.fromId)
+        const to = positionOf(transfer.toId)
+        if (from && to) front.framework.playCitizenSpirits(from, to, CUPIDS_ARROW_CONFIG, Math.max(1, transfer.amount))
+      }
+      return
+    }
+    case 'supernovaFired': {
+      // Space's ultimate: a star ignites at the caster, explodes, then collapses
+      // onto the target, scaled by charge level (1–3). If the pre-scan found a
+      // same-tick `supernovaLock` from this caster, the redirect actually fired
+      // (level 2/3 only) — hand its exact duration through so the singularity
+      // starts the moment the final impact lands, self-timed to match.
+      const fired = event as unknown as SupernovaFiredEvent
+      const from = positionOf(fired.playerId)
+      const to = positionOf(fired.targetId)
+      if (!from || !to) return
+      const wellMs = supernovaWellMs.get(`${fired.playerId}:${fired.tick}`) ?? 0
+      front.framework.playSupernova(from, to, SUPERNOVA_CONFIG, fired.level, wellMs)
+      return
+    }
+    case 'blackHoleOpened': {
+      // Space's other ultimate: a singularity ignites at the ARENA CENTER and
+      // opens the interception window (see the abilityCast branch above).
+      const opened = event as unknown as BlackHoleOpenedEvent
+      blackHoleOpenRef.current = true
+      const durationMs = (opened.durationTicks / tickRate) * 1000
+      front.framework.openBlackHole(BLACK_HOLE_CONFIG, durationMs)
+      return
+    }
+    case 'blackHoleAbsorbed': {
+      // One attack was swallowed — charging feedback (the running total is a
+      // separate DOM overlay driven off this same event).
+      front.framework.pulseBlackHole(BLACK_HOLE_CONFIG)
+      return
+    }
+    case 'blackHoleCollapsed': {
+      // Closes the interception window, then implosion → singularity hold →
+      // (if named) the colossal Judgment Beam → recovery.
+      const collapsed = event as unknown as BlackHoleCollapsedEvent
+      blackHoleOpenRef.current = false
+      const victimAt = collapsed.victimId ? (positionOf(collapsed.victimId) ?? null) : null
+      front.framework.collapseBlackHole(BLACK_HOLE_CONFIG, victimAt)
       return
     }
     case 'shieldDestroyed': {

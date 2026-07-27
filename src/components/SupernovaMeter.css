@@ -1,0 +1,253 @@
+/* Space's Supernova charge meter — sits above the ability buttons. Deep
+   void-violet with starlight-cyan energy; flares on level-up, pulses at max. */
+
+/* Positioned OUT of the ability-bar-wrapper's flex flow (which is already
+   `position: relative` — same anchor the Repairs & Shields panel floats
+   against) so the meter appearing/disappearing never resizes the wrapper and
+   never shrinks the arena above it. Sized as a fraction of the wrapper's own
+   already-responsive width, so it scales down in lockstep with the bar on
+   every screen/orientation without its own breakpoint math. Lower z-index
+   than `.shop-overlay` so opening the shop naturally covers it instead of the
+   two overlapping. */
+.supernova-meter {
+  --sn-violet: #5b21b6;
+  --sn-violet-lit: #8b5cf6;
+  --sn-cyan: #3ad0ff;
+  --sn-gold: #ffd76a;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  transform: translateX(-50%);
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(92%, 420px);
+  max-width: calc(100vw - 1.5rem);
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(10, 5, 24, 0.92), rgba(18, 10, 46, 0.92));
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  box-shadow:
+    0 0 12px rgba(91, 33, 182, 0.5),
+    inset 0 0 10px rgba(58, 208, 255, 0.08);
+  pointer-events: none;
+  user-select: none;
+  box-sizing: border-box;
+  z-index: 0;
+}
+
+.supernova-meter__icon {
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  color: var(--sn-violet-lit);
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.8));
+  animation: supernova-icon-spin 14s linear infinite;
+}
+
+.supernova-meter--lvl0 .supernova-meter__icon { color: #7c6aa8; filter: none; }
+
+.supernova-meter__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.supernova-meter__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.supernova-meter__title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #cbb8ff;
+  text-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
+}
+
+.supernova-meter__level { font-size: 10px; font-weight: 700; }
+
+.supernova-meter__charging {
+  color: #8a7bbf;
+  letter-spacing: 1px;
+}
+
+.supernova-meter__ready {
+  color: var(--sn-cyan);
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(58, 208, 255, 0.8);
+  animation: supernova-ready-pulse 1.4s ease-in-out infinite;
+}
+
+.supernova-meter--max .supernova-meter__ready {
+  color: var(--sn-gold);
+  text-shadow: 0 0 10px rgba(255, 215, 106, 0.9);
+}
+
+/* Track + fill */
+.supernova-meter__track {
+  position: relative;
+  height: 12px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(91, 33, 182, 0.5);
+  overflow: hidden;
+}
+
+.supernova-meter__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 7px 4px 4px 7px;
+  background: linear-gradient(90deg, #3a1a8e 0%, var(--sn-violet-lit) 55%, var(--sn-cyan) 100%);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.7);
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.supernova-meter--max .supernova-meter__fill {
+  background: linear-gradient(90deg, #7a1fd6 0%, #d94bff 45%, var(--sn-gold) 100%);
+  box-shadow: 0 0 16px rgba(255, 215, 106, 0.8);
+}
+
+/* Travelling shimmer along the filled portion. */
+.supernova-meter__fill-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: supernova-shimmer 1.8s linear infinite;
+}
+
+/* Threshold notches on the track. */
+.supernova-meter__notch {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 2px;
+  transform: translateX(-1px);
+  background: rgba(203, 184, 255, 0.35);
+}
+
+.supernova-meter__notch--lit {
+  background: rgba(58, 208, 255, 0.9);
+  box-shadow: 0 0 6px rgba(58, 208, 255, 0.9);
+}
+
+/* Level pips row (below the track edge, overlaid at the right). */
+.supernova-meter__pips {
+  position: absolute;
+  top: -1px;
+  right: 3px;
+  display: flex;
+  gap: 3px;
+  height: 100%;
+  align-items: center;
+}
+
+.supernova-meter__pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(124, 106, 168, 0.5);
+}
+
+.supernova-meter__pip--lit {
+  background: var(--sn-cyan);
+  box-shadow: 0 0 6px rgba(58, 208, 255, 0.95);
+}
+
+.supernova-meter--max .supernova-meter__pip--lit {
+  background: var(--sn-gold);
+  box-shadow: 0 0 7px rgba(255, 215, 106, 0.95);
+}
+
+/* Level-up flare: a quick bloom around the whole meter. */
+.supernova-meter--flare {
+  animation: supernova-flare 0.7s ease-out;
+}
+
+/* Fully-charged breathing glow. */
+.supernova-meter--max {
+  border-color: rgba(255, 215, 106, 0.7);
+  animation: supernova-max-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes supernova-icon-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes supernova-ready-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes supernova-shimmer {
+  0% { background-position: -50% 0; }
+  100% { background-position: 150% 0; }
+}
+
+@keyframes supernova-flare {
+  0% { box-shadow: 0 0 12px rgba(91, 33, 182, 0.5), inset 0 0 10px rgba(58, 208, 255, 0.08); }
+  30% {
+    box-shadow:
+      0 0 26px rgba(58, 208, 255, 0.95),
+      0 0 40px rgba(139, 92, 246, 0.8),
+      inset 0 0 18px rgba(58, 208, 255, 0.4);
+  }
+  100% { box-shadow: 0 0 12px rgba(91, 33, 182, 0.5), inset 0 0 10px rgba(58, 208, 255, 0.08); }
+}
+
+@keyframes supernova-max-breathe {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 215, 106, 0.55), inset 0 0 10px rgba(255, 215, 106, 0.12); }
+  50% { box-shadow: 0 0 24px rgba(255, 215, 106, 0.9), inset 0 0 16px rgba(255, 215, 106, 0.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .supernova-meter__icon,
+  .supernova-meter__ready,
+  .supernova-meter__fill-glow,
+  .supernova-meter--flare,
+  .supernova-meter--max {
+    animation: none;
+  }
+}
+
+/* Portrait / narrow phones — mirrors AbilityBar.css's own breakpoint so the
+   meter shrinks in step with the bar beneath it. */
+@media (max-width: 900px) and (orientation: portrait), (max-width: 700px) {
+  .supernova-meter {
+    gap: 7px;
+    padding: 5px 9px;
+    bottom: calc(100% + 0.4rem);
+  }
+
+  .supernova-meter__icon { font-size: 17px; }
+  .supernova-meter__title { font-size: 9px; letter-spacing: 1.5px; }
+  .supernova-meter__level { font-size: 9px; }
+  .supernova-meter__track { height: 10px; }
+}
+
+/* Short landscape (phones on their side) — very little vertical room above the
+   bar, so the meter goes compact rather than crowding the arena. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .supernova-meter {
+    gap: 6px;
+    padding: 4px 8px;
+    bottom: calc(100% + 0.3rem);
+    border-radius: 9px;
+  }
+
+  .supernova-meter__icon { font-size: 15px; }
+  .supernova-meter__title { font-size: 8px; letter-spacing: 1px; }
+  .supernova-meter__level { font-size: 8px; }
+  .supernova-meter__track { height: 8px; }
+}

@@ -19,7 +19,7 @@ export function ArsenalStep() {
     >
       <div className="howto-arsenal">
         <DemoDummyCastle
-          name="Sir Practiceton"
+          name="Fire"
           kingdomId="fire"
           color="#ff6b4a"
           hp={sandbox.dummy.hp}

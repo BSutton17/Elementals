@@ -7,6 +7,8 @@ import { type KingdomTheme } from '../game/kingdomThemes'
 import { AbilityButton } from './AbilityButton'
 import { ShopOverlay } from './ShopOverlay'
 import { FrostCoat } from './FrostCoat'
+import { SupernovaMeter } from './SupernovaMeter'
+import type { ScrambleDisplay } from './scramble/useScrambleValues'
 import './AbilityBar.css'
 
 interface AbilityState {
@@ -32,6 +34,8 @@ interface AbilityBarProps {
   nextCitizenCost: number
   nextRepairCost: number
   shieldCost: number
+  /** Seconds left on the buy-shield break cooldown (0 = ready). */
+  shieldCooldownSeconds?: number
   /** Repairs already purchased this match (capped at maxRepairs). */
   repairsUsed: number
   maxRepairs: number
@@ -41,11 +45,25 @@ interface AbilityBarProps {
   citizensPoisoned?: boolean
   /** Ice's Frozen: every action button ices over and the shop is sealed shut. */
   frozen?: boolean
+  /** Time's Half Past 12: the whole bar wobbles, jitters, and leaves temporal
+   *  afterimages while the victim's UI is scrambled (purely cosmetic; buttons
+   *  stay clickable). */
+  scrambled?: boolean
+  /** Half Past 12 randomized DISPLAY values (gold, HP, costs, …) shown in place
+   *  of the real ones while scrambled. Null when not scrambled. Cosmetic only —
+   *  the real props above still drive every affordability/cooldown decision. */
+  scramble?: ScrambleDisplay | null
+  /** Father Time's Mark is on the local player: badge every damaging attack
+   *  with a clock, since landing one resets the punishing countdown. */
+  fatherTimeMarked?: boolean
   /** Chilling Retribution is lengthening the caster's cooldowns — snowflake the
    *  cards that are on cooldown. */
   cooldownChilled?: boolean
   incomePerSecond: number
   abilities: AbilityState[]
+  /** Space only: current Supernova charge. When provided (Supernova unlocked),
+   *  the charge meter is shown above the ability buttons. */
+  supernovaMeter?: number | null
   tickRate: number
   onCastAbility: (abilityId: string, chargesToUse?: number) => void
   onUpgradeAbility?: (abilityId: string) => void
@@ -63,14 +81,19 @@ export function AbilityBar({
   nextCitizenCost,
   nextRepairCost,
   shieldCost,
+  shieldCooldownSeconds = 0,
   repairsUsed,
   maxRepairs,
   lockedOut = false,
   citizensPoisoned = false,
   frozen = false,
+  scrambled = false,
+  scramble = null,
+  fatherTimeMarked = false,
   cooldownChilled = false,
   incomePerSecond,
   abilities,
+  supernovaMeter = null,
   tickRate,
   onCastAbility,
   onUpgradeAbility,
@@ -114,10 +137,18 @@ export function AbilityBar({
       }
     })
 
-  // Format HP and shield numbers nicely
-  const formattedHp = castleHp.toLocaleString()
-  const formattedIncome = incomePerSecond.toFixed(1)
-  const formattedCurrency = Math.floor(currency)
+  // Displayed numbers — real, unless Half Past 12 is scrambling this HUD, in
+  // which case every readout churns to a random value (cosmetic only). Shield
+  // scrambles only while a shield is actually up.
+  const displayCitizens = scramble ? scramble.citizens : citizens
+  const displayShield = scramble && shieldHp > 0 ? scramble.shieldHp : shieldHp
+  // The Supernova meter scrambles the same way — only while it's actually
+  // shown (Supernova unlocked), never conjured out of nothing by the scramble.
+  const displaySupernovaMeter =
+    scramble && supernovaMeter != null ? scramble.supernovaMeter : supernovaMeter
+  const formattedHp = (scramble ? scramble.castleHp : castleHp).toLocaleString()
+  const formattedIncome = (scramble ? scramble.incomePerSecond : incomePerSecond).toFixed(1)
+  const formattedCurrency = Math.floor(scramble ? scramble.gold : currency)
 
   const themeVars = {
     '--bar-primary': theme?.primary || '#4aa3ff',
@@ -126,7 +157,11 @@ export function AbilityBar({
   } as React.CSSProperties
 
   return (
-    <div className="ability-bar-wrapper" style={themeVars} data-testid="ability-bar">
+    <div
+      className={`ability-bar-wrapper${scrambled ? ' ability-bar-wrapper--scrambled' : ''}`}
+      style={themeVars}
+      data-testid="ability-bar"
+    >
       {/* Frozen: tiny snow drifts down over the whole action bar. */}
       {frozen && (
         <div className="ability-bar__frost-snow" aria-hidden="true">
@@ -147,12 +182,17 @@ export function AbilityBar({
         nextCitizenCost={nextCitizenCost}
         nextRepairCost={nextRepairCost}
         shieldCost={shieldCost}
+        shieldCooldownSeconds={shieldCooldownSeconds}
         repairsUsed={repairsUsed}
         maxRepairs={maxRepairs}
         theme={theme}
         onBuyItem={onBuyItem}
         onClose={() => setIsShopOpen(false)}
       />
+
+      {/* Space's Supernova charge meter, above the buttons — shown only once
+          Supernova is unlocked (the parent passes a number then). */}
+      {supernovaMeter != null && <SupernovaMeter meter={displaySupernovaMeter!} />}
 
       {/* Main Bottom HUD Bar */}
       <div className="ability-bar">
@@ -188,7 +228,7 @@ export function AbilityBar({
             )}
             <span className="ability-bar__stat-icon"><IoMdPeople /></span>
             <div className="ability-bar__stat-values">
-              <span className="ability-bar__stat-val">{citizens}</span>
+              <span className="ability-bar__stat-val">{displayCitizens}</span>
               <span className="ability-bar__stat-label">Citizens</span>
             </div>
           </div>
@@ -200,7 +240,7 @@ export function AbilityBar({
               <span className="ability-bar__stat-val">{formattedHp}</span>
               {shieldHp > 0 ? (
                 <span className="ability-bar__stat-label ability-bar__stat-label--shield">
-                  <span style={{ display: 'inline-block', marginRight: '4px' }}><FaShieldAlt /></span> +{shieldHp} Shield
+                  <span style={{ display: 'inline-block', marginRight: '4px' }}><FaShieldAlt /></span> +{displayShield} Shield
                 </span>
               ) : (
                 <span className="ability-bar__stat-label">Castle HP</span>
@@ -224,6 +264,19 @@ export function AbilityBar({
               chilled={cooldownChilled}
               cost={cost}
               rechargeTicks={rechargeTicks}
+              scramble={
+                scramble
+                  ? {
+                      cost: scramble.cost(metadata.id),
+                      upgradeCost: scramble.upgradeCost(metadata.id),
+                      unlockCost: scramble.unlockCost(metadata.id),
+                      cooldown: scramble.cooldown(metadata.id),
+                      affordable: scramble.affordable(metadata.id),
+                    }
+                  : null
+              }
+              // Father Time: a clock marks the attacks that reset the countdown.
+              showFatherTimeClock={fatherTimeMarked && metadata.kind === 'attack'}
               onCast={(chargesToUse) => onCastAbility(metadata.id, chargesToUse)}
               onUnlock={onUpgradeAbility ? () => onUpgradeAbility(metadata.id) : undefined}
               onUpgrade={onUpgradeAbility ? () => onUpgradeAbility(metadata.id) : undefined}

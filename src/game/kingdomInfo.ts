@@ -17,7 +17,7 @@ export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
     },
     {
       name: 'Fountain of Youth',
-      description: 'Burns wear off faster and fire damage is reduced.',
+      description: 'All damage over time effects hurts you 15% less.',
     },
   ],
   fire: [
@@ -78,6 +78,36 @@ export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
     {
       name: "Gardener's Gift",
       description: 'Begin the game with extra citizens.',
+    },
+  ],
+  time: [
+    {
+      name: 'Longevity',
+      description: 'The longer the battle lasts, the stronger you get — your attacks and your defenses both steadily improve over time.',
+    },
+    {
+      name: 'Time is money',
+      description: 'Hiring a citizen sometimes brings a second one along for free, without raising the next hire\'s price.',
+    },
+  ],
+  space: [
+    {
+      name: 'Blast off!',
+      description: 'Start the match with extra gold in the bank.',
+    },
+    {
+      name: 'Vast Universe',
+      description: 'Your economy grows stronger the more kingdoms are targeting you.',
+    },
+  ],
+  love: [
+    {
+      name: 'Warm Welcome',
+      description: 'All citzens come at a discount.',
+    },
+    {
+      name: 'Feel the love!',
+      description: 'Whenever another kingdom heals, you receive a share of it too.',
     },
   ],
 }

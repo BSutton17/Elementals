@@ -15,7 +15,7 @@ describe('HowToPlay', () => {
     render(<HowToPlay onClose={noop} />)
     expect(screen.getByTestId('howto-page-throne')).toBeTruthy()
     expect(
-      screen.getByRole('heading', { name: /seven kingdoms\. one throne\./i }),
+      screen.getByRole('heading', { name: /kingdoms\. one throne\./i }),
     ).toBeTruthy()
     expect(hasSeenTutorial()).toBe(true)
   })

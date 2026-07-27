@@ -1,0 +1,30 @@
+/* Blip! rewind flourish — victim-only, full-screen, click-through, above the
+   battlefield. The canvas draws the temporal rings / motes / sand; the DOM
+   hourglass icon flips and rights itself over the sequence. */
+
+.blip {
+  position: fixed;
+  inset: 0;
+  z-index: 8900;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.blip__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The central hourglass, pinned over the clock field (matches the canvas
+   centre at 50% / 46%). Rotation + opacity are driven inline per frame. */
+.blip__hourglass {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  font-size: clamp(3.5rem, 12vmin, 7rem);
+  color: #f3d27a;
+  filter: drop-shadow(0 0 22px rgba(243, 210, 122, 0.8));
+  will-change: transform, opacity;
+}

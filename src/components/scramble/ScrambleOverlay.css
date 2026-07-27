@@ -1,0 +1,87 @@
+/* "Half Past 12" temporal-scramble overlay (Time). Full-screen, click-through
+   (pointer-events:none so the HUD stays usable), above the battlefield. The
+   canvas draws the clock field; two thin CSS layers add scanline glitch and a
+   temporal vignette. Everything stays low-opacity so the game reads clearly. */
+
+.scramble {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.scramble__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Faint temporal scanlines drifting down — an unstable-signal feel. */
+.scramble__glitch {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(159, 208, 255, 0.04) 0 1px,
+    transparent 1px 3px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: scramble-scan 5.5s linear infinite;
+}
+
+@keyframes scramble-scan {
+  to {
+    background-position: 0 140px;
+  }
+}
+
+/* Gold/walnut vignette that slowly hue-shifts — time bending at the edges. */
+.scramble__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 120% at 50% 50%,
+    transparent 55%,
+    rgba(217, 178, 90, 0.1) 78%,
+    rgba(61, 43, 26, 0.28) 100%
+  );
+  animation: scramble-hue 8s ease-in-out infinite;
+}
+
+@keyframes scramble-hue {
+  0%,
+  100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(-14deg);
+  }
+}
+
+/* Freeze — "time briefly stopped": a hard desync snap on the glitch + a punch
+   of contrast on the clock field, held for the 100–200ms freeze window. */
+.scramble--freeze .scramble__glitch {
+  transform: translateX(2px);
+  filter: invert(0.06) hue-rotate(20deg);
+  opacity: 0.9;
+}
+
+.scramble--freeze .scramble__canvas {
+  filter: contrast(1.15) saturate(1.2);
+}
+
+/* Restoration — ease the glitch out as the clocks collapse back to 12. */
+.scramble--restoring .scramble__glitch {
+  opacity: 0.18;
+  transition: opacity 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scramble__glitch,
+  .scramble__vignette {
+    animation: none;
+  }
+}

@@ -56,6 +56,27 @@ export const KINGDOM_THEMES: Record<string, KingdomTheme> = {
     secondary: '#a8ff78',
     dark: '#11998e',
   },
+  time: {
+    id: 'time',
+    name: 'Time',
+    primary: '#a9834e', // aged brass / brown wood
+    secondary: '#d9c39a', // clock-face beige
+    dark: '#3d2b1a', // deep walnut
+  },
+  space: {
+    id: 'space',
+    name: 'Space',
+    primary: '#5b21b6', // deep void-violet (darker than Electricity's bright purple)
+    secondary: '#3ad0ff', // starlight cyan
+    dark: '#0a0518', // near-black void
+  },
+  love: {
+    id: 'love',
+    name: 'Love',
+    primary: '#ff4d8d', // rose pink
+    secondary: '#ffd1e3', // soft blush
+    dark: '#5c1030', // deep wine
+  },
 }
 
 export function getKingdomTheme(kingdomId: string | null): KingdomTheme | null {

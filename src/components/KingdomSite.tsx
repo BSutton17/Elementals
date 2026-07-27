@@ -6,6 +6,9 @@ import { ShieldBar, DEFAULT_MAX_SHIELD, EARTH_MAX_SHIELD } from './ShieldBar'
 import { ShieldOverlay } from './ShieldOverlay'
 import { FrozenOverlay } from './FrozenOverlay'
 import { NaturalTerrainRing } from './NaturalTerrainRing'
+import { OrionsBeltRing } from './OrionsBeltRing'
+import { InfatuatedAura } from './InfatuatedAura'
+import { LoveGaloreAura } from './LoveGaloreAura'
 import { CitizenDisplay } from './CitizenDisplay'
 import { IncomeDisplay } from './IncomeDisplay'
 import type { GamePlayer } from '../game/gameState'
@@ -59,6 +62,35 @@ export function KingdomSite({
   useEffect(() => {
     if (hasNaturalTerrain) setTerrain(true)
   }, [hasNaturalTerrain])
+  // Space's Orion's Belt: a miniature system of orbiting celestial bodies
+  // surrounds the castle while the buff is active. Kept mounted through its
+  // orbital-decay deactivation, then removed (like Natural Terrain).
+  const hasOrionsBelt =
+    (player.statuses?.some((s) => s.id === 'orionsBelt') ?? false) && !player.eliminated
+  const [belt, setBelt] = useState(false)
+  useEffect(() => {
+    if (hasOrionsBelt) setBelt(true)
+  }, [hasOrionsBelt])
+  // Love's Cupid's Arrow: the "infatuated" mark — a gentle enchanted aura
+  // surrounds the castle while it lasts. Kept mounted through its fade-out
+  // deactivation, then removed (like Orion's Belt / Natural Terrain).
+  const hasInfatuated =
+    (player.statuses?.some((s) => s.id === 'infatuated') ?? false) && !player.eliminated
+  const [infatuated, setInfatuated] = useState(false)
+  useEffect(() => {
+    if (hasInfatuated) setInfatuated(true)
+  }, [hasInfatuated])
+  // Love's "Love Galore": once the ultimate REVEALS (server-synced `revealed`
+  // flag on the shield status), swirling ribbons + the ultimate icon bloom over
+  // the castle. Hidden during the stealth phase. Kept mounted through its
+  // fade-out, then removed.
+  const hasLoveGalore =
+    (player.statuses?.some((s) => s.id === 'loveGaloreShield' && s.revealed) ?? false) &&
+    !player.eliminated
+  const [loveGalore, setLoveGalore] = useState(false)
+  useEffect(() => {
+    if (hasLoveGalore) setLoveGalore(true)
+  }, [hasLoveGalore])
   // Active shield: a ring around the kingdom in its colour. Every shield is a
   // circle except Earth's ultimate (Brick Wall), which is a hexadecagon.
   const shielded = player.castle.shield > 0 && !player.eliminated
@@ -175,6 +207,27 @@ export function KingdomSite({
       {terrain && (
         <g transform="translate(0 24)">
           <NaturalTerrainRing active={hasNaturalTerrain} onExpired={() => setTerrain(false)} />
+        </g>
+      )}
+
+      {/* Orion's Belt: a miniature orbiting asteroid system protecting Space. */}
+      {belt && (
+        <g transform="translate(0 24)">
+          <OrionsBeltRing active={hasOrionsBelt} onExpired={() => setBelt(false)} />
+        </g>
+      )}
+
+      {/* Cupid's Arrow: the gentle enchanted "infatuated" aura. */}
+      {infatuated && (
+        <g transform="translate(0 24)">
+          <InfatuatedAura active={hasInfatuated} onExpired={() => setInfatuated(false)} />
+        </g>
+      )}
+
+      {/* Love Galore: the revealed ultimate — swirling ribbons + its icon. */}
+      {loveGalore && (
+        <g transform="translate(0 24)">
+          <LoveGaloreAura active={hasLoveGalore} onExpired={() => setLoveGalore(false)} />
         </g>
       )}
 

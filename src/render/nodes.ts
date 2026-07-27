@@ -33,10 +33,72 @@ export function makeTriangleNode(parent: Container): DisplayNode {
   return g as unknown as DisplayNode
 }
 
+/**
+ * A unit HEART (Love's Tough Love). Drawn white and tinted per-effect; sized
+ * around UNIT_RADIUS so it scales like the circle. Not direction-facing — a
+ * heart reads upright regardless of travel. Satisfies DisplayNode.
+ */
+export function makeHeartNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // Two top lobes + a bottom point, in local units (y-down). Cusp at top-center.
+  g.moveTo(0, -R * 0.35)
+  g.bezierCurveTo(R * 0.55, -R * 1.05, R * 1.35, -R * 0.15, 0, R * 0.95)
+  g.bezierCurveTo(-R * 1.35, -R * 0.15, -R * 0.55, -R * 1.05, 0, -R * 0.35)
+  g.fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A unit ARROW (Love's Cupid's Arrow): a slim shaft with a pointed head at the
+ * tip and fletching at the tail, all pointing along +x so a `faceDirection`
+ * projectile aims its head toward the target. White + tinted; scales like the
+ * circle. Satisfies DisplayNode.
+ */
+export function makeArrowNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // Shaft.
+  g.rect(-R * 1.4, -R * 0.12, R * 2.6, R * 0.24).fill(0xffffff)
+  // Arrowhead (triangle at the tip, +x).
+  g.poly([R * 1.9, 0, R * 1.0, -R * 0.5, R * 1.0, R * 0.5]).fill(0xffffff)
+  // Fletching (two angled flights at the tail).
+  g.poly([-R * 1.4, 0, -R * 1.9, -R * 0.5, -R * 1.1, 0]).fill(0xffffff)
+  g.poly([-R * 1.4, 0, -R * 1.9, R * 0.5, -R * 1.1, 0]).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
 /** A unit ring (hollow), used for impact shockwaves. Satisfies DisplayNode. */
 export function makeRingNode(parent: Container): DisplayNode {
   const g = new Graphics()
   g.circle(0, 0, UNIT_RADIUS).stroke({ width: 3, color: 0xffffff, alignment: 0.5 })
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A tilted, spinning planetary ring (Space's Saturn's Rings projectile). An
+ * ADDITIVE ellipse band — squashed on y so it reads as a ring seen at an angle —
+ * with a brighter inner line and a small bright "shepherd" node off to one side
+ * so its ROTATION is visible as it spins (a plain symmetric ring would look
+ * static). Drawn white and tinted per-effect; scaled uniformly by the projectile
+ * system (the y-squash is baked into the geometry). Satisfies DisplayNode.
+ */
+export function makeSaturnRingNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // Outer translucent dust band.
+  g.ellipse(0, 0, R * 1.15, R * 0.5).stroke({ width: R * 0.42, color: 0xffffff, alpha: 0.28, alignment: 0.5 })
+  // Bright inner ring line.
+  g.ellipse(0, 0, R * 1.0, R * 0.42).stroke({ width: R * 0.14, color: 0xffffff, alpha: 0.9, alignment: 0.5 })
+  // A bright shepherd fleck on the ring's edge — makes the spin read.
+  g.circle(R * 1.0, 0, R * 0.16).fill({ color: 0xffffff, alpha: 0.95 })
+  g.blendMode = 'add'
   g.visible = false
   parent.addChild(g)
   return g as unknown as DisplayNode

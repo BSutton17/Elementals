@@ -33,6 +33,19 @@ export interface DamageEvent {
   crit: boolean
   element?: string
   cause: string
+  /** A decoy number that didn't actually land (Love's "Love Galore" stealth
+   *  phase): shown to everyone EXCEPT the bearer, who wasn't really hurt. */
+  phantom?: boolean
+}
+
+export interface ResourceTransferEvent {
+  type: 'resourceTransfer'
+  tick: number
+  fromId: string
+  toId: string
+  resource: 'currency' | 'citizens'
+  amount: number
+  cause: string
 }
 
 export interface HealEvent {
@@ -63,6 +76,35 @@ export interface StatusExpiredEvent {
   statusId: string
 }
 
+export interface StatusRevealedEvent {
+  type: 'statusRevealed'
+  tick: number
+  /** The bearer whose two-phase status (Love's "Love Galore") just revealed. */
+  playerId: string
+  statusId: string
+}
+
+export interface StatusTickEvent {
+  type: 'statusTick'
+  tick: number
+  playerId: string
+  statusId: string
+  /** The bearer avoided this interval's damage by landing a damaging attack —
+   *  the countdown reset instead (Father Time's Mark). */
+  interrupted: boolean
+}
+
+export interface AttackUndoneEvent {
+  type: 'attackUndone'
+  tick: number
+  /** The Time kingdom whose last incoming attack was rewound. */
+  playerId: string
+  /** Attacker + ability of the undone attack (for the travel-attack rewind). */
+  sourceId: string
+  abilityId: string
+  removedStatusIds: string[]
+}
+
 export interface ShieldDestroyedEvent {
   type: 'shieldDestroyed'
   tick: number
@@ -74,6 +116,53 @@ export interface EliminatedEvent {
   type: 'eliminated'
   tick: number
   playerId: string
+}
+
+export interface SupernovaFiredEvent {
+  type: 'supernovaFired'
+  tick: number
+  /** The Space kingdom that fired. */
+  playerId: string
+  /** Who it hit. */
+  targetId: string
+  /** Charge level (1–3) — scales the whole battlefield sequence. */
+  level: number
+}
+
+export interface AttackMissedEvent {
+  type: 'attackMissed'
+  tick: number
+  /** The belted defender the attack whiffed against. */
+  playerId: string
+  attackerId: string
+  abilityId: string
+  cause: string
+}
+
+export interface BlackHoleOpenedEvent {
+  type: 'blackHoleOpened'
+  tick: number
+  /** The Space kingdom that opened it. */
+  playerId: string
+  durationTicks: number
+}
+
+export interface BlackHoleAbsorbedEvent {
+  type: 'blackHoleAbsorbed'
+  tick: number
+  ownerId: string
+  /** Whose attack it swallowed. */
+  attackerId: string
+  amount: number
+}
+
+export interface BlackHoleCollapsedEvent {
+  type: 'blackHoleCollapsed'
+  tick: number
+  ownerId: string
+  /** The kingdom the stored damage dumps onto, or null if nobody fed it. */
+  victimId: string | null
+  amount: number
 }
 
 /** Any event as it arrives on the wire; decoded to a typed shape per handler. */

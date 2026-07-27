@@ -27,6 +27,7 @@ describe('LobbyView', () => {
         youId="b"
         onToggleReady={noop}
         onSelectKingdom={noop}
+        onSpectate={noop}
         onStart={noop}
         onLeave={noop}
       />,
@@ -49,6 +50,7 @@ describe('LobbyView', () => {
         youId="b"
         onToggleReady={onToggleReady}
         onSelectKingdom={onSelectKingdom}
+        onSpectate={noop}
         onStart={noop}
         onLeave={onLeave}
       />,
@@ -72,6 +74,7 @@ describe('LobbyView', () => {
         youId="b"
         onToggleReady={noop}
         onSelectKingdom={noop}
+        onSpectate={noop}
         onStart={noop}
         onLeave={noop}
       />,
@@ -90,6 +93,7 @@ describe('LobbyView', () => {
         youId="b"
         onToggleReady={noop}
         onSelectKingdom={noop}
+        onSpectate={noop}
         onStart={noop}
         onLeave={noop}
       />,
@@ -108,6 +112,7 @@ describe('LobbyView', () => {
         youId="a"
         onToggleReady={noop}
         onSelectKingdom={noop}
+        onSpectate={noop}
         onStart={onStart}
         onLeave={noop}
       />,
@@ -134,6 +139,7 @@ describe('LobbyView', () => {
         youId="a"
         onToggleReady={noop}
         onSelectKingdom={noop}
+        onSpectate={noop}
         onStart={onStart}
         onLeave={noop}
       />,

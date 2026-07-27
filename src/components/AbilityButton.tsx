@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CiLock } from 'react-icons/ci'
+import { CiLock, CiClock2 } from 'react-icons/ci'
 import { FaSnowflake } from 'react-icons/fa'
 import type { ClientAbilityMetadata } from '../game/abilities'
 import { FrostCoat } from './FrostCoat'
@@ -19,6 +19,13 @@ interface AbilityButtonProps {
    *  slowed cooldown with a snowflake. */
   chilled?: boolean
   cost: number // gold cost to cast
+  /** Half Past 12 scramble (Time): when present, the card's cost/upgrade/unlock
+   *  numbers show these random values and its "affordable" LOOK follows
+   *  `affordable` — but the REAL props above still gate every click. Cosmetic. */
+  scramble?: { cost: number; upgradeCost: number; unlockCost: number; cooldown: number; affordable: boolean } | null
+  /** Father Time's Mark is active: this is a damaging attack, so badge it with a
+   *  pulsing clock — landing it resets the punishing countdown. */
+  showFatherTimeClock?: boolean
   /** Ticks until each spent charge regenerates (charge-based abilities). */
   rechargeTicks?: number[]
   onCast: (chargesToUse?: number) => void
@@ -39,6 +46,8 @@ export function AbilityButton({
   frozen = false,
   chilled = false,
   cost,
+  scramble = null,
+  showFatherTimeClock = false,
   rechargeTicks,
   onCast,
   onUnlock,
@@ -71,11 +80,30 @@ export function AbilityButton({
   const isLocked = level === 0 && metadata.kind !== 'passive'
   const canAffordUnlock = unlockCost != null && currency >= unlockCost
   // A locked card is a "buy" button: clickable whenever the unlock is affordable.
+  // REAL gating — drives the `disabled` attribute and every click. Never lies.
   const isCastingDisabled = isLocked
     ? !canAffordUnlock
     : isCooldown ||
       !enabled ||
       !canAfford ||
+      (chargeSpec != null && availableCharges === 0) ||
+      (metadata.kind === 'ultimate' && !isUltimateCharged)
+
+  // Half Past 12 scramble: the DISPLAYED cost numbers and the affordable LOOK
+  // come from the random scramble; the button still enables/casts by the REAL
+  // gating above, so a "can't afford" look never actually blocks a real buy.
+  const shownCost = scramble ? scramble.cost : effectiveCost
+  const shownUpgradeCost = scramble ? scramble.upgradeCost : upgradeCost
+  const shownUnlockCost = scramble ? scramble.unlockCost : unlockCost
+  const visualAfford = scramble ? scramble.affordable : canAfford
+  const visualAffordUnlock = scramble ? scramble.affordable : canAffordUnlock
+  // What the card LOOKS like (dim/unaffordable) — swaps the affordability term
+  // for the scramble's coin-flip while keeping cooldown/charge/ultimate reality.
+  const visualDisabled = isLocked
+    ? !visualAffordUnlock
+    : isCooldown ||
+      !enabled ||
+      !visualAfford ||
       (chargeSpec != null && availableCharges === 0) ||
       (metadata.kind === 'ultimate' && !isUltimateCharged)
 
@@ -88,7 +116,7 @@ export function AbilityButton({
       <button
         type="button"
         className={`ability-button ability-button--${metadata.element} ${
-          isCastingDisabled ? 'ability-button--disabled' : ''
+          visualDisabled ? 'ability-button--disabled' : ''
         } ${metadata.kind === 'ultimate' ? 'ability-button--ultimate' : ''}`}
         style={{ '--gradient': metadata.gradient } as React.CSSProperties}
         disabled={isCastingDisabled || frozen}
@@ -100,13 +128,21 @@ export function AbilityButton({
         {/* Ability Badge Icon */}
         <span className="ability-button__badge"><metadata.icon /></span>
 
+        {/* Father Time: a pulsing clock marks the attacks that reset the mark's
+            countdown (visual hint only). */}
+        {showFatherTimeClock && (
+          <span className="ability-button__ft-clock" aria-hidden="true">
+            <CiClock2 />
+          </span>
+        )}
+
         {/* Hotkey Tag */}
         <span className="ability-button__hotkey">{metadata.hotkey}</span>
 
         {/* Cost Tag — charge-based casts show the single-charge price. */}
         {effectiveCost > 0 && (
           <span className="ability-button__cost">
-            {effectiveCost}g{chargeSpec ? '/⚡' : ''}
+            {shownCost}g{chargeSpec ? '/⚡' : ''}
           </span>
         )}
 
@@ -137,20 +173,24 @@ export function AbilityButton({
           </span>
         )}
 
-        {/* Cooldown Overlay */}
+        {/* Cooldown Overlay. Half Past 12 scrambles the TIMER, but only on an
+            ability that is ACTUALLY on cooldown — the random 1–30s number rides
+            the real countdown and disappears when it genuinely ends. */}
         {isCooldown && (
           <div className="ability-button__cooldown-overlay">
             <svg className="ability-button__cooldown-svg" viewBox="0 0 36 36">
               <path
                 className="ability-button__cooldown-path"
                 strokeDasharray="100, 100"
-                strokeDashoffset={cooldownPercent}
+                strokeDashoffset={scramble ? (scramble.cooldown / 30) * 100 : cooldownPercent}
                 d="M18 2.0845
                   a 15.9155 15.9155 0 0 1 0 31.831
                   a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <span className="ability-button__cooldown-text">{cooldownSeconds}s</span>
+            <span className="ability-button__cooldown-text">
+              {scramble ? scramble.cooldown : cooldownSeconds}s
+            </span>
           </div>
         )}
 
@@ -169,8 +209,8 @@ export function AbilityButton({
           <div className="ability-button__locked-overlay">
             <div className="ability-button__locked-content">
               <span className="ability-button__locked-icon"><CiLock /></span>
-              {unlockCost && (
-                <span className="ability-button__unlock-cost">{unlockCost}g</span>
+              {unlockCost != null && (
+                <span className="ability-button__unlock-cost">{shownUnlockCost}g</span>
               )}
             </div>
           </div>
@@ -227,7 +267,7 @@ export function AbilityButton({
             }}
             onMouseEnter={() => setUpgradeHovered(true)}
             onMouseLeave={() => setUpgradeHovered(false)}
-            aria-label={`Upgrade ${metadata.name} for ${upgradeCost} gold`}
+            aria-label={`Upgrade ${metadata.name} for ${shownUpgradeCost} gold`}
           >
             +
           </button>
@@ -237,7 +277,7 @@ export function AbilityButton({
                 Upgrade to Level {level + 1}
               </div>
               <div className="ability-upgrade-tooltip__cost">
-                Cost: <span className="text-gold">{upgradeCost}g</span>
+                Cost: <span className="text-gold">{shownUpgradeCost}g</span>
               </div>
             </div>
           )}
@@ -259,7 +299,11 @@ export function AbilityButton({
           </div>
           
           <div className="ability-tooltip__meta">
-            {cost > 0 && <span className="ability-tooltip__cost">Cost: {cost} Gold</span>}
+            {cost > 0 && (
+              <span className="ability-tooltip__cost">
+                Cost: {scramble ? scramble.cost : cost} Gold
+              </span>
+            )}
             <span className="ability-tooltip__hotkey">Hotkey: {metadata.hotkey}</span>
           </div>
 

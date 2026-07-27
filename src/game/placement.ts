@@ -10,6 +10,10 @@ export interface KingdomPosition {
   angle: number
 }
 
+/** The arena's fixed center point (matches `placeKingdoms`'s own defaults) —
+ *  where battlefield-center effects (Space's Black Hole) are anchored. */
+export const ARENA_CENTER = { x: 500, y: 500 }
+
 /**
  * Evenly distributes `count` kingdoms on a circle of `radius` around
  * (`cx`, `cy`). The first kingdom sits at the top; the rest follow clockwise.

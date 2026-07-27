@@ -16,6 +16,8 @@ export interface GameCastle {
   nextShieldCost?: number
   /** Number of shields purchased this match (drives the fallback shield cost). */
   shieldsPurchased?: number
+  /** Ticks left on the buy-shield break cooldown (0 = ready). */
+  shieldCooldownRemaining?: number
 }
 
 export interface GameEconomy {
@@ -39,7 +41,13 @@ export interface GamePlayer {
   upgrades?: Record<string, number>
   /** Abilities the player has bought; bought = usable at base strength. */
   unlocked?: Record<string, boolean>
-  statuses?: Array<{ id: string; remainingTicks: number; stacks: number }>
+  statuses?: Array<{
+    id: string
+    remainingTicks: number
+    stacks: number
+    /** Two-phase status has revealed (Love's "Love Galore"): drives its aura. */
+    revealed?: boolean
+  }>
   /**
    * Effective cast cost per unlocked ability id, upgrade discounts applied —
    * server-derived so HUD price tags match what a cast will actually charge.
@@ -52,6 +60,12 @@ export interface GamePlayer {
    * countdown (ticks) per spent charge. Available = ability max − list length.
    */
   recharges?: Record<string, number[]>
+  /**
+   * Space's Supernova charge meter (xp). Shooting Star, Saturn's Rings, and
+   * Orion's Belt misses fill it; Supernova fires at the level it maps to
+   * (thresholds 50/150/250). 0/absent for non-Space kingdoms.
+   */
+  supernovaMeter?: number
 }
 
 export interface GameState {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
 import { ABILITY_EFFECTS } from '../render/effects'
-import type { DamageEvent, HealEvent, RawGameEvent } from '../game/events'
+import type { AttackMissedEvent, DamageEvent, HealEvent, RawGameEvent } from '../game/events'
 
 // Floating combat numbers (#265, #266). An SVG `<g>` layer that lives INSIDE the
 // battlefield's 1000×1000 viewBox, so numbers share the exact coordinate space
@@ -28,6 +28,8 @@ const MAX_ACTIVE = 40
 const RIGHT_OFFSET = 100
 /** Vertical bias so the number sits beside the castle body, not its label. */
 const VERTICAL_BIAS = 8
+/** How far above the castle Orion's Belt's "MISS" text appears (user units). */
+const MISS_VERTICAL_OFFSET = 90
 
 interface FloatingNumber {
   key: number
@@ -36,8 +38,12 @@ interface FloatingNumber {
   text: string
   color: string
   crit: boolean
-  /** Text anchor — 'start' for right-of-castle, 'end' for left-of-castle. */
-  anchor: 'start' | 'end'
+  /** Orion's Belt dodge — styled larger/glowing, centered above the castle. */
+  miss?: boolean
+  /** Love's Cupid's Arrow shared-pain redirect — styled with a heart glow. */
+  sharedPain?: boolean
+  /** Text anchor — 'start' right-of-castle, 'end' left-of-castle, 'middle' centered. */
+  anchor: 'start' | 'end' | 'middle'
 }
 
 /** A number plus how long to wait before showing it (time-to-impact). */
@@ -57,15 +63,20 @@ export interface FloatingNumbersProps {
   kingdomOf: (id: string) => string | null
   /** Kingdom id → theme colour hex. */
   colorOf: (kingdomId: string | null) => string
+  /** The local viewer's player id — phantom hits on them are hidden (Love's
+   *  "Love Galore" stealth phase: the bearer knows they weren't hurt). */
+  youId?: string | null
 }
 
-export function FloatingNumbers({ positionOf, kingdomOf, colorOf }: FloatingNumbersProps) {
+export function FloatingNumbers({ positionOf, kingdomOf, colorOf, youId }: FloatingNumbersProps) {
   const [numbers, setNumbers] = useState<FloatingNumber[]>([])
 
   // Resolvers can change identity between renders; read the latest inside the
   // event handler without re-subscribing (mirrors BattlefieldFx).
   const resolvers = useRef({ positionOf, kingdomOf, colorOf })
   resolvers.current = { positionOf, kingdomOf, colorOf }
+  const youIdRef = useRef(youId)
+  youIdRef.current = youId
 
   useEffect(() => {
     let nextKey = 0
@@ -87,6 +98,15 @@ export function FloatingNumbers({ positionOf, kingdomOf, colorOf }: FloatingNumb
       const { positionOf, kingdomOf, colorOf } = resolvers.current
 
       for (const event of events) {
+        // Love's "Love Galore" stealth: a phantom hit is a decoy shown to
+        // everyone but the bearer, who knows the damage never really landed.
+        if (
+          event.type === 'damage' &&
+          (event as unknown as DamageEvent).phantom &&
+          (event as unknown as DamageEvent).targetId === youIdRef.current
+        ) {
+          continue
+        }
         const built = buildNumber(event, positionOf, kingdomOf, colorOf, () => nextKey++)
         if (!built) continue
 
@@ -129,7 +149,7 @@ export function FloatingNumbers({ positionOf, kingdomOf, colorOf }: FloatingNumb
           y={n.y}
           fill={n.color}
           textAnchor={n.anchor}
-          className={`floating-number${n.crit ? ' floating-number--crit' : ''}`}
+          className={`floating-number${n.crit ? ' floating-number--crit' : ''}${n.miss ? ' floating-number--miss' : ''}${n.sharedPain ? ' floating-number--shared-pain' : ''}`}
         >
           {n.text}
         </text>
@@ -161,19 +181,55 @@ export function buildNumber(
     // Damage-over-time (Burn, Poison) sits on the LEFT of the castle, opposite
     // the RIGHT where direct damage + healing appear.
     const dot = isDot(dmg.cause)
+    // Love's Cupid's Arrow: a share of Love's damage redirected onto an
+    // infatuated kingdom reads as "Shared Pain" (centered above, heart-glow)
+    // rather than a plain number — it communicates the magical bond, not a
+    // separate attack.
+    const sharedPain = dmg.cause === 'infatuated'
     return {
-      number: {
-        key: nextKey(),
-        x: at.x + (dot ? -RIGHT_OFFSET : RIGHT_OFFSET),
-        y: at.y + VERTICAL_BIAS + jitter(),
-        text: String(amount),
-        color: colorOf(kingdomOf(dmg.sourceId)), // attacker's colour (#265)
-        crit: dmg.crit === true,
-        anchor: dot ? 'end' : 'start',
-      },
+      number: sharedPain
+        ? {
+            key: nextKey(),
+            x: at.x,
+            y: at.y - MISS_VERTICAL_OFFSET,
+            text: 'Shared Pain',
+            color: '#ff6fa8',
+            crit: false,
+            sharedPain: true,
+            anchor: 'middle',
+          }
+        : {
+            key: nextKey(),
+            x: at.x + (dot ? -RIGHT_OFFSET : RIGHT_OFFSET),
+            y: at.y + VERTICAL_BIAS + jitter(),
+            text: String(amount),
+            color: colorOf(kingdomOf(dmg.sourceId)), // attacker's colour (#265)
+            crit: dmg.crit === true,
+            anchor: dot ? 'end' : 'start',
+          },
       delayMs: impactDelay(dmg.cause),
       targetId: dmg.targetId,
       dot,
+    }
+  }
+  if (event.type === 'attackMissed') {
+    const missed = event as unknown as AttackMissedEvent
+    const at = positionOf(missed.playerId)
+    if (!at) return null
+    return {
+      number: {
+        key: nextKey(),
+        x: at.x,
+        y: at.y - MISS_VERTICAL_OFFSET,
+        text: 'MISS',
+        color: '#8be3ff',
+        crit: false,
+        miss: true,
+        anchor: 'middle',
+      },
+      delayMs: abilityImpactDelay(missed.abilityId),
+      targetId: missed.playerId,
+      dot: false,
     }
   }
   if (event.type === 'heal') {
@@ -216,7 +272,12 @@ function isDot(cause: string | undefined): boolean {
 function impactDelay(cause: string | undefined): number {
   if (!cause) return 0
   const i = cause.indexOf(':')
-  const abilityId = i >= 0 ? cause.slice(i + 1) : cause
+  return abilityImpactDelay(i >= 0 ? cause.slice(i + 1) : cause)
+}
+
+/** Time-to-impact for a bare ability id (a beam's charge-up, else a
+ *  projectile's travel time) — 0 for instant/unregistered abilities. */
+function abilityImpactDelay(abilityId: string): number {
   const effect = ABILITY_EFFECTS[abilityId]
   if (!effect) return 0
   if (effect.beam) return effect.beam.chargeMs
