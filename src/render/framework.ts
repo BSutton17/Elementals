@@ -129,6 +129,21 @@ function ringPoint(center: Vec2, radius: number): Vec2 {
   return { x: center.x + Math.cos(a) * radius, y: center.y + Math.sin(a) * radius }
 }
 
+/** `through` pushed a further `extra` world units along the ray `from → through`
+ *  — an endpoint an effect overshoots to instead of stopping at its target. */
+function beyond(from: Vec2, through: Vec2, extra: number): Vec2 {
+  const dx = through.x - from.x
+  const dy = through.y - from.y
+  const dist = Math.hypot(dx, dy)
+  if (dist === 0) return { x: through.x, y: through.y + extra }
+  return { x: through.x + (dx / dist) * extra, y: through.y + (dy / dist) * extra }
+}
+
+/** How far past the victim's castle the Judgment Beam carries. Kingdoms sit 340
+ *  units out from the arena centre on a 1000×1000 field, so 420 more clears the
+ *  far edge from every angle — the beam always leaves the battlefield. */
+const JUDGMENT_BEAM_OVERSHOOT = 420
+
 /** Supernova's level→scale multiplier (index by charge level 1–3). A level 3
  *  cast should "briefly dominate the battlefield"; level 1 stays comparatively
  *  restrained. Index 0 is unused (level is always clamped to at least 1). */
@@ -1373,6 +1388,11 @@ export class AnimationFramework {
    * screen shake, and the victim's surroundings tearing apart throughout.
    */
   private fireJudgmentBeam(at: Vec2, victimAt: Vec2, cfg: BlackHoleConfig): void {
+    // The beam PUNCHES THROUGH the victim and carries on off the field, so its
+    // endpoint is the victim pushed further along the firing ray — not a scaled
+    // coordinate. (Doubling `y` only overshot for kingdoms *below* the
+    // singularity; for the ones at the top of the arena a doubled — still
+    // small — y landed short of the castle, stopping the beam before it.)
     this.beams.spawn(
       {
         chargeMs: cfg.beamChargeMs,
@@ -1387,9 +1407,10 @@ export class AnimationFramework {
         emberColor: cfg.starColor,
       },
       at,
-      { x: victimAt.x, y: victimAt.y * 2},
+      beyond(at, victimAt, JUDGMENT_BEAM_OVERSHOOT),
     )
-    this.pulseBeamRings(at, victimAt, cfg, cfg.beamChargeMs + cfg.beamFireMs)
+    // Rings ride the same line, so they travel past the castle with the beam.
+    this.pulseBeamRings(at, beyond(at, victimAt, JUDGMENT_BEAM_OVERSHOOT), cfg, cfg.beamChargeMs + cfg.beamFireMs)
     this.continuousBeamShake(cfg.beamFireMs, cfg.beamFireMs, cfg.beamChargeMs)
     // The instant the beam fires, the whole screen flashes white for a split
     // second — one giant white particle covering the entire arena.

@@ -148,6 +148,18 @@ export async function selectKingdom(kingdom: KingdomId): Promise<void> {
   if (!res.ok) setState({ error: res.error?.message ?? 'Cannot pick that kingdom' })
 }
 
+/**
+ * Sends the player's whole perk selection (0–2 ids). The server validates and
+ * broadcasts it, so the UI renders from the authoritative lobby state rather
+ * than a local copy.
+ */
+export async function selectPerks(perks: readonly string[]): Promise<void> {
+  const res = (await socket.emitWithAck('lobby:selectPerks', {
+    perks: [...perks],
+  })) as Ack
+  if (!res.ok) setState({ error: res.error?.message ?? 'Cannot pick that perk' })
+}
+
 /** Opt this seat out of playing — watch the match as a spectator instead. */
 export async function spectate(): Promise<void> {
   await socket.emitWithAck('lobby:selectKingdom', { kingdom: 'spectator' })

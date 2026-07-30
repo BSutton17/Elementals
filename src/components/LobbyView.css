@@ -56,7 +56,8 @@
   margin-top: auto;
 }
 
-/* Desktop / tablet: use the extra width — full-width, two-column body. */
+/* Desktop / tablet: use the extra width — full-width, three-column body
+   (roster | kingdom | perks), each column scrolling on its own. */
 @media (min-width: 48rem) {
   .lobby {
     padding: 2rem 3rem;
@@ -68,12 +69,22 @@
   }
   .lobby__players {
     flex: 2;
+    min-width: 0;
   }
   .lobby__kingdoms {
     flex: 3;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
+  }
+  .lobby__perks {
+    flex: 2;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
   }
 }
 
@@ -100,6 +111,14 @@
     flex-direction: column;
     min-height: 0;
   }
+  .lobby__perks {
+    flex: 1.1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+  }
   .lobby__kingdom-details {
     margin-top: 0.5rem;
     padding: 0.75rem;
@@ -107,6 +126,27 @@
   .lobby__kingdom-btn {
     padding: 0.45rem;
     font-size: 0.8rem;
+  }
+  /* Short screens: perk cards drop to a single compact line each. */
+  .lobby__perk-grid {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+  .lobby__perk-btn {
+    padding: 0.4rem 0.5rem;
+    gap: 0.45rem;
+  }
+  .lobby__perk-icon {
+    font-size: 1rem;
+  }
+  .lobby__perk-name {
+    font-size: 0.78rem;
+  }
+  .lobby__perk-desc {
+    font-size: 0.68rem;
+  }
+  .lobby__perk-hint {
+    font-size: 0.7rem;
   }
   .lobby__heading {
     margin-bottom: 0.4rem;
@@ -167,6 +207,11 @@
     padding: 0.6rem 0.75rem;
     font-size: 0.9rem;
   }
+  /* Narrow phones: one perk per row, so the description never wraps to a
+     cramped two-word column. */
+  .lobby__perk-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .lobby__heading {
@@ -194,11 +239,14 @@
   gap: 0.5rem;
 }
 
+/* Name on the left, perks + kingdom + ready on the right — wrapping onto a
+   second line rather than squashing when the roster column is narrow. */
 .lobby__player {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
   padding: 0.75rem 1rem;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -212,8 +260,11 @@
 .lobby__name {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  min-width: 0;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .lobby__tag {
@@ -235,7 +286,9 @@
 .lobby__meta {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
+  margin-left: auto;
   font-size: 0.8rem;
 }
 
@@ -250,6 +303,97 @@
 .lobby__ready--on {
   color: #4ade80;
   font-weight: 700;
+}
+
+/* ---- Perk chips shown beside a player's name in the roster ---- */
+
+.lobby__perk-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.lobby__perk-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--p);
+  background: color-mix(in srgb, var(--p) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--p) 45%, transparent);
+  border-radius: 0.4rem;
+}
+
+/* ---- Perk picker ---- */
+
+.lobby__perk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.5rem;
+}
+
+.lobby__perk-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  text-align: left;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.lobby__perk-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.lobby__perk-btn--selected {
+  border-color: var(--p);
+  box-shadow: inset 0 0 0 1px var(--p);
+  background: color-mix(in srgb, var(--p) 16%, transparent);
+}
+
+.lobby__perk-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.lobby__perk-icon {
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  color: var(--p);
+}
+
+.lobby__perk-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.lobby__perk-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.lobby__perk-desc {
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: #8b93a7;
+}
+
+.lobby__perk-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  color: #8b93a7;
 }
 
 .lobby__kingdom-grid {
@@ -476,6 +620,14 @@
 
 .lobby__ready-btn--on {
   background: linear-gradient(120deg, #4ade80, #22c55e);
+}
+
+/* Locked until a kingdom AND a full perk set are chosen; the label says which. */
+.lobby__ready-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .lobby__leave-btn {

@@ -32,6 +32,8 @@ export interface GamePlayer {
   id: string
   name: string
   kingdomId: string | null
+  /** Lobby-chosen perk ids (see game/perks.ts); fixed for the whole match. */
+  perks?: string[]
   castle: GameCastle
   economy: GameEconomy
   /** The player this kingdom is currently targeting, or null. */

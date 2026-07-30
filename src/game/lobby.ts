@@ -8,6 +8,8 @@ export interface LobbyPlayer {
   id: string
   name: string
   kingdomId: string | null
+  /** Chosen perk ids (see game/perks.ts); absent until they start picking. */
+  perks?: string[]
   ready: boolean
   connected: boolean
   socketId: string | null

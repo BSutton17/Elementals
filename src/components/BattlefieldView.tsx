@@ -21,6 +21,7 @@ import { DustBunniesLayer } from './DustBunniesLayer'
 import { AbilityBar } from './AbilityBar'
 import { useScrambleValues } from './scramble/useScrambleValues'
 import { getAbilitiesForKingdom, getUpgradeCost } from '../game/abilities'
+import { unlockCostFor } from '../game/perks'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
 import type { GamePlayer } from '../game/gameState'
 import type { LobbyMatch } from '../game/lobby'
@@ -441,9 +442,11 @@ export function BattlefieldView({
             // the base cost until the first sync arrives.
             const cost = you.abilityCosts?.[metadata.id] ?? metadata.baseCost
             const upgradeCost = isUnlocked ? getUpgradeCost(metadata.id, tier) : null
+            // "Great Merchants" discounts the unlock price — apply it here so
+            // the tag (and its affordability check) match the server's bill.
             const unlockCost = isUnlocked
               ? undefined
-              : metadata.unlockCost ?? Math.ceil(cost * 0.5)
+              : unlockCostFor(metadata.unlockCost ?? Math.ceil(cost * 0.5), you.perks)
             // Charge-based abilities: each spent charge regenerates on its own
             // synced countdown; available = max − recharging.
             const rechargeTicks = metadata.charges

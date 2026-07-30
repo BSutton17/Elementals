@@ -5,6 +5,13 @@ import { KINGDOMS, type KingdomId } from '../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { MIN_PLAYERS_TO_START, type LobbyMatch } from '../game/lobby'
+import {
+  PERKS,
+  PERKS_PER_PLAYER,
+  hasFullPerkSelection,
+  resolvePerks,
+  togglePerk,
+} from '../game/perks'
 import './LobbyView.css'
 
 interface LobbyViewProps {
@@ -12,9 +19,34 @@ interface LobbyViewProps {
   youId: string | null
   onToggleReady: () => void
   onSelectKingdom: (kingdom: KingdomId) => void
+  onSelectPerks: (perks: string[]) => void
   onSpectate: () => void
   onStart: () => void
   onLeave: () => void
+}
+
+/** A player's chosen perks, as icon chips beside their name in the roster. */
+function PerkChips({ perks }: { perks: string[] | undefined }) {
+  const chosen = resolvePerks(perks)
+  if (chosen.length === 0) return null
+  return (
+    <span className="lobby__perk-chips">
+      {chosen.map((p) => {
+        const Icon = p.icon
+        return (
+          <span
+            key={p.id}
+            className="lobby__perk-chip"
+            style={{ '--p': p.color } as CSSProperties}
+            title={`${p.name} — ${p.description}`}
+            aria-label={p.name}
+          >
+            <Icon aria-hidden />
+          </span>
+        )
+      })}
+    </span>
+  )
 }
 
 /** The selected kingdom's passives and ability lineup (no prices). */
@@ -70,6 +102,7 @@ export function LobbyView({
   youId,
   onToggleReady,
   onSelectKingdom,
+  onSelectPerks,
   onSpectate,
   onStart,
   onLeave,
@@ -79,12 +112,25 @@ export function LobbyView({
   const isReady = me?.ready ?? false
   const isSpectator = me?.spectator === true
   const isHost = youId != null && youId === match.hostId
+  const myPerks = me?.perks ?? []
+  const perksFull = myPerks.length >= PERKS_PER_PLAYER
   // Spectators don't gate the start and aren't counted as players.
   const connected = match.players.filter((p) => p.connected && !p.spectator)
   const enoughPlayers = connected.length >= MIN_PLAYERS_TO_START
   const allHaveKingdom = connected.every((p) => p.kingdomId !== null)
+  const allHavePerks = connected.every((p) => hasFullPerkSelection(p.perks))
   const allReady = connected.every((p) => p.ready)
-  const canStart = enoughPlayers && allHaveKingdom && allReady
+  const canStart = enoughPlayers && allHaveKingdom && allHavePerks && allReady
+  // The same gate the server enforces on `lobby:ready`: a kingdom and a full
+  // perk set. Spectators bring neither and may ready up freely.
+  const canReady =
+    isSpectator || (me?.kingdomId != null && hasFullPerkSelection(me?.perks))
+  const readyBlocker =
+    me?.kingdomId == null
+      ? 'Pick a kingdom first'
+      : `Pick ${PERKS_PER_PLAYER - myPerks.length} more perk${
+          PERKS_PER_PLAYER - myPerks.length === 1 ? '' : 's'
+        }`
   // The kingdom-playing seats are capped; once full, only spectating is left.
   const maxActive = match.maxActivePlayers ?? 7
   const activeCount = match.players.filter((p) => !p.spectator && p.kingdomId !== null).length
@@ -97,7 +143,9 @@ export function LobbyView({
       ? `Need ${MIN_PLAYERS_TO_START}+ players`
       : !allHaveKingdom
         ? 'Everyone must pick a kingdom'
-        : 'Everyone must ready up'
+        : !allHavePerks
+          ? `Everyone must pick ${PERKS_PER_PLAYER} perks`
+          : 'Everyone must ready up'
   const kingdomLabel = (id: string | null) =>
     KINGDOMS.find((k) => k.id === id)?.label ?? null
 
@@ -131,6 +179,7 @@ export function LobbyView({
                 {p.id === match.hostId && <span className="lobby__tag lobby__tag--host">Host</span>}
               </span>
               <span className="lobby__meta">
+                <PerkChips perks={p.perks} />
                 {kingdomLabel(p.kingdomId) && (
                   <span className="lobby__kingdom">{kingdomLabel(p.kingdomId)}</span>
                 )}
@@ -195,6 +244,52 @@ export function LobbyView({
           </p>
         )}
       </section>
+
+      <section className="lobby__perks" aria-label="Choose your perks">
+        <h2 className="lobby__heading">
+          Perks{' '}
+          <span className="lobby__count">
+            {myPerks.length}/{PERKS_PER_PLAYER}
+          </span>
+        </h2>
+        {isSpectator ? (
+          <p className="lobby__kingdom-hint">
+            Spectators don't bring perks into the match.
+          </p>
+        ) : (
+          <>
+            <div className="lobby__perk-grid">
+              {PERKS.map((perk) => {
+                const selected = myPerks.includes(perk.id)
+                const Icon = perk.icon
+                return (
+                  <button
+                    key={perk.id}
+                    type="button"
+                    className={`lobby__perk-btn${selected ? ' lobby__perk-btn--selected' : ''}`}
+                    style={{ '--p': perk.color } as CSSProperties}
+                    aria-pressed={selected}
+                    // Once two are picked, the rest lock until one is dropped.
+                    disabled={perksFull && !selected}
+                    onClick={() => onSelectPerks(togglePerk(myPerks, perk.id))}
+                  >
+                    <Icon className="lobby__perk-icon" aria-hidden />
+                    <span className="lobby__perk-text">
+                      <span className="lobby__perk-name">{perk.name}</span>
+                      <span className="lobby__perk-desc">{perk.description}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="lobby__perk-hint">
+              {perksFull
+                ? 'Locked in — tap a perk to swap it out.'
+                : `Pick ${PERKS_PER_PLAYER - myPerks.length} more. Perks stack with your kingdom's passives and abilities.`}
+            </p>
+          </>
+        )}
+      </section>
       </div>
 
       <div className="lobby__footer">
@@ -213,9 +308,11 @@ export function LobbyView({
         <button
           type="button"
           className={`lobby__ready-btn${isReady ? ' lobby__ready-btn--on' : ''}`}
+          disabled={!canReady}
+          title={canReady ? undefined : readyBlocker}
           onClick={onToggleReady}
         >
-          {isReady ? "I'm Ready" : 'Ready Up'}
+          {isReady ? "I'm Ready" : canReady ? 'Ready Up' : readyBlocker}
         </button>
         <button type="button" className="lobby__leave-btn" onClick={onLeave}>
           Leave
