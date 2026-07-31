@@ -12,6 +12,7 @@ import { RiEarthquakeFill, RiSnowflakeFill, RiRewindStartFill } from 'react-icon
 import { CiClock2 } from 'react-icons/ci'
 import { CgSandClock } from 'react-icons/cg'
 import { LiaUserTimesSolid } from 'react-icons/lia'
+import { GiCardJoker, GiJesterHat, GiTopHat, GiBalloons, GiClown, GiSunbeams, GiSunrise, GiSunRadiations, GiCandleLight, GiHolyGrail, GiNightSky, GiRaven, GiMoonBats, GiShadowFollower, GiEclipse } from 'react-icons/gi'
 
 export interface ClientAbilityMetadata {
   id: string
@@ -23,22 +24,13 @@ export interface ClientAbilityMetadata {
   color: string // theme color hex
   gradient: string // CSS gradient for buttons
   icon: IconType // react-icons component rendered on the ability card
-  baseCost: number
-  /** Explicit unlock price; when omitted, unlocking costs 50% of baseCost. */
-  unlockCost?: number
-  upgradeCosts: number[] // costs for level 0->1, 1->2, 2->3, etc.
   /**
-   * Charge-based casts (Lightning Barrage): the ability owns a pool of `max`
-   * charges. The card shows three mini cast buttons (spend 1/2/3), priced at
-   * costPerCharge each; damageByCharges is total damage indexed by charges
-   * spent. Spent charges regenerate independently (~rechargeSeconds apart).
+   * Charge-based casts (Lightning Barrage): the card shows mini cast buttons
+   * for spending 1/2/3 charges. This flag only says the ability HAS charges —
+   * the pool size, per-charge price, damage table, and regen cadence are all
+   * server-derived (`GamePlayer.abilityPrices[id].charges`).
    */
-  charges?: {
-    max: number
-    costPerCharge: number
-    damageByCharges: number[]
-    rechargeSeconds: number
-  }
+  charges?: true
 }
 
 export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
@@ -53,8 +45,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#4aa3ff',
     gradient: 'linear-gradient(135deg, #1e3c72, #2a5298, #4aa3ff)',
     icon: PiDropFill,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 400],
   },
   waterfall: {
     id: 'waterfall',
@@ -66,8 +56,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#4aa3ff',
     gradient: 'linear-gradient(135deg, #2b5876, #4e4376, #4aa3ff)',
     icon: BsWater,
-    baseCost: 250,
-    upgradeCosts: [200, 300, 350, 400],
   },
   flood: {
     id: 'flood',
@@ -79,8 +67,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#4aa3ff',
     gradient: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)',
     icon: MdFlood,
-    baseCost: 325,
-    upgradeCosts: [250, 300, 400, 500],
   },
   fluidAssimilation: {
     id: 'fluidAssimilation',
@@ -92,8 +78,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#4aa3ff',
     gradient: 'linear-gradient(135deg, #2193b0, #6dd5ed)',
     icon: FaBottleWater,
-    baseCost: 175,
-    upgradeCosts: [300, 400],
   },
   riptide: {
     id: 'riptide',
@@ -105,8 +89,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#4aa3ff',
     gradient: 'linear-gradient(135deg, #00c6ff, #0072ff)',
     icon: GiWaveSurfer,
-    baseCost: 1000,
-    upgradeCosts: [],
   },
 
   // Fire Abilities
@@ -120,8 +102,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff6b4a',
     gradient: 'linear-gradient(135deg, #870000, #190000, #ff6b4a)',
     icon: PiFireFill,
-    baseCost: 100,
-    upgradeCosts: [150, 200, 300],
   },
   scorchingSun: {
     id: 'scorchingSun',
@@ -133,8 +113,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff6b4a',
     gradient: 'linear-gradient(135deg, #f12711, #f5af19)',
     icon: FaSun,
-    baseCost: 250,
-    upgradeCosts: [300, 400, 550, 600],
   },
   firenado: {
     id: 'firenado',
@@ -146,8 +124,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff6b4a',
     gradient: 'linear-gradient(135deg, #f857a6, #ff5858)',
     icon: TbTornado,
-    baseCost: 350,
-    upgradeCosts: [300, 350, 400, 500],
   },
   heatWave: {
     id: 'heatWave',
@@ -159,8 +135,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff6b4a',
     gradient: 'linear-gradient(135deg, #ff9966, #ff5e62)',
     icon: TbTemperatureMinusFilled,
-    baseCost: 100,
-    upgradeCosts: [200, 350],
   },
   blazingDetermination: {
     id: 'blazingDetermination',
@@ -172,8 +146,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff6b4a',
     gradient: 'linear-gradient(135deg, #e52d27, #b31217)',
     icon: GiFireDash,
-    baseCost: 650,
-    upgradeCosts: [350, 450],
   },
 
   // Air Abilities
@@ -187,8 +159,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#b7c9ff',
     gradient: 'linear-gradient(135deg, #4b6cb7, #182848)',
     icon: PiWindFill,
-    baseCost: 125,
-    upgradeCosts: [150, 250, 400],
   },
   hurricane: {
     id: 'hurricane',
@@ -200,8 +170,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#b7c9ff',
     gradient: 'linear-gradient(135deg, #83a4d4, #b6fbff)',
     icon: FaHurricane,
-    baseCost: 350,
-    upgradeCosts: [200, 300, 450, 600],
   },
   thickFog: {
     id: 'thickFog',
@@ -213,8 +181,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#b7c9ff',
     gradient: 'linear-gradient(135deg, #6190e8, #a7bfe8)',
     icon: WiFog,
-    baseCost: 400,
-    upgradeCosts: [250, 400, 600, 800],
   },
   birdsEyeView: {
     id: 'birdsEyeView',
@@ -226,8 +192,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#b7c9ff',
     gradient: 'linear-gradient(135deg, #2b5876, #4e4376)',
     icon: PiEyeFill,
-    baseCost: 150,
-    upgradeCosts: [200, 350],
   },
   dustBunnies: {
     id: 'dustBunnies',
@@ -239,8 +203,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#b7c9ff',
     gradient: 'linear-gradient(135deg, #3a7bd5, #3a6073)',
     icon: SiBunnydotnet,
-    baseCost: 800,
-    upgradeCosts: [],
   },
 
   // Earth Abilities
@@ -254,8 +216,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#c9a56b',
     gradient: 'linear-gradient(135deg, #3E5151, #DECBA4)',
     icon: GiStonePile,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 400],
   },
   meteorShower: {
     id: 'meteorShower',
@@ -267,8 +227,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#c9a56b',
     gradient: 'linear-gradient(135deg, #ba8b02, #181818)',
     icon: PiMeteorFill,
-    baseCost: 225,
-    upgradeCosts: [200, 250, 350, 500],
   },
   earthquake: {
     id: 'earthquake',
@@ -280,8 +238,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#c9a56b',
     gradient: 'linear-gradient(135deg, #42275a, #734b6d)',
     icon: RiEarthquakeFill,
-    baseCost: 500,
-    upgradeCosts: [500, 600, 700, 800],
   },
   naturalTerrain: {
     id: 'naturalTerrain',
@@ -293,8 +249,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#c9a56b',
     gradient: 'linear-gradient(135deg, #513B3C, #DECBA4)',
     icon: FaMountain,
-    baseCost: 200,
-    upgradeCosts: [250, 400],
   },
   brickWall: {
     id: 'brickWall',
@@ -306,8 +260,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#c9a56b',
     gradient: 'linear-gradient(135deg, #603813, #b29f94)',
     icon: GiDefensiveWall,
-    baseCost: 1000,
-    upgradeCosts: [],
   },
 
   // Electricity Abilities
@@ -321,8 +273,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #f9d423, #ff4e50)',
     icon: PiLightningFill,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 300],
   },
   lightningBarrage: {
     id: 'lightningBarrage',
@@ -334,15 +284,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #e1eec3, #f05053)',
     icon: GiLightningFlame,
-    baseCost: 80,
-    unlockCost: 100,
-    upgradeCosts: [200, 300, 400, 500],
-    charges: {
-      max: 3,
-      costPerCharge: 80,
-      damageByCharges: [200, 410, 650],
-      rechargeSeconds: 3,
-    },
+    charges: true,
   },
   thunderdome: {
     id: 'thunderdome',
@@ -354,8 +296,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #360033, #0b8793)',
     icon: GiLightningDome,
-    baseCost: 350,
-    upgradeCosts: [250, 300, 400, 600],
   },
   hack: {
     id: 'hack',
@@ -367,8 +307,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #000000, #53346d)',
     icon: TbDeviceLaptop,
-    baseCost: 350,
-    upgradeCosts: [300, 500],
   },
   thunderingFate: {
     id: 'thunderingFate',
@@ -380,8 +318,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ffd24a',
     gradient: 'linear-gradient(135deg, #f7ff00, #db36a4)',
     icon: GiThunderSkull,
-    baseCost: 750,
-    upgradeCosts: [],
   },
 
   // Ice Abilities
@@ -395,8 +331,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #1c92d2, #f2fcfe)',
     icon: RiSnowflakeFill,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 400],
   },
   floodOfFrost: {
     id: 'floodOfFrost',
@@ -408,8 +342,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #36d1dc, #5b86e5)',
     icon: FaIcicles,
-    baseCost: 250,
-    upgradeCosts: [200, 300, 450, 600],
   },
   freezeToTheCore: {
     id: 'freezeToTheCore',
@@ -421,8 +353,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #00c6ff, #0072ff)',
     icon: GiMeltingIceCube,
-    baseCost: 400,
-    upgradeCosts: [300, 450, 600, 700],
   },
   snowman: {
     id: 'snowman',
@@ -434,8 +364,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)',
     icon: FaSnowman,
-    baseCost: 200,
-    upgradeCosts: [300, 450],
   },
   blizzard: {
     id: 'blizzard',
@@ -447,8 +375,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#8fe3ff',
     gradient: 'linear-gradient(135deg, #2193b0, #6dd5ed)',
     icon: GiSnowing,
-    baseCost: 650,
-    upgradeCosts: [],
   },
 
   // Nature Abilities
@@ -462,8 +388,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#6bd88a',
     gradient: 'linear-gradient(135deg, #11998e, #38ef7d)',
     icon: PiBiohazardFill,
-    baseCost: 150,
-    upgradeCosts: [200, 250, 300],
   },
   acidRain: {
     id: 'acidRain',
@@ -475,8 +399,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#6bd88a',
     gradient: 'linear-gradient(135deg, #a8ff78, #78ffd6)',
     icon: TbCloudRain,
-    baseCost: 250,
-    upgradeCosts: [200, 300, 400, 500],
   },
   gastroAcid: {
     id: 'gastroAcid',
@@ -488,8 +410,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#6bd88a',
     gradient: 'linear-gradient(135deg, #56ab2f, #a8ff78)',
     icon: PiSkullFill,
-    baseCost: 400,
-    upgradeCosts: [250, 400, 500, 700],
   },
   poisonApple: {
     id: 'poisonApple',
@@ -501,8 +421,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#6bd88a',
     gradient: 'linear-gradient(135deg, #ffe259, #ffa751)',
     icon: GiAppleCore,
-    baseCost: 200,
-    upgradeCosts: [250, 400],
   },
   toxicGas: {
     id: 'toxicGas',
@@ -514,8 +432,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#6bd88a',
     gradient: 'linear-gradient(135deg, #00b4db, #0083b0)',
     icon: GiPoisonGas,
-    baseCost: 800,
-    upgradeCosts: [],
   },
 
   // Time Abilities (grandfather-clock theme: brown & beige)
@@ -529,8 +445,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#a9834e',
     gradient: 'linear-gradient(135deg, #3d2b1a, #7a5a34, #d9c39a)',
     icon: CiClock2,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 400],
   },
   halfPassed12: {
     id: 'halfPassed12',
@@ -542,8 +456,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#a9834e',
     gradient: 'linear-gradient(135deg, #5c4326, #a9834e)',
     icon: GiTimeSynchronization,
-    baseCost: 250,
-    upgradeCosts: [200, 300, 400, 500],
   },
   fatherTime: {
     id: 'fatherTime',
@@ -555,8 +467,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#a9834e',
     gradient: 'linear-gradient(135deg, #2e2013, #8b5a2b)',
     icon: LiaUserTimesSolid,
-    baseCost: 400,
-    upgradeCosts: [250, 400, 500, 600],
   },
   blip: {
     id: 'blip',
@@ -568,8 +478,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#a9834e',
     gradient: 'linear-gradient(135deg, #7a5a34, #d9c39a)',
     icon: CgSandClock,
-    baseCost: 200,
-    upgradeCosts: [300, 400],
   },
   backToTheFuture: {
     id: 'backToTheFuture',
@@ -581,8 +489,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#a9834e',
     gradient: 'linear-gradient(135deg, #3d2b1a, #b08d5a)',
     icon: RiRewindStartFill,
-    baseCost: 1000,
-    upgradeCosts: [1000, 1500],
   },
 
   // Space Abilities (dark purple & black) — the bully. Three abilities feed a
@@ -598,8 +504,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#5b21b6',
     gradient: 'linear-gradient(135deg, #0a0518, #4b2fae, #5b21b6)',
     icon: GiFallingStar,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 400],
   },
   saturnsRings: {
     id: 'saturnsRings',
@@ -611,8 +515,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#5b21b6',
     gradient: 'linear-gradient(135deg, #0a0518, #4a1a9e)',
     icon: SiSaturn,
-    baseCost: 250,
-    upgradeCosts: [200, 300, 400],
   },
   supernova: {
     id: 'supernova',
@@ -624,8 +526,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#5b21b6',
     gradient: 'linear-gradient(135deg, #1a0033, #7a1fd6, #d94bff)',
     icon: TbBrandSupernova,
-    baseCost: 400,
-    upgradeCosts: [250, 400, 600],
   },
   orionsBeltAbility: {
     id: 'orionsBeltAbility',
@@ -637,8 +537,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#5b21b6',
     gradient: 'linear-gradient(135deg, #0a0518, #3a2a7e, #5b21b6)',
     icon: GiStoneSphere,
-    baseCost: 200,
-    upgradeCosts: [300, 400],
   },
   blackHole: {
     id: 'blackHole',
@@ -650,8 +548,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#5b21b6',
     gradient: 'linear-gradient(135deg, #000000, #2a1a5e)',
     icon: GiBlackHoleBolas,
-    baseCost: 1000,
-    upgradeCosts: [1000, 1500],
   },
 
   // Love Abilities (rose pink & blush) — a social, manipulative kit: it
@@ -666,8 +562,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff4d8d',
     gradient: 'linear-gradient(135deg, #5c1030, #b8265c, #ff4d8d)',
     icon: FaHeart,
-    baseCost: 100,
-    upgradeCosts: [150, 250, 400],
   },
   cupidsArrow: {
     id: 'cupidsArrow',
@@ -679,8 +573,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff4d8d',
     gradient: 'linear-gradient(135deg, #ff4d8d, #ffd1e3)',
     icon: BsArrowThroughHeartFill,
-    baseCost: 250,
-    upgradeCosts: [200, 300, 400],
   },
   bffs: {
     id: 'bffs',
@@ -692,8 +584,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff4d8d',
     gradient: 'linear-gradient(135deg, #b8265c, #ff4d8d, #ffb3cf)',
     icon: BsEmojiHeartEyesFill,
-    baseCost: 400,
-    upgradeCosts: [250, 400, 500],
   },
   empathy: {
     id: 'empathy',
@@ -705,8 +595,6 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff4d8d',
     gradient: 'linear-gradient(135deg, #5c1030, #ff4d8d)',
     icon: GiLoveInjection,
-    baseCost: 200,
-    upgradeCosts: [300, 400],
   },
   loveGalore: {
     id: 'loveGalore',
@@ -718,24 +606,178 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#ff4d8d',
     gradient: 'linear-gradient(135deg, #ff4d8d, #ff85ac, #ffd1e3)',
     icon: GiChainedHeart,
-    baseCost: 1000,
-    upgradeCosts: [1000, 1500],
+  },
+  // Joker Abilities — PLACEHOLDER (see Server/src/data/jokerAbilities.ts)
+  jokerAbility1: {
+    id: 'jokerAbility1',
+    name: 'JokerAbility1',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Joker kit is designed.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'joker',
+    color: '#e02434',
+    gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
+    icon: GiCardJoker,
+  },
+  jokerAbility2: {
+    id: 'jokerAbility2',
+    name: 'JokerAbility2',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Joker kit is designed.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'joker',
+    color: '#e02434',
+    gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
+    icon: GiJesterHat,
+  },
+  jokerAbility3: {
+    id: 'jokerAbility3',
+    name: 'JokerAbility3',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Joker kit is designed.',
+    hotkey: 'F',
+    kind: 'attack',
+    element: 'joker',
+    color: '#e02434',
+    gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
+    icon: GiTopHat,
+  },
+  jokerAbility4: {
+    id: 'jokerAbility4',
+    name: 'JokerAbility4',
+    description: 'Placeholder utility — a short self buff standing in until the real Joker kit is designed.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'joker',
+    color: '#e02434',
+    gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
+    icon: GiBalloons,
+  },
+  jokerAbility5: {
+    id: 'jokerAbility5',
+    name: 'JokerAbility5',
+    description: 'Placeholder ultimate — one heavy hit standing in until the real Joker kit is designed.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'joker',
+    color: '#e02434',
+    gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
+    icon: GiClown,
+  },
+  // Light Abilities — PLACEHOLDER (see Server/src/data/lightAbilities.ts)
+  lightAbility1: {
+    id: 'lightAbility1',
+    name: 'LightAbility1',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Light kit is designed.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'light',
+    color: '#f7f7f2',
+    gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
+    icon: GiSunbeams,
+  },
+  lightAbility2: {
+    id: 'lightAbility2',
+    name: 'LightAbility2',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Light kit is designed.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'light',
+    color: '#f7f7f2',
+    gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
+    icon: GiSunrise,
+  },
+  lightAbility3: {
+    id: 'lightAbility3',
+    name: 'LightAbility3',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Light kit is designed.',
+    hotkey: 'F',
+    kind: 'attack',
+    element: 'light',
+    color: '#f7f7f2',
+    gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
+    icon: GiSunRadiations,
+  },
+  lightAbility4: {
+    id: 'lightAbility4',
+    name: 'LightAbility4',
+    description: 'Placeholder utility — a short self buff standing in until the real Light kit is designed.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'light',
+    color: '#f7f7f2',
+    gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
+    icon: GiCandleLight,
+  },
+  lightAbility5: {
+    id: 'lightAbility5',
+    name: 'LightAbility5',
+    description: 'Placeholder ultimate — one heavy hit standing in until the real Light kit is designed.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'light',
+    color: '#f7f7f2',
+    gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
+    icon: GiHolyGrail,
+  },
+  // Dark Abilities — PLACEHOLDER (see Server/src/data/darkAbilities.ts)
+  darkAbility1: {
+    id: 'darkAbility1',
+    name: 'DarkAbility1',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Dark kit is designed.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'dark',
+    color: '#12121a',
+    gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
+    icon: GiNightSky,
+  },
+  darkAbility2: {
+    id: 'darkAbility2',
+    name: 'DarkAbility2',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Dark kit is designed.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'dark',
+    color: '#12121a',
+    gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
+    icon: GiRaven,
+  },
+  darkAbility3: {
+    id: 'darkAbility3',
+    name: 'DarkAbility3',
+    description: 'Placeholder attack — a plain damaging cast standing in until the real Dark kit is designed.',
+    hotkey: 'F',
+    kind: 'attack',
+    element: 'dark',
+    color: '#12121a',
+    gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
+    icon: GiMoonBats,
+  },
+  darkAbility4: {
+    id: 'darkAbility4',
+    name: 'DarkAbility4',
+    description: 'Placeholder utility — a short self buff standing in until the real Dark kit is designed.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'dark',
+    color: '#12121a',
+    gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
+    icon: GiShadowFollower,
+  },
+  darkAbility5: {
+    id: 'darkAbility5',
+    name: 'DarkAbility5',
+    description: 'Placeholder ultimate — one heavy hit standing in until the real Dark kit is designed.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'dark',
+    color: '#12121a',
+    gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
+    icon: GiEclipse,
   },
 }
 
 export function getAbilitiesForKingdom(kingdomId: string | null): ClientAbilityMetadata[] {
   if (!kingdomId) return []
   return Object.values(ABILITY_METADATA).filter((m) => m.element === kingdomId)
-}
-
-/**
- * Returns the upgrade cost of an ability based on its current level.
- * level = 0 means has not upgraded yet (still locked), so next cost is upgradeCosts[0] (e.g. 150g).
- * level = 1 means next upgrade is level 2, cost is upgradeCosts[1] (e.g. 250g).
- */
-export function getUpgradeCost(abilityId: string, currentLevel: number): number | null {
-  const metadata = ABILITY_METADATA[abilityId]
-  if (!metadata || !metadata.upgradeCosts) return null
-  if (currentLevel >= metadata.upgradeCosts.length) return null // Max level
-  return metadata.upgradeCosts[currentLevel]
 }

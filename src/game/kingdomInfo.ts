@@ -110,4 +110,20 @@ export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
       description: 'Whenever another kingdom heals, you receive a share of it too.',
     },
   ],
+  // Placeholder kingdoms: named but not designed. The server declares no
+  // passive primitives for them yet (`KINGDOM_PASSIVES` in data/kingdoms.ts),
+  // so nothing applies in a match — these entries exist so the lobby's detail
+  // panel still shows the shape of the kingdom. Replace both together.
+  joker: [
+    { name: 'JokerPassive1', description: 'Not designed yet — no effect in a match.' },
+    { name: 'JokerPassive2', description: 'Not designed yet — no effect in a match.' },
+  ],
+  light: [
+    { name: 'LightPassive1', description: 'Not designed yet — no effect in a match.' },
+    { name: 'LightPassive2', description: 'Not designed yet — no effect in a match.' },
+  ],
+  dark: [
+    { name: 'DarkPassive1', description: 'Not designed yet — no effect in a match.' },
+    { name: 'DarkPassive2', description: 'Not designed yet — no effect in a match.' },
+  ],
 }

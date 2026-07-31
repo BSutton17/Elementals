@@ -20,8 +20,7 @@ import { BffsLinkLayer } from './BffsLinkLayer'
 import { DustBunniesLayer } from './DustBunniesLayer'
 import { AbilityBar } from './AbilityBar'
 import { useScrambleValues } from './scramble/useScrambleValues'
-import { getAbilitiesForKingdom, getUpgradeCost } from '../game/abilities'
-import { unlockCostFor } from '../game/perks'
+import { getAbilitiesForKingdom } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
 import type { GamePlayer } from '../game/gameState'
 import type { LobbyMatch } from '../game/lobby'
@@ -437,16 +436,11 @@ export function BattlefieldView({
             const cooldownRemaining = you.cooldowns?.[metadata.id] ?? 0
             // Find if there is an active/enabled state from server snapshot
             const enabled = true // fallback to true
-            // Server-derived effective cast cost (upgrade tiers can discount
-            // the price, e.g. cooldown tiers' costMultiplier) — fall back to
-            // the base cost until the first sync arrives.
-            const cost = you.abilityCosts?.[metadata.id] ?? metadata.baseCost
-            const upgradeCost = isUnlocked ? getUpgradeCost(metadata.id, tier) : null
-            // "Great Merchants" discounts the unlock price — apply it here so
-            // the tag (and its affordability check) match the server's bill.
-            const unlockCost = isUnlocked
-              ? undefined
-              : unlockCostFor(metadata.unlockCost ?? Math.ceil(cost * 0.5), you.perks)
+            // Every price is server-derived from the kingdom's ability data,
+            // with upgrade tiers and perks already applied — the client has no
+            // cost data of its own to drift from it. Zeroed until the first
+            // sync arrives, at which point real prices replace them.
+            const prices = you.abilityPrices?.[metadata.id]
             // Charge-based abilities: each spent charge regenerates on its own
             // synced countdown; available = max − recharging.
             const rechargeTicks = metadata.charges
@@ -457,9 +451,10 @@ export function BattlefieldView({
               level,
               cooldownRemaining,
               enabled,
-              cost,
-              upgradeCost,
-              unlockCost,
+              cost: prices?.cast ?? 0,
+              upgradeCost: prices?.upgrade ?? null,
+              unlockCost: prices?.unlock ?? undefined,
+              charges: prices?.charges,
               rechargeTicks,
             }
           })}

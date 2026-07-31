@@ -2,7 +2,7 @@ import { TutorialStep } from '../TutorialStep'
 import { DemoDummyCastle } from '../DemoDummyCastle'
 import { AbilityButton } from '../../AbilityButton'
 import { ABILITY_METADATA } from '../../../game/abilities'
-import { useTutorialSandbox } from '../../../game/useTutorialSandbox'
+import { demoCastCost, useTutorialSandbox } from '../../../game/useTutorialSandbox'
 
 // Page 6 — statuses & combos. Cast Waterfall and the dummy is visibly caught
 // in a Current (the real battlefield submersion effect), then the page teases
@@ -55,7 +55,7 @@ export function TricksStep() {
             tickRate={sandbox.tickRate}
             currency={sandbox.currency}
             enabled
-            cost={waterfall.baseCost}
+            cost={demoCastCost(waterfall)}
             onCast={() => sandbox.castAbility('waterfall')}
           />
         </div>

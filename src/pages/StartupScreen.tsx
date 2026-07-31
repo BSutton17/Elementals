@@ -53,14 +53,6 @@ export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
           Join Room
         </button>
 
-        <button
-          type="button"
-          className={`startup__secondary startup__howto${nudge && !showHowTo ? ' startup__howto--nudge' : ''}`}
-          onClick={() => setShowHowTo(true)}
-        >
-          How to Play
-        </button>
-
         {error && <p className="startup__error">{error}</p>}
 
         <div
@@ -68,6 +60,15 @@ export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
         >
         </div>
       </div>
+
+      {/* Pinned to the menu's bottom-left corner, out of the main column. */}
+      <button
+        type="button"
+        className={`startup__secondary startup__howto${nudge && !showHowTo ? ' startup__howto--nudge' : ''}`}
+        onClick={() => setShowHowTo(true)}
+      >
+        How to Play
+      </button>
 
       {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
     </main>

@@ -28,6 +28,23 @@ export interface GameEconomy {
   citizensPurchased?: number
 }
 
+/** Server-resolved prices for one ability (mirrors gameSync.ts `AbilityPrices`). */
+export interface AbilityPrices {
+  /** Effective cast cost at the player's current upgrade tier. */
+  cast: number
+  /** Price to buy this ability, or null once it is unlocked. */
+  unlock: number | null
+  /** Price of the next upgrade tier, or null while locked or fully upgraded. */
+  upgrade: number | null
+  /** Charge-based abilities: the charge economy at this tier. */
+  charges?: {
+    max: number
+    costPerCharge: number
+    damageByCharges: number[]
+    rechargeTicks: number
+  }
+}
+
 export interface GamePlayer {
   id: string
   name: string
@@ -51,10 +68,13 @@ export interface GamePlayer {
     revealed?: boolean
   }>
   /**
-   * Effective cast cost per unlocked ability id, upgrade discounts applied —
-   * server-derived so HUD price tags match what a cast will actually charge.
+   * Every price the HUD shows, per ability id of this player's kingdom, with
+   * upgrade tiers and perks applied. The SINGLE source of ability pricing —
+   * the client holds none of its own, so a tag can never drift from what a
+   * click actually charges. Authored in the server's `<kingdom>Abilities.ts`
+   * and resolved by `abilityPrices` in gameSync.ts.
    */
-  abilityCosts?: Record<string, number>
+  abilityPrices?: Record<string, AbilityPrices>
   /** Active stat modifiers (buffs/debuffs). */
   modifiers?: Array<{ id: string; stat: string; remainingTicks: number | null }>
   /**

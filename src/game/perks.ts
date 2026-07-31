@@ -16,22 +16,10 @@ import { PiShieldPlusBold } from 'react-icons/pi'
 /** How many perks each player must pick before they can ready up. */
 export const PERKS_PER_PLAYER = 2
 
-/** "Great Merchants" discount, mirroring the server's `PERKS.UNLOCK_DISCOUNT_PCT`. */
-const UNLOCK_DISCOUNT_PCT = 0.15
-
-/**
- * The unlock price a player will actually be charged for an ability, so HUD
- * price tags (and their affordability check) match what the server bills. Same
- * rounding as the server's `unlockOrUpgradeAbility`.
- */
-export function unlockCostFor(
-  baseCost: number,
-  perks: readonly string[] | undefined,
-): number {
-  return perks?.includes('greatMerchants')
-    ? Math.ceil(baseCost * (1 - UNLOCK_DISCOUNT_PCT))
-    : baseCost
-}
+// NOTE: no perk MAGNITUDES live here. The descriptions below are display copy;
+// every number a perk actually changes is applied server-side (see the server's
+// `engine/perks.ts`), and prices reach the HUD already discounted via
+// `GamePlayer.abilityPrices`.
 
 export interface Perk {
   id: string
@@ -96,7 +84,7 @@ export const PERKS: readonly Perk[] = [
   {
     id: 'betterConstruction',
     name: 'Better Construction',
-    description: '+250 shield health',
+    description: '+500 shield health',
     icon: PiShieldPlusBold,
     color: '#8fe3ff',
   },

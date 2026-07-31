@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { GiEagleEmblem } from 'react-icons/gi'
 import { CastleSprite } from './CastleSprite'
+import { getCastleOutline } from '../game/kingdomThemes'
 import { HealthBar } from './HealthBar'
 import { ShieldBar, DEFAULT_MAX_SHIELD, EARTH_MAX_SHIELD } from './ShieldBar'
 import { ShieldOverlay } from './ShieldOverlay'
@@ -166,7 +167,11 @@ export function KingdomSite({
       )}
 
       <g transform="translate(0 24)">
-        <CastleSprite color={color} eliminated={player.eliminated} />
+        <CastleSprite
+          color={color}
+          outline={getCastleOutline(player.kingdomId)}
+          eliminated={player.eliminated}
+        />
       </g>
 
       {/* "Current" mark: a translucent, gently-bobbing water plane over the

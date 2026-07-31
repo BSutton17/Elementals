@@ -12,9 +12,29 @@ export const KINGDOMS = [
   { id: 'time', label: 'Time', color: '#a9834e' }, // grandfather-clock brass
   { id: 'space', label: 'Space', color: '#5b21b6' }, // deep void-violet
   { id: 'love', label: 'Love', color: '#ff4d8d' }, // rose pink
+  { id: 'joker', label: 'Joker', color: '#e02434' }, // circus red
+  { id: 'light', label: 'Light', color: '#f7f7f2' }, // pure white
+  { id: 'dark', label: 'Dark', color: '#12121a' }, // near-black
 ] as const
 
 export type KingdomId = (typeof KINGDOMS)[number]['id']
+
+/**
+ * Kingdoms whose kits are still placeholders — hidden from the lobby's kingdom
+ * picker and the tutorial's kingdom browser so players can't select an
+ * unfinished kingdom in production. Everything behind them is fully wired, so
+ * putting one back in the game is just commenting out its line here.
+ */
+const UNRELEASED_KINGDOM_IDS: readonly string[] = [
+  'joker',
+  'light',
+  'dark',
+]
+
+/** The kingdoms a player may actually pick right now. */
+export const SELECTABLE_KINGDOMS = KINGDOMS.filter(
+  (k) => !UNRELEASED_KINGDOM_IDS.includes(k.id),
+)
 
 /**
  * Kingdoms whose attacks may strike several kingdoms at once (Air's "Embrace of

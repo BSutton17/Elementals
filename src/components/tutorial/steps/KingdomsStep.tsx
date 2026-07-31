@@ -1,29 +1,33 @@
 import { useState, type CSSProperties } from 'react'
 import { TutorialStep } from '../TutorialStep'
-import { KINGDOMS, type KingdomId } from '../../../game/kingdoms'
+import { SELECTABLE_KINGDOMS, type KingdomId } from '../../../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../../../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../../../game/abilities'
 
-// Page 8 — meet the ten kingdoms (incl. Time, Space, Love): tap through each
-// one's personality, passives, and signature ultimate. Fully data-driven off
-// KINGDOMS/kingdomInfo/abilities, so it can never drift from the lobby.
+// Page 8 — meet the kingdoms: tap through each one's personality, passives, and
+// signature ultimate. Fully data-driven off the selectable kingdom list /
+// kingdomInfo / abilities, so it can never drift from the lobby.
 
 const FLAVOR: Record<KingdomId, string> = {
-  water: 'Patient, prosperous, and very hard to drown.',
+  water: 'In honor of Katara',
   fire: 'Glass cannon. Emphasis on cannon.',
-  air: 'Slippery, chaotic, everywhere at once.',
-  earth: 'A wall with opinions.',
-  electricity: 'Fast hands, faster attacks.',
-  ice: 'Freeze them solid. Take your time.',
+  air: 'Everything, everywhere, all at once.',
+  earth: 'The best offense is a great defense.',
+  electricity: 'Gotta go fast!',
+  ice: 'Let\'s chill',
   nature: 'Everything is poisonous. Everything.',
   time: 'Speeds up, slows down, and rewinds the clock.',
-  space: 'The void between stars — vast, cold, inevitable.',
-  love: 'Charming, manipulative, and impossible to hate.',
+  space: 'No one can hear you scream.',
+  love: 'Awww, I love you too!',
+  // Placeholder kingdoms — flavour lands with their real kits.
+  joker: 'May the odds be ever in your favor.',
+  light: 'Nothing left to hide behind.',
+  dark: 'Something moved.',
 }
 
 export function KingdomsStep() {
   const [selected, setSelected] = useState<KingdomId>('water')
-  const kingdom = KINGDOMS.find((k) => k.id === selected) ?? KINGDOMS[0]
+  const kingdom = SELECTABLE_KINGDOMS.find((k) => k.id === selected) ?? SELECTABLE_KINGDOMS[0]
   const passives = KINGDOM_PASSIVES_INFO[selected] ?? []
   const ultimate = getAbilitiesForKingdom(selected).find((a) => a.kind === 'ultimate')
 
@@ -35,7 +39,7 @@ export function KingdomsStep() {
     >
       <div className="howto-kingdoms">
         <div className="howto-kingdoms__tabs" role="tablist" aria-label="Kingdoms">
-          {KINGDOMS.map((k) => (
+          {SELECTABLE_KINGDOMS.map((k) => (
             <button
               key={k.id}
               type="button"

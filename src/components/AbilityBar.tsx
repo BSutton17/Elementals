@@ -9,6 +9,7 @@ import { ShopOverlay } from './ShopOverlay'
 import { FrostCoat } from './FrostCoat'
 import { SupernovaMeter } from './SupernovaMeter'
 import type { ScrambleDisplay } from './scramble/useScrambleValues'
+import type { AbilityPrices } from '../game/gameState'
 import './AbilityBar.css'
 
 interface AbilityState {
@@ -21,6 +22,8 @@ interface AbilityState {
   unlockCost?: number
   /** Ticks until each spent charge regenerates (charge-based abilities). */
   rechargeTicks?: number[]
+  /** Server-resolved charge economy (charge-based abilities). */
+  charges?: AbilityPrices['charges']
 }
 
 interface AbilityBarProps {
@@ -124,6 +127,7 @@ export function AbilityBar({
         upgradeCost: 150, // fallback starting cost
         unlockCost: undefined,
         rechargeTicks: undefined,
+        charges: undefined,
       }
       return {
         metadata,
@@ -134,6 +138,7 @@ export function AbilityBar({
         upgradeCost: state.upgradeCost,
         unlockCost: state.unlockCost,
         rechargeTicks: state.rechargeTicks,
+        charges: state.charges,
       }
     })
 
@@ -251,7 +256,7 @@ export function AbilityBar({
 
         {/* Center: Castable Ability Buttons */}
         <div className="ability-bar__buttons">
-          {activeAbilities.map(({ metadata, level, cooldownRemaining, enabled, cost, upgradeCost, unlockCost, rechargeTicks }) => (
+          {activeAbilities.map(({ metadata, level, cooldownRemaining, enabled, cost, upgradeCost, unlockCost, rechargeTicks, charges }) => (
             <AbilityButton
               key={metadata.id}
               metadata={metadata}
@@ -264,6 +269,7 @@ export function AbilityBar({
               chilled={cooldownChilled}
               cost={cost}
               rechargeTicks={rechargeTicks}
+              chargeSpec={charges}
               scramble={
                 scramble
                   ? {

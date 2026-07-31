@@ -6,7 +6,11 @@
 // owns the authoritative balance).
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ABILITY_METADATA, getAbilitiesForKingdom, getUpgradeCost } from './abilities'
+import {
+  ABILITY_METADATA,
+  getAbilitiesForKingdom,
+  type ClientAbilityMetadata,
+} from './abilities'
 
 /** Sandbox ticks per second (drives income, cooldowns, status durations). */
 export const SANDBOX_TICK_RATE = 10
@@ -36,6 +40,31 @@ const INCOMING_DAMAGE = 450
 const CASTLE_HP_FLOOR = 500
 
 /**
+ * Demo-only prices, by ability kind. Real prices are declared once in the
+ * server's `<kingdom>Abilities.ts` and only ever reach the client through a
+ * live match's `abilityPrices` sync — the sandbox has no server to ask, and the
+ * walkthrough only needs "cheap / pricey / very pricey" to read. These are
+ * deliberately NOT a mirror of the real numbers.
+ */
+const DEMO_CAST_COST: Record<ClientAbilityMetadata['kind'], number> = {
+  attack: 100,
+  utility: 150,
+  ultimate: 800,
+  passive: 0,
+}
+
+/** Demo-only upgrade ladder, indexed by the ability's current sandbox level. */
+const DEMO_UPGRADE_COSTS = [150, 250, 400]
+
+export function demoCastCost(meta: ClientAbilityMetadata): number {
+  return DEMO_CAST_COST[meta.kind]
+}
+
+function demoUpgradeCost(level: number): number | null {
+  return DEMO_UPGRADE_COSTS[level] ?? null
+}
+
+/**
  * Demo-only combat numbers for the tutorial kingdom's abilities. Damage and
  * cooldowns are flavour, not balance; statuses reuse real status ids so the
  * real battlefield visuals (e.g. Water's "Current" submersion) light up.
@@ -56,7 +85,7 @@ function demoStatsFor(abilityId: string) {
   const known = DEMO_ABILITIES[abilityId]
   if (known) return known
   const meta = ABILITY_METADATA[abilityId]
-  const damage = meta && meta.kind === 'attack' ? Math.round(meta.baseCost * 2.5) : 0
+  const damage = meta && meta.kind === 'attack' ? 400 : 0
   return { damage, cooldownTicks: 40, status: undefined }
 }
 
@@ -221,7 +250,7 @@ export function useTutorialSandbox(options: TutorialSandboxOptions = {}) {
         setState((s) => {
           const meta = ABILITY_METADATA[abilityId]
           if (!meta) return s
-          const cost = meta.baseCost
+          const cost = demoCastCost(meta)
           const onCooldown = (s.cooldowns[abilityId] ?? 0) > 0
           if (s.currency < cost || onCooldown) return s
 
@@ -275,7 +304,7 @@ export function useTutorialSandbox(options: TutorialSandboxOptions = {}) {
       upgradeAbility(abilityId: string) {
         setState((s) => {
           const level = s.levels[abilityId] ?? 1
-          const cost = getUpgradeCost(abilityId, level)
+          const cost = demoUpgradeCost(level)
           if (cost == null || s.currency < cost) return s
           return {
             ...s,
@@ -335,8 +364,8 @@ export function useTutorialSandbox(options: TutorialSandboxOptions = {}) {
             level,
             cooldownRemaining: state.cooldowns[m.id] ?? 0,
             enabled: true,
-            cost: m.baseCost,
-            upgradeCost: getUpgradeCost(m.id, level),
+            cost: demoCastCost(m),
+            upgradeCost: demoUpgradeCost(level),
             unlockCost: undefined as number | undefined,
             rechargeTicks: undefined as number[] | undefined,
           }

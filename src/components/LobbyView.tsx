@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import { RoomCode } from './RoomCode'
 import { HowToPlay } from '../pages/HowToPlay'
-import { KINGDOMS, type KingdomId } from '../game/kingdoms'
+import { KINGDOMS, SELECTABLE_KINGDOMS, type KingdomId } from '../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { MIN_PLAYERS_TO_START, type LobbyMatch } from '../game/lobby'
@@ -195,7 +195,7 @@ export function LobbyView({
       <section className="lobby__kingdoms" aria-label="Choose your kingdom">
         <h2 className="lobby__heading">Kingdom</h2>
         <div className="lobby__kingdom-grid">
-          {KINGDOMS.map((k) => {
+          {SELECTABLE_KINGDOMS.map((k) => {
             const takenByOther = match.players.some(
               (p) => p.id !== youId && p.kingdomId === k.id,
             )

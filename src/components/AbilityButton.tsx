@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { CiLock, CiClock2 } from 'react-icons/ci'
 import { FaSnowflake } from 'react-icons/fa'
 import type { ClientAbilityMetadata } from '../game/abilities'
+import type { AbilityPrices } from '../game/gameState'
 import { FrostCoat } from './FrostCoat'
 import './AbilityBar.css'
 
@@ -28,6 +29,10 @@ interface AbilityButtonProps {
   showFatherTimeClock?: boolean
   /** Ticks until each spent charge regenerates (charge-based abilities). */
   rechargeTicks?: number[]
+  /** Server-resolved charge economy for a charge-based ability (pool size,
+   *  per-charge price, damage by charges spent, regen cadence). Absent until
+   *  the first sync, and for every ability without charges. */
+  chargeSpec?: AbilityPrices['charges']
   onCast: (chargesToUse?: number) => void
   onUnlock?: () => void // buy a locked ability (puts it at level 1)
   onUpgrade?: () => void
@@ -49,6 +54,7 @@ export function AbilityButton({
   scramble = null,
   showFatherTimeClock = false,
   rechargeTicks,
+  chargeSpec = undefined,
   onCast,
   onUnlock,
   onUpgrade,
@@ -67,8 +73,9 @@ export function AbilityButton({
   const cooldownPercent = isCooldown ? Math.min(100, Math.max(0, (cooldownRemaining / (10 * tickRate)) * 100)) : 0
 
   // Charge-based abilities (Lightning Barrage): the pool holds `max` charges;
-  // each spent one is regenerating on its own timer in `rechargeTicks`.
-  const chargeSpec = metadata.charges
+  // each spent one is regenerating on its own timer in `rechargeTicks`. The
+  // pool's own numbers are server-derived (`chargeSpec`) — the metadata only
+  // flags that this ability HAS charges.
   const availableCharges = chargeSpec
     ? Math.max(0, chargeSpec.max - (rechargeTicks?.length ?? 0))
     : 0
@@ -332,7 +339,7 @@ export function AbilityButton({
               </div>
               <div className="ability-tooltip__charge-row ability-tooltip__charge-hint">
                 Use the 1 / 2 / 3 buttons to pick how many charges to spend.
-                Each spent charge recharges on its own ~{chargeSpec.rechargeSeconds}s
+                Each spent charge recharges on its own ~{Math.round(chargeSpec.rechargeTicks / tickRate)}s
                 timer; unspent charges fire immediately.
               </div>
             </div>
