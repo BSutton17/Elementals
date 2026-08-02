@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
 import { ABILITY_EFFECTS } from '../render/effects'
-import type { AttackMissedEvent, DamageEvent, HealEvent, RawGameEvent } from '../game/events'
+import type {
+  AttackMissedEvent,
+  DamageEvent,
+  HealEvent,
+  RawGameEvent,
+  StatusRepelledEvent,
+} from '../game/events'
 
 // Floating combat numbers (#265, #266). An SVG `<g>` layer that lives INSIDE the
 // battlefield's 1000×1000 viewBox, so numbers share the exact coordinate space
@@ -229,6 +235,28 @@ export function buildNumber(
       },
       delayMs: abilityImpactDelay(missed.abilityId),
       targetId: missed.playerId,
+      dot: false,
+    }
+  }
+  if (event.type === 'statusRepelled') {
+    // A shield turned the effect away entirely (Fireflies). Shown above the
+    // castle like a dodge, because that is what it is.
+    const repelled = event as unknown as StatusRepelledEvent
+    const at = positionOf(repelled.playerId)
+    if (!at) return null
+    return {
+      number: {
+        key: nextKey(),
+        x: at.x,
+        y: at.y - MISS_VERTICAL_OFFSET,
+        text: 'SHIELDED',
+        color: '#ffe9a8',
+        crit: false,
+        miss: true,
+        anchor: 'middle',
+      },
+      delayMs: abilityImpactDelay(repelled.abilityId),
+      targetId: repelled.playerId,
       dot: false,
     }
   }

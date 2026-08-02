@@ -23,6 +23,8 @@ export interface MatchConfig {
   tickRate: number
   startingCitizens: number
   startingCastleHp: number
+  /** Damage Dark must absorb to fill the Unlimited Rage meter (server-owned). */
+  rageFull?: number
 }
 
 export interface LobbyMatch {

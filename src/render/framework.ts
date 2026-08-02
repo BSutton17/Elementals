@@ -8,6 +8,7 @@ import type {
   EffectDefinition,
   AcidRainConfig,
   EarthquakeConfig,
+  FirefliesConfig,
   FrostAuraConfig,
   LightningBarrageConfig,
   LightningConfig,
@@ -33,6 +34,7 @@ import { LightningSystem } from './systems/lightning'
 import { ThunderdomeSystem } from './systems/thunderdome'
 import { AcidRainSystem } from './systems/acidRain'
 import { FrostAuraSystem } from './systems/frostAura'
+import { FirefliesSystem } from './systems/fireflies'
 import { AuraSystem } from './systems/aura'
 import { Camera } from './camera'
 import { AnimationTimeline } from './timeline'
@@ -60,6 +62,12 @@ export interface NodeFactories {
   projectileHeart?: () => DisplayNode
   /** Arrow sprite (Love's Cupid's Arrow). Falls back to the circle pool. */
   projectileArrow?: () => DisplayNode
+  /** Joker's Ace of Spades pip. */
+  projectileSpade?: () => DisplayNode
+  /** Dark's Shadow Strike orb (white-rimmed so it reads on a dark field). */
+  projectileShadow?: () => DisplayNode
+  /** Dark's Yin and Yang taijitu, drawn at its final black/white colours. */
+  projectileYinYang?: () => DisplayNode
   impact: () => DisplayNode
   particle: () => DisplayNode
   /** Beam segment sprite. Falls back to the projectile factory if omitted. */
@@ -189,6 +197,7 @@ export class AnimationFramework {
   readonly thunderdomes: ThunderdomeSystem
   readonly acidRains: AcidRainSystem
   readonly frostAuras: FrostAuraSystem
+  readonly fireflies: FirefliesSystem
   readonly auras: AuraSystem
   readonly camera: Camera
   readonly timeline = new AnimationTimeline()
@@ -214,6 +223,9 @@ export class AnimationFramework {
         ...(nodes.projectileRing ? { ring: nodes.projectileRing } : {}),
         ...(nodes.projectileHeart ? { heart: nodes.projectileHeart } : {}),
         ...(nodes.projectileArrow ? { arrow: nodes.projectileArrow } : {}),
+        ...(nodes.projectileSpade ? { spade: nodes.projectileSpade } : {}),
+        ...(nodes.projectileShadow ? { shadow: nodes.projectileShadow } : {}),
+        ...(nodes.projectileYinYang ? { yinYang: nodes.projectileYinYang } : {}),
       },
     )
     this.impacts = new ImpactSystem(nodes.impact, baseRadius)
@@ -259,6 +271,8 @@ export class AnimationFramework {
       nodes.auraGlow ?? nodes.particle,
       baseRadius,
     )
+    // Fireflies are pure additive glow — one node factory is all they need.
+    this.fireflies = new FirefliesSystem(nodes.auraGlow ?? nodes.particle, baseRadius)
     this.auras = new AuraSystem(
       nodes.aura ?? nodes.particle,
       nodes.auraGlow ?? nodes.particle,
@@ -283,6 +297,7 @@ export class AnimationFramework {
     this.thunderdomes.update(dtMs)
     this.acidRains.update(dtMs)
     this.frostAuras.update(dtMs)
+    this.fireflies.update(dtMs)
     this.auras.update(dtMs)
     this.timeline.update(dtMs)
     this.camera.update(dtMs)
@@ -1986,6 +2001,28 @@ export class AnimationFramework {
     return this.frostAuras.has(key)
   }
 
+  /** Settle a swarm of Fireflies over a kingdom (keyed per target). It dances
+   *  there indefinitely — only `stopFireflies` ends it. */
+  startFireflies(key: string, at: Vec2, config: FirefliesConfig): void {
+    this.fireflies.start(key, at, config)
+  }
+
+  /** Illumination lit the swarm up — brighter, faster, tighter. No-op if the
+   *  target has no fireflies on it. */
+  agitateFireflies(key: string, amount?: number): void {
+    this.fireflies.agitate(key, amount)
+  }
+
+  /** The ransom was paid — scatter the swarm and let the lights wink out. */
+  stopFireflies(key: string): void {
+    this.fireflies.stop(key)
+  }
+
+  /** True while a live (non-scattering) swarm exists under `key`. */
+  hasFireflies(key: string): boolean {
+    return this.fireflies.has(key)
+  }
+
   /**
    * Freeze to the Core cast: freezing energy spirals INWARD onto the target for a
    * beat, then a brilliant icy-blue flash + explosive crystal growth erupts
@@ -2044,6 +2081,7 @@ export class AnimationFramework {
     this.thunderdomes.clear()
     this.acidRains.clear()
     this.frostAuras.clear()
+    this.fireflies.clear()
     this.auras.clear()
     this.timeline.clear()
     this.camera.clear()

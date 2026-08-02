@@ -1,0 +1,225 @@
+/* Blackjack's casino reveal. Click-through end to end — it is a cutscene laid
+   over the battlefield, never something to interact with. */
+.bj {
+  position: fixed;
+  inset: 0;
+  z-index: 5600;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bj__dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(40, 4, 9, 0.85), rgba(3, 3, 6, 0.95));
+  transition: opacity 120ms linear;
+}
+
+/* ---- The golden bloom behind the card ---- */
+
+.bj__bloom {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bloom);
+  height: var(--bloom);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(242, 214, 138, 0.55), transparent 68%);
+  animation: bj-bloom-pulse 1.6s ease-in-out infinite;
+}
+
+.bj__bloom--face {
+  background: radial-gradient(circle, rgba(255, 226, 150, 0.7), transparent 68%);
+}
+
+.bj__bloom--joker {
+  background: radial-gradient(circle, rgba(255, 140, 190, 0.6), transparent 70%);
+  animation: bj-bloom-rainbow 2.2s linear infinite;
+}
+
+@keyframes bj-bloom-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.94); opacity: 0.75; }
+  50% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+}
+
+@keyframes bj-bloom-rainbow {
+  0% { filter: hue-rotate(0deg); transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.12); }
+  100% { filter: hue-rotate(360deg); transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- The card ---- */
+
+.bj__stage {
+  position: absolute;
+  perspective: 1400px;
+  will-change: transform, left, top;
+}
+
+.bj__card {
+  position: relative;
+  transform-style: preserve-3d;
+  /* The flip angle is driven from the stage transform. */
+  transform: rotateY(var(--flip, 0deg));
+}
+
+.bj__card-side {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+}
+
+/* The back faces the player until the flip carries the front around. */
+.bj__card-side--back {
+  position: relative;
+  transform: rotateY(0deg);
+}
+
+.bj__card-side--front {
+  transform: rotateY(180deg);
+}
+
+.bj__card .pcard {
+  --card-w: 7rem;
+}
+
+/* ---- Shed casino litter ---- */
+
+.bj__litter,
+.bj__confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bj__bit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  opacity: 0;
+  animation: bj-bit-drift 1.6s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+.bj__bit--chip { background: #e02434; box-shadow: 0 0 6px #ff6b76; }
+.bj__bit--spark { background: #ffeaa7; box-shadow: 0 0 8px #f2d68a; }
+.bj__bit--card {
+  width: 0.4rem;
+  height: 0.6rem;
+  border-radius: 1px;
+  background: #fffdf5;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+@keyframes bj-bit-drift {
+  0% { transform: translate(-50%, -50%) rotate(0deg) translateX(0) scale(0.4); opacity: 0; }
+  20% { opacity: 0.95; }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--a)) translateX(22rem) scale(1);
+    opacity: 0;
+  }
+}
+
+/* During the showcase the litter orbits instead of flying outward. */
+.bj__litter--orbit .bj__bit {
+  animation: bj-bit-orbit 3s linear infinite;
+}
+
+@keyframes bj-bit-orbit {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--a)) translateX(11rem) scale(0.9);
+    opacity: 0;
+  }
+  15%, 75% { opacity: 0.9; }
+  100% {
+    transform: translate(-50%, -50%) rotate(calc(var(--a) + 360deg))
+      translateX(13rem) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* ---- Joker chaos ---- */
+
+.bj__flake {
+  position: absolute;
+  left: var(--x);
+  top: -5%;
+  width: 0.45rem;
+  height: 0.8rem;
+  border-radius: 1px;
+  background: hsl(calc(var(--i) * 37deg), 90%, 62%);
+  animation: bj-flake-fall 2.4s linear infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes bj-flake-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ---- Impact ---- */
+
+.bj__burst {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.bj__slash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14rem;
+  height: 0.3rem;
+  transform: translate(-50%, -50%) rotate(-35deg);
+  background: linear-gradient(90deg, transparent, #fffdf5, transparent);
+  box-shadow: 0 0 22px #f2d68a;
+  animation: bj-slash 0.45s ease-out forwards;
+}
+
+@keyframes bj-slash {
+  0% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(0.1); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(-35deg) scaleX(1.5); opacity: 0; }
+}
+
+.bj__frag {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  animation: bj-frag-fly 0.5s ease-out forwards;
+}
+
+.bj__frag--chip { background: #e02434; }
+.bj__frag--spark { background: #ffeaa7; }
+.bj__frag--card { width: 0.4rem; height: 0.6rem; border-radius: 1px; background: #fffdf5; }
+
+@keyframes bj-frag-fly {
+  0% { transform: translate(-50%, -50%) rotate(var(--a)) translateX(0); opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(var(--a)) translateX(9rem); opacity: 0; }
+}
+
+/* Smaller screens: keep the showcase card inside the viewport. */
+@media (max-width: 40rem), (max-height: 34rem) {
+  .bj__card .pcard { --card-w: 4.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bj__bloom,
+  .bj__bit,
+  .bj__flake,
+  .bj__slash,
+  .bj__frag {
+    animation: none;
+  }
+}

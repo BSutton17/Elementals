@@ -6,8 +6,10 @@ import { getAbilitiesForKingdom } from '../game/abilities'
 import { type KingdomTheme } from '../game/kingdomThemes'
 import { AbilityButton } from './AbilityButton'
 import { ShopOverlay } from './ShopOverlay'
+import { DispelButton } from './DispelButton'
 import { FrostCoat } from './FrostCoat'
 import { SupernovaMeter } from './SupernovaMeter'
+import { RageMeter } from './RageMeter'
 import type { ScrambleDisplay } from './scramble/useScrambleValues'
 import type { AbilityPrices } from '../game/gameState'
 import './AbilityBar.css'
@@ -39,6 +41,10 @@ interface AbilityBarProps {
   shieldCost: number
   /** Seconds left on the buy-shield break cooldown (0 = ready). */
   shieldCooldownSeconds?: number
+  /** Your own deployed swarm bars a shield purchase (Light's Fireflies). */
+  shieldBlockedBySwarm?: boolean
+  /** A status you can pay off, and its price (Light's Fireflies). */
+  dispel?: { statusId: string; cost: number } | null
   /** Repairs already purchased this match (capped at maxRepairs). */
   repairsUsed: number
   maxRepairs: number
@@ -48,6 +54,12 @@ interface AbilityBarProps {
   citizensPoisoned?: boolean
   /** Ice's Frozen: every action button ices over and the shop is sealed shut. */
   frozen?: boolean
+  /** Dark's Never-ending Nightmare: the caster may use ONLY their basic attack.
+   *  Every other attack and their ultimate are barred until it lifts. */
+  nightmared?: boolean
+  /** Damage Dark must absorb to fill Unlimited Rage (server-owned, from the
+   *  match config — never a constant on this side). */
+  rageFull?: number
   /** Time's Half Past 12: the whole bar wobbles, jitters, and leaves temporal
    *  afterimages while the victim's UI is scrambled (purely cosmetic; buttons
    *  stay clickable). */
@@ -67,10 +79,13 @@ interface AbilityBarProps {
   /** Space only: current Supernova charge. When provided (Supernova unlocked),
    *  the charge meter is shown above the ability buttons. */
   supernovaMeter?: number | null
+  /** Dark only: current Unlimited Rage charge. When provided (the ultimate is
+   *  unlocked), the rage meter is shown above the ability buttons. */
+  rageMeter?: number | null
   tickRate: number
-  onCastAbility: (abilityId: string, chargesToUse?: number) => void
+  onCastAbility: (abilityId: string, chargesToUse?: number, choice?: string) => void
   onUpgradeAbility?: (abilityId: string) => void
-  onBuyItem: (id: 'citizen' | 'repair' | 'shield') => void
+  onBuyItem: (id: 'citizen' | 'repair' | 'shield' | 'dispel') => void
 }
 
 export function AbilityBar({
@@ -85,11 +100,15 @@ export function AbilityBar({
   nextRepairCost,
   shieldCost,
   shieldCooldownSeconds = 0,
+  shieldBlockedBySwarm = false,
+  dispel = null,
   repairsUsed,
   maxRepairs,
   lockedOut = false,
   citizensPoisoned = false,
   frozen = false,
+  nightmared = false,
+  rageFull,
   scrambled = false,
   scramble = null,
   fatherTimeMarked = false,
@@ -97,6 +116,7 @@ export function AbilityBar({
   incomePerSecond,
   abilities,
   supernovaMeter = null,
+  rageMeter = null,
   tickRate,
   onCastAbility,
   onUpgradeAbility,
@@ -114,6 +134,9 @@ export function AbilityBar({
 
   // Get metadata definitions for player's kingdom
   const metadatas = getAbilitiesForKingdom(kingdomId)
+  // The one attack a nightmared kingdom may still cast: their slot-1 attack,
+  // which is how the server identifies it too (`basicAttackIdFor`).
+  const basicAttackId = metadatas.find((m) => m.kind === 'attack')?.id
 
   // Map state from props to metadata definitions, ensuring correct display order
   const activeAbilities = metadatas
@@ -129,8 +152,16 @@ export function AbilityBar({
         rechargeTicks: undefined,
         charges: undefined,
       }
+      // The nightmare lock, mirrored from the server's rule exactly: attacks
+      // and the ultimate are refused unless it is the kingdom's slot-1 attack.
+      // Utilities stay legal so the victim can still defend themselves.
+      const barred =
+        nightmared &&
+        (metadata.kind === 'attack' || metadata.kind === 'ultimate') &&
+        metadata.id !== basicAttackId
       return {
         metadata,
+        barred,
         level: state.level,
         cooldownRemaining: state.cooldownRemaining,
         enabled: state.enabled,
@@ -188,6 +219,7 @@ export function AbilityBar({
         nextRepairCost={nextRepairCost}
         shieldCost={shieldCost}
         shieldCooldownSeconds={shieldCooldownSeconds}
+        shieldBlockedBySwarm={shieldBlockedBySwarm}
         repairsUsed={repairsUsed}
         maxRepairs={maxRepairs}
         theme={theme}
@@ -195,9 +227,19 @@ export function AbilityBar({
         onClose={() => setIsShopOpen(false)}
       />
 
+      {/* Pay-to-remove (Fireflies). Floats over the bar rather than hiding in
+          the shop — it blocks your shield and its price climbs, so it has to be
+          visible. Absolute, so the battlefield never reflows around it. */}
+      <DispelButton
+        dispel={dispel}
+        currency={currency}
+        onBuy={() => onBuyItem('dispel')}
+      />
+
       {/* Space's Supernova charge meter, above the buttons — shown only once
           Supernova is unlocked (the parent passes a number then). */}
       {supernovaMeter != null && <SupernovaMeter meter={displaySupernovaMeter!} />}
+      {rageMeter != null && <RageMeter meter={rageMeter} full={rageFull} />}
 
       {/* Main Bottom HUD Bar */}
       <div className="ability-bar">
@@ -256,7 +298,7 @@ export function AbilityBar({
 
         {/* Center: Castable Ability Buttons */}
         <div className="ability-bar__buttons">
-          {activeAbilities.map(({ metadata, level, cooldownRemaining, enabled, cost, upgradeCost, unlockCost, rechargeTicks, charges }) => (
+          {activeAbilities.map(({ metadata, barred, level, cooldownRemaining, enabled, cost, upgradeCost, unlockCost, rechargeTicks, charges }) => (
             <AbilityButton
               key={metadata.id}
               metadata={metadata}
@@ -266,6 +308,7 @@ export function AbilityBar({
               currency={currency}
               enabled={enabled}
               frozen={frozen}
+              barred={barred}
               chilled={cooldownChilled}
               cost={cost}
               rechargeTicks={rechargeTicks}
@@ -283,7 +326,7 @@ export function AbilityBar({
               }
               // Father Time: a clock marks the attacks that reset the countdown.
               showFatherTimeClock={fatherTimeMarked && metadata.kind === 'attack'}
-              onCast={(chargesToUse) => onCastAbility(metadata.id, chargesToUse)}
+              onCast={(chargesToUse, choice) => onCastAbility(metadata.id, chargesToUse, choice)}
               onUnlock={onUpgradeAbility ? () => onUpgradeAbility(metadata.id) : undefined}
               onUpgrade={onUpgradeAbility ? () => onUpgradeAbility(metadata.id) : undefined}
               upgradeCost={upgradeCost}

@@ -41,11 +41,58 @@ export function makeTriangleNode(parent: Container): DisplayNode {
 export function makeHeartNode(parent: Container): DisplayNode {
   const R = UNIT_RADIUS
   const g = new Graphics()
-  // Two top lobes + a bottom point, in local units (y-down). Cusp at top-center.
-  g.moveTo(0, -R * 0.35)
-  g.bezierCurveTo(R * 0.55, -R * 1.05, R * 1.35, -R * 0.15, 0, R * 0.95)
-  g.bezierCurveTo(-R * 1.35, -R * 0.15, -R * 0.55, -R * 1.05, 0, -R * 0.35)
+  // A heart lying on its side: rotated 90° from upright so a `faceDirection`
+  // projectile flies POINT-FIRST, lobes trailing, the way the arrow does.
+  // (Upright, this is the cusp at top-centre, lobes up-left/up-right, point at
+  // the bottom; every coordinate below is that path turned a quarter turn.)
+  g.moveTo(-R * 0.35, 0)
+  g.bezierCurveTo(-R * 1.05, -R * 0.55, -R * 0.15, -R * 1.35, R * 0.95, 0)
+  g.bezierCurveTo(-R * 0.15, R * 1.35, -R * 1.05, R * 0.55, -R * 0.35, 0)
   g.fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A unit SPADE pip (Joker's Ace of Spades): the point leads along +x with the
+ * two lobes and a flared stem trailing, so a `faceDirection` projectile flies
+ * tip-first. White + tinted; scales like the circle. Satisfies DisplayNode.
+ */
+export function makeSpadeNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // The pip body — an inverted heart, point forward.
+  g.moveTo(-R * 0.3, 0)
+  g.bezierCurveTo(-R * 1.0, -R * 0.6, -R * 0.1, -R * 1.3, R * 1.05, 0)
+  g.bezierCurveTo(-R * 0.1, R * 1.3, -R * 1.0, R * 0.6, -R * 0.3, 0)
+  g.fill(0xffffff)
+  // The stem, flaring out behind it — what separates a spade from a heart.
+  g.poly([
+    -R * 0.3, -R * 0.14,
+    -R * 1.15, -R * 0.5,
+    -R * 1.15, R * 0.5,
+    -R * 0.3, R * 0.14,
+  ]).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A unit SHADOW orb (Dark's Shadow Strike): a near-black disc ringed in white
+ * so it stays readable against the dark battlefield — an untinted bolt in
+ * Dark's own colours would simply vanish.
+ *
+ * Unlike every other shape this one is drawn at its FINAL colours rather than
+ * white, because a single `tint` cannot spare the rim. Its effect therefore
+ * uses a white projectile colour so the tint is the identity.
+ */
+export function makeShadowNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  g.circle(0, 0, R).fill(0x12121a)
+  g.circle(0, 0, R).stroke({ width: R * 0.28, color: 0xf7f7f2, alignment: 0 })
   g.visible = false
   parent.addChild(g)
   return g as unknown as DisplayNode
@@ -67,6 +114,34 @@ export function makeArrowNode(parent: Container): DisplayNode {
   // Fletching (two angled flights at the tail).
   g.poly([-R * 1.4, 0, -R * 1.9, -R * 0.5, -R * 1.1, 0]).fill(0xffffff)
   g.poly([-R * 1.4, 0, -R * 1.9, R * 0.5, -R * 1.1, 0]).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A unit YIN-YANG (Dark's Yin and Yang): the taijitu — two interlocking
+ * teardrops, each carrying a dot of the other.
+ *
+ * Like the shadow orb this is drawn at its FINAL colours rather than white,
+ * because the whole symbol IS the contrast between black and white; a single
+ * `tint` would flatten it to one colour. Its effect therefore uses a white
+ * projectile colour so the drawn colours survive.
+ */
+export function makeYinYangNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // The white half is the full disc; the black half is laid over it.
+  g.circle(0, 0, R).fill(0xf7f7f2)
+  // The S-curve: a half-disc plus the two lobes that swap the boundary over.
+  g.arc(0, 0, R, -Math.PI / 2, Math.PI / 2).fill(0x0b0b12)
+  g.circle(0, -R / 2, R / 2).fill(0xf7f7f2)
+  g.circle(0, R / 2, R / 2).fill(0x0b0b12)
+  // The eyes — each half carries a dot of the other.
+  g.circle(0, -R / 2, R * 0.16).fill(0x0b0b12)
+  g.circle(0, R / 2, R * 0.16).fill(0xf7f7f2)
+  // A rim so it reads against both a dark battlefield and a bright flash.
+  g.circle(0, 0, R).stroke({ width: R * 0.09, color: 0x8a8a99, alignment: 0 })
   g.visible = false
   parent.addChild(g)
   return g as unknown as DisplayNode

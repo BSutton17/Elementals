@@ -1640,3 +1640,36 @@
     font-size: 0.65rem;
   }
 }
+
+/* Never-ending Nightmare: an illegal move. Greyed out and stamped with a
+   no-entry sign, so the lock is legible before you click rather than after the
+   server refuses you. The card stays visible — you need to see what you are
+   being denied. */
+.ability-button--barred {
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.ability-button__barred-sign {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.6rem;
+  color: #ff5a6a;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  z-index: 4;
+  animation: barred-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes barred-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-button__barred-sign { animation: none; }
+}

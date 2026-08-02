@@ -1,0 +1,156 @@
+/* Light's Light Show — drawn inside the arena SVG, so every length here is in
+   arena units (the 0 0 1000 1000 viewBox) and scales with the battlefield.
+
+   `--windup` is the real time until the strike lands, handed down from the
+   server's own resolveTick. Every part of the warning runs off it, so the spin,
+   the swell and the glare all peak on the exact frame the light comes down —
+   the animation can't drift from the game. */
+
+.lightshow {
+  pointer-events: none;
+}
+
+/* ---- The disc ---- */
+
+.lightshow__halo {
+  transform-origin: 500px 500px;
+  animation: lightshow-halo var(--windup) ease-in forwards;
+}
+
+@keyframes lightshow-halo {
+  /* Brightness only — no growth. The halo sits directly behind the disc, so
+     swelling it read as the disc changing size. */
+  0% { opacity: 0; }
+  60% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* The disc's rotation and scale are NOT set here. They are driven per frame in
+   the component as an SVG `transform` attribute with an explicit centre —
+   rotate(deg, 500, 500).
+
+   Nothing may animate `transform` on this element from CSS: a CSS transform
+   WINS over an SVG transform attribute, so a rule here silently overrides the
+   JS and the disc stops turning. That is exactly what happened, and jsdom
+   cannot catch it (it doesn't run CSS animations), so it is written down
+   instead. Opacity is safe — it doesn't touch the transform. */
+.lightshow__disc {
+  animation: lightshow-disc-in 320ms ease-out;
+}
+
+@keyframes lightshow-disc-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* One big filled white circle. */
+.lightshow__disc-body {
+  fill: #ffffff;
+  opacity: 0.92;
+}
+
+/* Wedges cut across its face — without these a spinning disc looks perfectly
+   still, however fast it is actually turning. */
+.lightshow__blade {
+  fill: #e8a92b;
+  opacity: 0.95;
+}
+
+.lightshow__disc-rim {
+  fill: none;
+  stroke: #fff6d5;
+  stroke-width: 8;
+  opacity: 0.95;
+}
+
+/* ---- The clock ---- */
+
+.lightshow__count {
+  /* Dark: it sits ON the white disc, so white text would be invisible. */
+  fill: #3d2a00;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 130px;
+  font-weight: 900;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 6;
+  animation: lightshow-count 1s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes lightshow-count {
+  0% { opacity: 0; scale: 1.9; }
+  25% { opacity: 1; scale: 1; }
+  100% { opacity: 1; }
+}
+
+/* ---- The strike ---- */
+
+.lightshow__flash {
+  transform-origin: 500px 500px;
+  animation: lightshow-flash 0.6s ease-out forwards;
+}
+
+@keyframes lightshow-flash {
+  0% { opacity: 1; scale: 0.3; }
+  100% { opacity: 0; scale: 3; }
+}
+
+.lightshow__beam {
+  stroke-linecap: round;
+  stroke-width: var(--w);
+  animation: lightshow-lance 1.1s ease-out forwards;
+  animation-delay: var(--delay);
+  /* Hidden until its own delay starts it, so a staggered beam doesn't sit
+     visible at full width waiting its turn. */
+  opacity: 0;
+}
+
+/* Each layer carries its own full width as `--w`, so the shared keyframes below
+   can widen and collapse both of them proportionally. (They cannot just say
+   `inherit` — that would resolve against the parent <g>, which sets no width,
+   and both beams would render as hairlines.) */
+.lightshow__beam--corona {
+  --w: 96px;
+  stroke: #ffd98a;
+}
+
+.lightshow__beam--core {
+  --w: 44px;
+  stroke: #ffffff;
+}
+
+@keyframes lightshow-lance {
+  /* Snaps out to full width, holds there, then narrows and fades as it
+     discharges — the corona and the core collapsing together. */
+  0% { opacity: 0; stroke-width: calc(var(--w) * 0.06); }
+  6% { opacity: 1; }
+  12% { opacity: 1; stroke-width: var(--w); }
+  55% { opacity: 1; stroke-width: var(--w); }
+  100% { opacity: 0; stroke-width: calc(var(--w) * 0.12); }
+}
+
+.lightshow__impact {
+  transform-origin: center;
+  animation: lightshow-impact 0.85s ease-out forwards;
+  animation-delay: var(--delay);
+  opacity: 0;
+}
+
+@keyframes lightshow-impact {
+  0% { opacity: 0; scale: 0.2; }
+  15% { opacity: 1; scale: 1; }
+  100% { opacity: 0; scale: 2.2; }
+}
+
+/* The warning still has to be readable without motion — the disc and the
+   countdown stay, they simply don't spin or swell. */
+/* The warning still has to be readable without motion. The disc's spin is
+   JS-driven so it is unaffected here; these are just the CSS flourishes. */
+@media (prefers-reduced-motion: reduce) {
+  .lightshow__halo,
+  .lightshow__count,
+  .lightshow__disc {
+    animation: none;
+  }
+  .lightshow__halo { opacity: 0.7; }
+}

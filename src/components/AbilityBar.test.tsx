@@ -107,9 +107,10 @@ describe('AbilityBar', () => {
       />
     )
 
-    // Click cast Fireball (non-charge abilities pass no charge count)
+    // Click cast Fireball (non-charge abilities pass no charge count, and no
+    // choice — only a choice-bearing card like Yin and Yang supplies one)
     fireEvent.click(screen.getByLabelText('Cast Fireball'))
-    expect(onCast).toHaveBeenCalledWith('fireball', undefined)
+    expect(onCast).toHaveBeenCalledWith('fireball', undefined, undefined)
 
     // Click upgrade Fireball (needs enough currency, Fireball upgradeCost = 150g, currency = 500g, so clickable)
     const upgradeBtns = screen.getAllByRole('button', { name: /Upgrade/ })
@@ -333,6 +334,97 @@ describe('AbilityBar', () => {
     // frost coat intercepts the click, so no cast fires.
     const coat = container.querySelector('.frost-coat')!
     fireEvent.click(coat)
+    expect(onCast).not.toHaveBeenCalled()
+  })
+})
+
+// Dark's Never-ending Nightmare locks the victim to their basic attack. The
+// client's rule has to match the server's exactly (`basicAttackIdFor` + the
+// attack/ultimate check), or a card looks castable and is then refused.
+describe('Never-ending Nightmare bars illegal moves', () => {
+  const darkAbilities = [
+    { id: 'shadowStrike', level: 1, cooldownRemaining: 0, enabled: true, cost: 100, upgradeCost: 150 },
+    { id: 'yinAndYang', level: 1, cooldownRemaining: 0, enabled: true, cost: 200, upgradeCost: 250 },
+    { id: 'unlimitedRage', level: 1, cooldownRemaining: 0, enabled: true, cost: 600, upgradeCost: 1000 },
+    { id: 'neverEndingNightmare', level: 1, cooldownRemaining: 0, enabled: true, cost: 300, upgradeCost: 400 },
+    { id: 'infinitumTenebrae', level: 1, cooldownRemaining: 0, enabled: true, cost: 800, upgradeCost: 1200 },
+  ]
+
+  const renderDark = (nightmared: boolean) =>
+    render(
+      <AbilityBar
+        kingdomId="dark"
+        theme={null}
+        currency={5000}
+        citizens={12}
+        castleHp={10000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={24}
+        abilities={darkAbilities}
+        tickRate={20}
+        nightmared={nightmared}
+        onCastAbility={() => {}}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />,
+    )
+
+  it('marks nothing while the victim is free', () => {
+    const { container } = renderDark(false)
+    expect(container.querySelectorAll('.ability-button--barred')).toHaveLength(0)
+    expect(container.querySelectorAll('[data-testid="barred-sign"]')).toHaveLength(0)
+  })
+
+  it('bars every attack but the basic one, and the ultimate', () => {
+    const { container } = renderDark(true)
+    // shadowStrike (basic attack) and neverEndingNightmare (utility) stay legal;
+    // yinAndYang, unlimitedRage (attacks) and infinitumTenebrae (ultimate) do not.
+    expect(container.querySelectorAll('.ability-button--barred')).toHaveLength(3)
+    expect(container.querySelectorAll('[data-testid="barred-sign"]')).toHaveLength(3)
+  })
+
+  it('leaves the basic attack castable — it is the one legal move', () => {
+    const { container } = renderDark(true)
+    const cards = [...container.querySelectorAll('.ability-button')]
+    const basic = cards[0]!
+    expect(basic.className).not.toContain('ability-button--barred')
+    expect((basic as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('a barred card cannot be clicked at all', () => {
+    const onCast = vi.fn()
+    const { container } = render(
+      <AbilityBar
+        kingdomId="dark"
+        theme={null}
+        currency={5000}
+        citizens={12}
+        castleHp={10000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={24}
+        abilities={darkAbilities}
+        tickRate={20}
+        nightmared
+        onCastAbility={onCast}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />,
+    )
+    const barred = container.querySelector('.ability-button--barred') as HTMLButtonElement
+    expect(barred.disabled).toBe(true)
+    fireEvent.click(barred)
     expect(onCast).not.toHaveBeenCalled()
   })
 })

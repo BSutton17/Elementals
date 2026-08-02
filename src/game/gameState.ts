@@ -62,11 +62,19 @@ export interface GamePlayer {
   unlocked?: Record<string, boolean>
   statuses?: Array<{
     id: string
+    /** Who applied it — lets the UI tell "my swarm" from "someone else's". */
+    sourceId?: string
     remainingTicks: number
     stacks: number
     /** Two-phase status has revealed (Love's "Love Galore"): drives its aura. */
     revealed?: boolean
   }>
+  /**
+   * A status this player can buy their way out of and its current price
+   * (Light's Fireflies), or null when they hold none. Server-derived — the
+   * price is snapshotted when the status lands and can be inflated afterwards.
+   */
+  dispel?: { statusId: string; cost: number } | null
   /**
    * Every price the HUD shows, per ability id of this player's kingdom, with
    * upgrade tiers and perks applied. The SINGLE source of ability pricing —
@@ -88,6 +96,40 @@ export interface GamePlayer {
    * (thresholds 50/150/250). 0/absent for non-Space kingdoms.
    */
   supernovaMeter?: number
+  /**
+   * Dark's Unlimited Rage charge, in damage absorbed. Fills from every hit
+   * taken; the ultimate is uncastable below `RAGE_FULL` and empties it on use.
+   * Present for every kingdom, meaningful only for Dark.
+   */
+  rageMeter?: number
+  /**
+   * Joker's Slot Machine: this player owes a spin and their gold production is
+   * frozen until they pull the lever. Absent/null when nothing is owed.
+   */
+  pendingSpin?: { sourceId: string; abilityId: string; atTick: number } | null
+  /**
+   * Their most recent spin. `revealTick` is when the reels stop and the result
+   * becomes public — Joker's overhead readout holds at "Spinning…" until then,
+   * so it lands at the same moment the victim's own reels do.
+   */
+  lastSpin?: { symbols: string[]; outcome: string; revealTick: number } | null
+  /**
+   * Joker's Roulette: this player owes a bet and their gold production is
+   * frozen until they call a colour. `atTick` orders it against `pendingSpin`,
+   * so whichever landed first is the one shown and the other waits.
+   */
+  pendingBet?: { sourceId: string; abilityId: string; atTick: number } | null
+  /** Their most recent wheel, held back until `revealTick` like `lastSpin`. */
+  lastBet?: {
+    pocket: number
+    color: string
+    bet: string
+    /** The verdict as told to the bettor ("you missed, 750 damage"). */
+    outcome: string
+    /** The same verdict told ABOUT them — what Joker's mirror shows. */
+    publicOutcome?: string
+    revealTick: number
+  } | null
 }
 
 export interface GameState {

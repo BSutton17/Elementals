@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
-import type { AbilityCastEvent, AttackUndoneEvent, ShieldDestroyedEvent } from '../game/events'
+import type {
+  AbilityCastEvent,
+  AttackUndoneEvent,
+  CardDrawnEvent,
+  LuckyDrawEvent,
+  ShieldDestroyedEvent,
+} from '../game/events'
 import {
   KINGDOMS,
   canMultiTarget,
   usesLocalTargeting,
   localSelectLimit,
+  statusMultiTargetLimit,
   MULTI_SELECT_ABILITIES,
 } from '../game/kingdoms'
 import { placeKingdoms } from '../game/placement'
@@ -13,12 +20,16 @@ import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
 // import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
+import { LightShowLayer } from './lightShow/LightShowLayer'
+import { WagerResultLayer } from './wager/WagerResultLayer'
 import { BlackHoleAccumulator } from './BlackHoleAccumulator'
 import { FloatingNumbers } from './FloatingNumbers'
 import { EmpathyReaction } from './EmpathyReaction'
 import { BffsLinkLayer } from './BffsLinkLayer'
 import { DustBunniesLayer } from './DustBunniesLayer'
 import { AbilityBar } from './AbilityBar'
+import { BlackjackReveal, type BlackjackCinematic } from './cards/BlackjackReveal'
+import { LuckyDrawOverlay } from './cards/LuckyDrawOverlay'
 import { useScrambleValues } from './scramble/useScrambleValues'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
@@ -27,7 +38,35 @@ import type { LobbyMatch } from '../game/lobby'
 import './BattlefieldView.css'
 
 const FALLBACK_COLOR = '#3a4152'
+
+/**
+ * Ability ids we've already complained about, so the warning below fires once
+ * per ability rather than every frame.
+ */
+const warnedMissingPrices = new Set<string>()
+
+/**
+ * Shouts when the server priced SOME abilities but not this one. That only
+ * happens on a version skew — the client knows an ability the server doesn't,
+ * which in practice means the server is running a stale `dist/` (its dev script
+ * serves compiled output, so a `npm run build` is needed after a data change
+ * while Vite hot-reloads the client instantly).
+ *
+ * Without this the failure is silent and baffling: the card renders with no
+ * price and refuses to unlock, exactly as if the ability were broken.
+ */
+function warnIfUnpriced(abilityId: string, hasAnyPrices: boolean, priced: boolean): void {
+  if (!hasAnyPrices || priced || warnedMissingPrices.has(abilityId)) return
+  warnedMissingPrices.add(abilityId)
+  console.warn(
+    `[kingdoms] The server sent no prices for "${abilityId}" — it can't be ` +
+      `unlocked or cast. The server is probably running a stale build; ` +
+      `rebuild it (npm run build in Server/) and restart.`,
+  )
+}
 const DEFAULT_TICK_RATE = 20
+/** How long a finished spin's symbols stay above a kingdom on Joker's screen. */
+const SLOT_RESULT_LINGER_SECONDS = 7
 /** How long a Blip travel-attack rewind streak takes to fly back (ms). */
 const REWIND_MS = 700
 
@@ -44,11 +83,14 @@ export function BattlefieldView({
   match,
   youId,
   players,
+  tick = 0,
   spectator = false,
 }: {
   match: LobbyMatch
   youId: string | null
   players: GamePlayer[]
+  /** Current server tick — drives time-gated readouts (slot-machine reveals). */
+  tick?: number
   /** Watch-only mode: fullscreen arena, no header, no controls, no targeting. */
   spectator?: boolean
 }) {
@@ -155,9 +197,12 @@ export function BattlefieldView({
   // keeps the single, server-tracked target. Only living opponents stay
   // selected. `multiTarget` (Air, spreads ALL attacks) is a narrower flag than
   // `localSelect` (Air OR Love) — Love only spreads BFFS.
-  const multiTarget = canMultiTarget(you.kingdomId)
-  const localSelect = usesLocalTargeting(you.kingdomId)
-  const selectLimit = localSelectLimit(you.kingdomId)
+  // Dark's Infinitum Tenebrae grants the same thing TEMPORARILY, so the
+  // targeting UI has to follow the live status too, not just the kingdom.
+  const grantedLimit = statusMultiTargetLimit(you.statuses)
+  const multiTarget = canMultiTarget(you.kingdomId) || grantedLimit > 1
+  const localSelect = usesLocalTargeting(you.kingdomId) || grantedLimit > 1
+  const selectLimit = Math.max(localSelectLimit(you.kingdomId), grantedLimit)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const activeSelected = selectedIds.filter((id) =>
     roster.some((p) => p.id === id && p.id !== youId && !p.eliminated),
@@ -177,6 +222,70 @@ export function BattlefieldView({
       void changeTarget(id)
     }
   }
+
+  // Joker's Slot Machine, watched from outside. Only Joker sees this — it is
+  // the payoff for casting it, and nobody else needs to know who is stuck at
+  // the machine. The readout holds at "Spinning…" until the server's
+  // `revealTick`, so it flips to the symbols exactly when the victim's own
+  // reels stop. The EFFECT is never shown; that is the victim's business.
+  const watchingSlots = you.kingdomId === 'joker'
+  const slotDisplayFor = (p: GamePlayer): { text: string; spinning: boolean } | null => {
+    if (!watchingSlots || p.id === you.id) return null
+    if (p.pendingSpin) return { text: 'Spinning…', spinning: true }
+    const spin = p.lastSpin
+    if (!spin) return null
+    if (tick < spin.revealTick) return { text: 'Spinning…', spinning: true }
+    // `lastSpin` is never wiped server-side, so the readout clears itself once
+    // the result has had its moment — otherwise every kingdom would wear its
+    // last spin overhead for the rest of the match.
+    if (tick >= spin.revealTick + SLOT_RESULT_LINGER_SECONDS * tickRate) return null
+    return { text: spin.symbols.join(' '), spinning: false }
+  }
+
+  // Joker's Blackjack: the drawn card is announced on CAST, and the server
+  // holds its damage until the cinematic delivers it, so the card is always
+  // seen landing before the victim is hurt. Positions are converted from arena
+  // space (1000×1000) to viewport percentages for the overlay.
+  const [blackjack, setBlackjack] = useState<BlackjackCinematic | null>(null)
+  const blackjackKey = useRef(0)
+  useEffect(
+    () =>
+      onGameEvents((events) => {
+        for (const event of events) {
+          if (event.type !== 'cardDrawn') continue
+          const draw = event as unknown as CardDrawnEvent
+          const caster = positionOf(draw.playerId)
+          const victimId = roster.find((r) => r.id === draw.playerId)?.target
+          const victim = victimId ? positionOf(victimId) : undefined
+          setBlackjack({
+            key: ++blackjackKey.current,
+            card: draw.card,
+            from: { x: (caster?.x ?? 500) / 10, y: (caster?.y ?? 500) / 10 },
+            to: { x: (victim?.x ?? 500) / 10, y: (victim?.y ?? 500) / 10 },
+          })
+        }
+      }),
+    // `positionOf`/`roster` are rebuilt each render; the handler only reads them
+    // when an event actually fires, so re-subscribing per render is intended.
+  )
+
+  // Joker's Lucky Draw: the server has already rolled which of the five faces
+  // landed. The overlay lets the CASTER pick a card to turn over — theatre, not
+  // influence — so only Joker sees it.
+  const [luckyOutcome, setLuckyOutcome] = useState<string | null>(null)
+  const luckyKey = useRef(0)
+  useEffect(
+    () =>
+      onGameEvents((events) => {
+        for (const event of events) {
+          if (event.type !== 'luckyDraw') continue
+          const draw = event as unknown as LuckyDrawEvent
+          if (draw.playerId !== youId) continue // the caster's own choice
+          luckyKey.current += 1
+          setLuckyOutcome(draw.outcome)
+        }
+      }),
+  )
 
   // A brief on-screen hint (e.g. "BFFS!!! needs two kingdoms"). Self-clearing.
   const [castHint, setCastHint] = useState<string | null>(null)
@@ -311,6 +420,7 @@ export function BattlefieldView({
                 tickRate={tickRate}
                 showStats={spectator || isYou || hasAirVision}
                 ultShield={ultShieldIds.has(p.id) && p.castle.shield > 0}
+                slotDisplay={slotDisplayFor(p)}
                 onSelect={
                   !spectator && !isYou && !p.eliminated
                     ? () => toggleTarget(p.id)
@@ -323,6 +433,14 @@ export function BattlefieldView({
 
         {/* Layer: projectiles & effects — populated by later tickets. */}
         <g className="battlefield__layer-projectiles" data-testid="projectile-layer" />
+
+        {/* Layer: Light Show — the warning ring + countdown over the centre of
+            the field, then a lance to every kingdom but Light. Lives inside the
+            arena SVG so it shares the kingdoms' exact coordinate space. */}
+        <LightShowLayer positions={positions} roster={roster} tickRate={tickRate} />
+
+        {/* Layer: the Yin and Yang verdict — did they read the wager right? */}
+        <WagerResultLayer positionOf={positionOf} />
 
         {/* Layer: Blip! travel-attack rewinds — a mote in the attacker's colour
             streaks from the victim back to the caster (the shot un-happening).
@@ -386,6 +504,11 @@ export function BattlefieldView({
         tickRate={tickRate}
       />
       <BlackHoleAccumulator />
+      {/* Joker's Blackjack: the whole card reveal, replacing the default bolt.
+          The damage is held server-side until the impact frame below. */}
+      <BlackjackReveal cast={blackjack} />
+      {/* Joker's Lucky Draw: the caster's own five-card selection. */}
+      <LuckyDrawOverlay outcome={luckyOutcome} castKey={luckyKey.current} />
       {castHint && (
         <div className="battlefield__cast-hint" role="status">
           {castHint}
@@ -415,11 +538,21 @@ export function BattlefieldView({
             Math.round(500 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
           }
           shieldCooldownSeconds={(you.castle.shieldCooldownRemaining ?? 0) / tickRate}
+          // Light's Fireflies: a swarm on your castle bars you from buying a
+          // shield until you pay it off (the server enforces it; this is just
+          // so the button says why).
+          shieldBlockedBySwarm={
+            you.statuses?.some((s) => s.id === 'fireflies') ?? false
+          }
+          dispel={you.dispel ?? null}
           repairsUsed={you.castle.repairs ?? 0}
           maxRepairs={3}
           lockedOut={shopLocked}
           citizensPoisoned={citizensPoisoned}
           frozen={frozen}
+          // Never-ending Nightmare: every attack but your basic one, and your
+          // ultimate, are illegal until it lifts.
+          nightmared={you.statuses?.some((s) => s.id === 'neverEndingNightmare') ?? false}
           scrambled={scrambled}
           scramble={scramble}
           fatherTimeMarked={fatherTimeMarked}
@@ -428,6 +561,10 @@ export function BattlefieldView({
           // Space only: show the Supernova charge meter once Supernova is
           // unlocked (undefined for every other kingdom hides it).
           supernovaMeter={you.unlocked?.supernova ? you.supernovaMeter ?? 0 : null}
+          // Dark only: show the Unlimited Rage meter once the ultimate is
+          // unlocked (null for every other kingdom hides it).
+          rageMeter={you.unlocked?.unlimitedRage ? you.rageMeter ?? 0 : null}
+          rageFull={match.config?.rageFull}
           abilities={getAbilitiesForKingdom(you.kingdomId).map((metadata) => {
             // Bought abilities show as level 1; upgrade tiers stack on top.
             const isUnlocked = you.unlocked?.[metadata.id] ?? false
@@ -441,6 +578,11 @@ export function BattlefieldView({
             // cost data of its own to drift from it. Zeroed until the first
             // sync arrives, at which point real prices replace them.
             const prices = you.abilityPrices?.[metadata.id]
+            warnIfUnpriced(
+              metadata.id,
+              Object.keys(you.abilityPrices ?? {}).length > 0,
+              prices != null,
+            )
             // Charge-based abilities: each spent charge regenerates on its own
             // synced countdown; available = max − recharging.
             const rechargeTicks = metadata.charges
@@ -459,7 +601,7 @@ export function BattlefieldView({
             }
           })}
           tickRate={tickRate}
-          onCastAbility={(abilityId, chargesToUse) => {
+          onCastAbility={(abilityId, chargesToUse, choice) => {
             // Air spreads every attack across the whole selected set. Love picks
             // up to two but only BFFS!!! consumes both — every other Love
             // ability uses the FIRST selection and DROPS the rest. Everyone
@@ -485,7 +627,7 @@ export function BattlefieldView({
             } else {
               target = you.target
             }
-            void castAbility(abilityId, target, chargesToUse)
+            void castAbility(abilityId, target, chargesToUse, choice)
           }}
           onUpgradeAbility={(abilityId) => {
             void buyUpgrade(abilityId)

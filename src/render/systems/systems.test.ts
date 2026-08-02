@@ -4,7 +4,14 @@ import { ImpactSystem } from './impacts'
 import { ParticleSystem } from './particles'
 import { AcidRainSystem } from './acidRain'
 import { FrostAuraSystem } from './frostAura'
-import type { AcidRainConfig, FrostAuraConfig, DisplayNode, Vec2 } from '../types'
+import { FirefliesSystem } from './fireflies'
+import type {
+  AcidRainConfig,
+  FirefliesConfig,
+  FrostAuraConfig,
+  DisplayNode,
+  Vec2,
+} from '../types'
 
 /** A plain stand-in for a Pixi display object, so system motion is testable
  *  without a WebGL context. */
@@ -371,4 +378,70 @@ test('gather + erupt are one-shot cast bursts (no keyed aura) that drain away', 
   expect(sys.active).toBe(0)
   for (let i = 0; i < 120; i++) sys.update(16)
   expect(sys.particleCount).toBe(0)
+})
+
+// --- Fireflies (Light) ---------------------------------------------------------
+
+const FIREFLY_CFG: FirefliesConfig = {
+  glowColor: 0xffe9a8,
+  litColor: 0xffffff,
+  radius: 60,
+  flySize: 6,
+  intensity: 1,
+}
+
+test('a fireflies swarm dances indefinitely — it never expires on its own', () => {
+  const sys = new FirefliesSystem(fakeNode, 16, { rng: () => 0.5 })
+  sys.start('k', { x: 100, y: 100 }, FIREFLY_CFG)
+  expect(sys.has('k')).toBe(true)
+  // The ransom is the ONLY exit: two full minutes later it is still there.
+  for (let i = 0; i < 7200; i++) sys.update(16)
+  expect(sys.has('k')).toBe(true)
+})
+
+test('the flies actually move, and not as one body', () => {
+  const sys = new FirefliesSystem(fakeNode, 16, { rng: Math.random })
+  sys.start('k', { x: 0, y: 0 }, FIREFLY_CFG)
+  sys.update(16)
+  const before = sys.positions('k')
+  for (let i = 0; i < 30; i++) sys.update(16)
+  const after = sys.positions('k')
+
+  // Every fly has moved...
+  const moved = before.filter((p, i) => Math.hypot(after[i]!.x - p.x, after[i]!.y - p.y) > 0.01)
+  expect(moved.length).toBe(before.length)
+  // ...and they have not all moved by the same vector (that would be a rigid
+  // cloud sliding around rather than a swarm).
+  const deltas = before.map((p, i) => `${(after[i]!.x - p.x).toFixed(2)},${(after[i]!.y - p.y).toFixed(2)}`)
+  expect(new Set(deltas).size).toBeGreaterThan(1)
+})
+
+test('Illumination agitates a swarm, and the frenzy decays back down', () => {
+  const sys = new FirefliesSystem(fakeNode, 16, { rng: () => 0.5 })
+  sys.start('k', { x: 0, y: 0 }, FIREFLY_CFG)
+  expect(sys.agitationOf('k')).toBe(0)
+  sys.agitate('k')
+  expect(sys.agitationOf('k')).toBeCloseTo(1, 5)
+  // It stacks: a second Illumination drives them harder still.
+  sys.agitate('k')
+  expect(sys.agitationOf('k')).toBeGreaterThan(1)
+  // And it always bleeds back to a lazy drift.
+  for (let i = 0; i < 2000; i++) sys.update(16)
+  expect(sys.agitationOf('k')).toBe(0)
+})
+
+test('agitating a kingdom with no swarm is a no-op, not a crash', () => {
+  const sys = new FirefliesSystem(fakeNode, 16, { rng: () => 0.5 })
+  expect(() => sys.agitate('nobody')).not.toThrow()
+  expect(sys.has('nobody')).toBe(false)
+})
+
+test('paying the ransom scatters the swarm and clears it', () => {
+  const sys = new FirefliesSystem(fakeNode, 16, { rng: () => 0.5 })
+  sys.start('k', { x: 0, y: 0 }, FIREFLY_CFG)
+  sys.stop('k')
+  // No longer live, but still on screen while the lights scatter.
+  expect(sys.has('k')).toBe(false)
+  for (let i = 0; i < 120; i++) sys.update(16)
+  expect(sys.positions('k')).toHaveLength(0)
 })

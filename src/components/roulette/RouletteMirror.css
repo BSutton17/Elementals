@@ -1,0 +1,114 @@
+/* Joker's side-screen mirror of every Roulette it has running. Purely a
+   spectator readout — click-through, and never in the way of the battlefield. */
+.roulette-mirror {
+  position: fixed;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 80vh;
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.roulette-mirror__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 8.5rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  color: #f4efe2;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  background: linear-gradient(#0d3f25, #072418);
+  border: 2px solid #c9a227;
+  border-radius: 0.6rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+}
+
+.roulette-mirror__name {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #f2d68a;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roulette-mirror__wheel {
+  width: 6.5rem;
+  height: 6.5rem;
+}
+
+.roulette-mirror__bet {
+  font-size: 0.66rem;
+  color: rgba(244, 239, 226, 0.85);
+}
+
+.roulette-mirror__swatch {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.roulette-mirror__swatch--red { color: #ff6b76; }
+.roulette-mirror__swatch--black { color: #cfd2dd; }
+.roulette-mirror__swatch--green { color: #6bf0a0; }
+
+.roulette-mirror__result {
+  font-size: 0.64rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.roulette-mirror__result--red { color: #ff6b76; }
+.roulette-mirror__result--black { color: #cfd2dd; }
+.roulette-mirror__result--green { color: #6bf0a0; }
+
+/* Mobile portrait: tuck the mirror into the top-right corner and shrink it, so
+   it never covers the arena. */
+@media (max-width: 30rem) {
+  .roulette-mirror {
+    right: 0.4rem;
+    top: 0.4rem;
+    transform: none;
+    flex-direction: row;
+    max-width: calc(100vw - 0.8rem);
+    overflow-x: auto;
+  }
+  .roulette-mirror__card {
+    width: 6rem;
+    padding: 0.35rem;
+  }
+  .roulette-mirror__wheel {
+    width: 4.4rem;
+    height: 4.4rem;
+  }
+}
+
+/* Mobile landscape: height is scarce, so keep it a narrow strip on the right. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  .roulette-mirror {
+    right: 0.4rem;
+    gap: 0.35rem;
+    max-height: 92vh;
+  }
+  .roulette-mirror__card {
+    width: 5.6rem;
+    padding: 0.3rem;
+    gap: 0.1rem;
+  }
+  .roulette-mirror__wheel {
+    width: 4rem;
+    height: 4rem;
+  }
+  .roulette-mirror__name { font-size: 0.6rem; }
+  .roulette-mirror__bet { font-size: 0.56rem; }
+  .roulette-mirror__result { font-size: 0.56rem; }
+}

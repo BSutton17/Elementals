@@ -1,0 +1,238 @@
+/* Joker's Lucky Draw. The only phase that takes pointer events is `choose` —
+   everything else is a cutscene the player watches. */
+.lucky {
+  position: fixed;
+  inset: 0;
+  z-index: 5700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.lucky--choose {
+  pointer-events: auto;
+}
+
+.lucky__dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(58, 6, 12, 0.82), rgba(3, 3, 6, 0.94));
+  animation: lucky-fade 0.4s ease-out;
+}
+
+@keyframes lucky-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- The five-card fan ---- */
+
+.lucky__fan {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.4rem, 2vw, 1.2rem);
+}
+
+.lucky__slot {
+  position: relative;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: default;
+  perspective: 1200px;
+  /* A gentle bob, offset per card so the fan breathes rather than pulses. */
+  animation: lucky-bob 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.22s);
+  transition: transform 0.18s ease, filter 0.18s ease, opacity 0.5s ease;
+}
+
+.lucky__slot--live {
+  cursor: pointer;
+}
+
+@keyframes lucky-bob {
+  0%, 100% { transform: translateY(0) rotate(calc((var(--i) - 2) * 2.5deg)); }
+  50% { transform: translateY(-0.6rem) rotate(calc((var(--i) - 2) * 2.5deg + 1deg)); }
+}
+
+/* Hover: lift and brighten so it reads as pickable. */
+.lucky__slot--live:hover {
+  animation-play-state: paused;
+  transform: translateY(-1.4rem) scale(1.06);
+  filter: brightness(1.35) drop-shadow(0 0 1.2rem rgba(242, 214, 138, 0.9));
+}
+
+.lucky__card {
+  position: relative;
+  display: block;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.3, 0.9, 0.3, 1);
+}
+
+.lucky__side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+}
+
+.lucky__side--front {
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  text-align: center;
+  color: #14141a;
+  background: linear-gradient(160deg, #fffdf5, #ece4cf);
+  border: 2px solid #f2d68a;
+  border-radius: 0.6rem;
+  transform: rotateY(180deg);
+}
+
+.lucky__slot .pcard {
+  --card-w: clamp(4rem, 13vw, 7rem);
+}
+
+.lucky__pip { font-size: 1.6rem; line-height: 1; }
+.lucky__name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6d5416;
+}
+.lucky__desc { font-size: 0.6rem; line-height: 1.15; color: #3a3a44; }
+
+/* The unpicked four dissolve into particles. */
+.lucky__slot--dissolving {
+  opacity: 0;
+  transform: translateY(-2rem) scale(0.7);
+  filter: blur(6px) brightness(2);
+  pointer-events: none;
+}
+
+/* The pick centres itself and turns over. */
+.lucky__slot--picked {
+  animation: none;
+  transform: scale(1.5);
+  z-index: 2;
+}
+
+.lucky__slot--picked .lucky__card {
+  transform: rotateY(180deg);
+}
+
+.lucky--showcase .lucky__slot--picked,
+.lucky--dissolve .lucky__slot--picked {
+  animation: lucky-float 2.4s ease-in-out infinite;
+}
+
+@keyframes lucky-float {
+  0%, 100% { transform: scale(1.5) translateY(0) rotate(-1deg); }
+  50% { transform: scale(1.5) translateY(-0.5rem) rotate(1deg); }
+}
+
+.lucky--dissolve .lucky__slot--picked {
+  opacity: 0;
+  filter: blur(8px) brightness(2.2);
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+
+.lucky__prompt {
+  position: absolute;
+  bottom: 14%;
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: clamp(0.9rem, 3vw, 1.2rem);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f2d68a;
+  text-shadow: 0 0 14px rgba(242, 214, 138, 0.8);
+  animation: lucky-prompt 1.6s ease-in-out infinite;
+}
+
+@keyframes lucky-prompt {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ---- Themed showcase particles ---- */
+
+.lucky__aura,
+.lucky__theme {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lucky__mote {
+  position: absolute;
+  left: calc(20% + var(--m) * 20%);
+  bottom: 0;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+  background: #f2d68a;
+  animation: lucky-mote 2.2s ease-out infinite;
+  animation-delay: calc(var(--m) * 0.4s);
+}
+
+@keyframes lucky-mote {
+  0% { transform: translateY(0); opacity: 0; }
+  30% { opacity: 0.9; }
+  100% { transform: translateY(-5rem); opacity: 0; }
+}
+
+.lucky__spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  animation: lucky-spark 2.6s ease-out infinite;
+  animation-delay: calc(var(--i) * 0.11s);
+}
+
+@keyframes lucky-spark {
+  0% { transform: translate(-50%, -50%) rotate(var(--a)) translateX(3rem); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(var(--a)) translateX(15rem); opacity: 0; }
+}
+
+.lucky__theme--attack { color: #ff6b4a; }
+.lucky__theme--armor { color: #6bb8ff; }
+.lucky__theme--gold { color: #ffd24a; }
+.lucky__theme--shield { color: #8fe3ff; }
+.lucky__theme--heal { color: #6bd88a; }
+
+.lucky__front--attack { border-color: #ff6b4a; }
+.lucky__front--armor { border-color: #6bb8ff; }
+.lucky__front--gold { border-color: #ffd24a; }
+.lucky__front--shield { border-color: #8fe3ff; }
+.lucky__front--heal { border-color: #6bd88a; }
+
+/* Landscape phones: the fan is the tall part, so shrink the cards not the gaps. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  .lucky__slot .pcard { --card-w: clamp(3rem, 16vh, 4.6rem); }
+  .lucky__prompt { bottom: 6%; font-size: 0.8rem; }
+  .lucky__desc { font-size: 0.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lucky__slot,
+  .lucky__mote,
+  .lucky__spark,
+  .lucky__prompt {
+    animation: none;
+  }
+}

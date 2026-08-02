@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { CiLock, CiClock2 } from 'react-icons/ci'
+import { CiLock, CiClock2, CiNoWaitingSign } from 'react-icons/ci'
 import { FaSnowflake } from 'react-icons/fa'
 import type { ClientAbilityMetadata } from '../game/abilities'
 import type { AbilityPrices } from '../game/gameState'
 import { FrostCoat } from './FrostCoat'
+import { ChoicePopup } from './ChoicePopup'
 import './AbilityBar.css'
 
 interface AbilityButtonProps {
@@ -16,6 +17,8 @@ interface AbilityButtonProps {
   isUltimateCharged?: boolean
   /** The caster is Frozen (Ice): the card ices over and can't be activated. */
   frozen?: boolean
+  /** Barred by Dark's Never-ending Nightmare — an illegal move right now. */
+  barred?: boolean
   /** Chilling Retribution is extending the caster's cooldowns — flag this card's
    *  slowed cooldown with a snowflake. */
   chilled?: boolean
@@ -33,7 +36,7 @@ interface AbilityButtonProps {
    *  per-charge price, damage by charges spent, regen cadence). Absent until
    *  the first sync, and for every ability without charges. */
   chargeSpec?: AbilityPrices['charges']
-  onCast: (chargesToUse?: number) => void
+  onCast: (chargesToUse?: number, choice?: string) => void
   onUnlock?: () => void // buy a locked ability (puts it at level 1)
   onUpgrade?: () => void
   upgradeCost?: number | null // next upgrade cost, null if maxed
@@ -49,6 +52,7 @@ export function AbilityButton({
   enabled,
   isUltimateCharged = true,
   frozen = false,
+  barred = false,
   chilled = false,
   cost,
   scramble = null,
@@ -62,6 +66,8 @@ export function AbilityButton({
   unlockCost,
 }: AbilityButtonProps) {
   const [hovered, setHovered] = useState(false)
+  /** Dark's Yin and Yang: the side-picker is open. */
+  const [picking, setPicking] = useState(false)
   const [upgradeHovered, setUpgradeHovered] = useState(false)
 
   // Compute cooldown timing
@@ -88,9 +94,13 @@ export function AbilityButton({
   const canAffordUnlock = unlockCost != null && currency >= unlockCost
   // A locked card is a "buy" button: clickable whenever the unlock is affordable.
   // REAL gating — drives the `disabled` attribute and every click. Never lies.
+  // A card that demands a pick (Yin and Yang) is never cast by clicking the
+  // card — only by its choice buttons below, so a side is always named.
+  const needsChoice = (metadata.choices?.length ?? 0) > 0
   const isCastingDisabled = isLocked
     ? !canAffordUnlock
-    : isCooldown ||
+    : barred ||
+      isCooldown ||
       !enabled ||
       !canAfford ||
       (chargeSpec != null && availableCharges === 0) ||
@@ -124,16 +134,34 @@ export function AbilityButton({
         type="button"
         className={`ability-button ability-button--${metadata.element} ${
           visualDisabled ? 'ability-button--disabled' : ''
-        } ${metadata.kind === 'ultimate' ? 'ability-button--ultimate' : ''}`}
+        } ${barred ? 'ability-button--barred' : ''} ${
+          metadata.kind === 'ultimate' ? 'ability-button--ultimate' : ''
+        }`}
         style={{ '--gradient': metadata.gradient } as React.CSSProperties}
         disabled={isCastingDisabled || frozen}
-        onClick={() =>
-          isLocked ? onUnlock?.() : onCast(chargeSpec ? 1 : undefined)
-        }
+        onClick={() => {
+          if (isLocked) return onUnlock?.()
+          // A card that must name a side opens its picker; picking is the cast.
+          if (needsChoice) return setPicking(true)
+          onCast(chargeSpec ? 1 : undefined)
+        }}
         aria-label={isLocked ? `Unlock ${metadata.name}` : `Cast ${metadata.name}`}
       >
         {/* Ability Badge Icon */}
         <span className="ability-button__badge"><metadata.icon /></span>
+
+        {/* Never-ending Nightmare: an illegal move. The card greys out and
+            takes a no-entry sign, so the lock is legible at a glance rather
+            than discovered by clicking and being refused. */}
+        {barred && (
+          <span
+            className="ability-button__barred-sign"
+            aria-hidden="true"
+            data-testid="barred-sign"
+          >
+            <CiNoWaitingSign />
+          </span>
+        )}
 
         {/* Father Time: a pulsing clock marks the attacks that reset the mark's
             countdown (visual hint only). */}
@@ -223,6 +251,20 @@ export function AbilityButton({
           </div>
         )}
       </button>
+
+      {/* Dark's Yin and Yang: clicking the card opens a picker rather than
+          casting. The side chosen IS the cast — see ChoicePopup. */}
+      {picking && (
+        <ChoicePopup
+          title={metadata.name}
+          choices={metadata.choices!}
+          onPick={(value) => {
+            setPicking(false)
+            onCast(undefined, value)
+          }}
+          onCancel={() => setPicking(false)}
+        />
+      )}
 
       {/* Charge cast buttons (Lightning Barrage): spend exactly 1, 2, or 3
           charges. Each is enabled only while that many charges are ready and

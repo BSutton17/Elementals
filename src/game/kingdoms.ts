@@ -26,9 +26,11 @@ export type KingdomId = (typeof KINGDOMS)[number]['id']
  * putting one back in the game is just commenting out its line here.
  */
 const UNRELEASED_KINGDOM_IDS: readonly string[] = [
-  'joker',
-  'light',
-  'dark',
+  // Uncomment to hide a kingdom from production again (e.g. before a release
+  // while its kit is still placeholder data).
+  // 'joker',
+  // 'light',
+  // 'dark',
 ]
 
 /** The kingdoms a player may actually pick right now. */
@@ -71,6 +73,30 @@ export function usesLocalTargeting(kingdomId: string | null): boolean {
 
 export function localSelectLimit(kingdomId: string | null): number {
   return (kingdomId != null && LOCAL_SELECT_LIMITS[kingdomId]) || 1
+}
+
+/**
+ * Statuses that TEMPORARILY grant multi-target attacks, mapped to how many
+ * kingdoms one attack may then name (Dark's Infinitum Tenebrae). Unlike the
+ * kingdom-level grants above these come and go mid-match, so the targeting UI
+ * has to read the live status list rather than the kingdom id alone. Mirrors
+ * the server's `grantsMultiTarget` status flag.
+ */
+export const MULTI_TARGET_STATUSES: Readonly<Record<string, number>> = {
+  infinitumTenebrae: 3,
+}
+
+/** The best temporary multi-target grant among a player's active statuses, or
+ *  1 when none of them grant it. */
+export function statusMultiTargetLimit(
+  statuses: readonly { id: string }[] | undefined,
+): number {
+  let limit = 1
+  for (const s of statuses ?? []) {
+    const granted = MULTI_TARGET_STATUSES[s.id]
+    if (granted) limit = Math.max(limit, granted)
+  }
+  return limit
 }
 
 /**

@@ -1,0 +1,72 @@
+/* Dark's Unlimited Rage charge bar, above the ability buttons. All-or-nothing:
+   it only matters when it hits full, so that is the only state that shouts. */
+.rage-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.6rem;
+  margin: 0 auto 0.35rem;
+  width: fit-content;
+  max-width: 100%;
+  background: rgba(5, 5, 10, 0.55);
+  border: 1px solid rgba(247, 247, 242, 0.16);
+  border-radius: 999px;
+}
+
+.rage-meter__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a9aa5;
+}
+
+.rage-meter__track {
+  width: 9rem;
+  max-width: 40vw;
+  height: 0.45rem;
+  background: rgba(247, 247, 242, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rage-meter__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3a0d14, #b3202f);
+  border-radius: 999px;
+  transition: width 0.25s ease-out;
+}
+
+.rage-meter__value {
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: #9a9aa5;
+}
+
+/* Full: the ultimate is live. */
+.rage-meter--full {
+  border-color: rgba(226, 36, 52, 0.75);
+  animation: rage-meter-pulse 1.5s ease-in-out infinite;
+}
+
+.rage-meter--full .rage-meter__fill {
+  background: linear-gradient(90deg, #b3202f, #ff4d5e);
+}
+
+.rage-meter--full .rage-meter__value {
+  color: #ff8a94;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+@keyframes rage-meter-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(226, 36, 52, 0); }
+  50% { box-shadow: 0 0 16px rgba(226, 36, 52, 0.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rage-meter--full {
+    animation: none;
+    box-shadow: 0 0 12px rgba(226, 36, 52, 0.5);
+  }
+}

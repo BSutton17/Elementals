@@ -139,6 +139,30 @@ export interface AttackMissedEvent {
   cause: string
 }
 
+/** Joker drew a Blackjack card. Fires on CAST; the damage lands later, when
+ *  the card's cinematic delivers it. */
+export interface CardDrawnEvent {
+  type: 'cardDrawn'
+  tick: number
+  /** The Joker kingdom that drew. */
+  playerId: string
+  abilityId: string
+  /** The card's label — "2".."10", "Ace", "Jack", "Queen", "King", "Joker". */
+  card: string
+  /** Pre-pipeline damage the card rolled (display only). */
+  damage: number
+}
+
+/** Joker's Lucky Draw landed a face. `outcome` names it (a status id, or
+ *  "shield"/"heal"); null can only appear if the odds are ever made uncertain. */
+export interface LuckyDrawEvent {
+  type: 'luckyDraw'
+  tick: number
+  playerId: string
+  abilityId: string
+  outcome: string | null
+}
+
 export interface BlackHoleOpenedEvent {
   type: 'blackHoleOpened'
   tick: number
@@ -163,6 +187,38 @@ export interface BlackHoleCollapsedEvent {
   /** The kingdom the stored damage dumps onto, or null if nobody fed it. */
   victimId: string | null
   amount: number
+}
+
+/**
+ * A delayed strike has been armed and is hanging over the field (Light's Light
+ * Show). The warning is PUBLIC and is half the ability — `resolveTick` is when
+ * it comes down, which is what the countdown cinematic runs against.
+ */
+export interface StrikeIncomingEvent {
+  type: 'strikeIncoming'
+  tick: number
+  /** The caster — the one kingdom the strike will spare. */
+  ownerId: string
+  abilityId: string
+  /** The tick the strike lands on. */
+  resolveTick: number
+}
+
+/**
+ * A status was turned away before it could land — Light's Fireflies bouncing
+ * off a shield. Announced so the cast doesn't look like it simply did nothing,
+ * and so the defender learns their shield is what saved them.
+ */
+export interface StatusRepelledEvent {
+  type: 'statusRepelled'
+  tick: number
+  /** The kingdom that shrugged it off. */
+  playerId: string
+  sourceId: string
+  statusId: string
+  abilityId: string
+  /** What repelled it — currently always 'shield'. */
+  cause: string
 }
 
 /** Any event as it arrives on the wire; decoded to a typed shape per handler. */

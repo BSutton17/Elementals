@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { GiEagleEmblem } from 'react-icons/gi'
+import { GiEagleEmblem, GiDreamCatcher } from 'react-icons/gi'
 import { CastleSprite } from './CastleSprite'
 import { getCastleOutline } from '../game/kingdomThemes'
 import { HealthBar } from './HealthBar'
@@ -32,6 +32,7 @@ export function KingdomSite({
   tickRate,
   showStats = true,
   ultShield = false,
+  slotDisplay = null,
   onSelect,
 }: {
   player: GamePlayer
@@ -45,6 +46,9 @@ export function KingdomSite({
   /** This kingdom's shield came from its ULTIMATE (Earth's Brick Wall) — render
    *  the fortress hexadecagon instead of the normal circle. */
   ultShield?: boolean
+  /** Joker's Slot Machine readout above this kingdom: "Spinning…" while their
+   *  reels turn, then the emojis they landed. Null when there's nothing to say. */
+  slotDisplay?: { text: string; spinning: boolean } | null
   /** Called when this kingdom is clicked (used to select it as your target). */
   onSelect?: () => void
 }) {
@@ -99,6 +103,12 @@ export function KingdomSite({
   // Bird's Eye View: an eagle emblem hovers above the castle for the buff's
   // whole duration — fading in when it starts and out when it ends.
   const hasBirdsEye = player.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
+  // Dark's Never-ending Nightmare: a dream catcher hangs over the victim's
+  // castle for the whole lock, so everyone can see who is barred from
+  // attacking — the restriction is public, not a private surprise.
+  const nightmared =
+    (player.statuses?.some((s) => s.id === 'neverEndingNightmare') ?? false) &&
+    !player.eliminated
   const [birdsEye, setBirdsEye] = useState<'in' | 'out' | null>(null)
   useEffect(() => {
     if (hasBirdsEye) {
@@ -142,12 +152,35 @@ export function KingdomSite({
         </text>
       )}
 
+      {/* Joker's Slot Machine, from the OUTSIDE: whoever owes a spin reads
+          "Spinning…" until their reels stop, then shows the symbols they
+          landed — never what those symbols did to them. */}
+      {slotDisplay && (
+        <text
+          y={-146}
+          className={`battlefield__slot${slotDisplay.spinning ? ' battlefield__slot--spinning' : ''}`}
+          data-testid="kingdom-slot"
+        >
+          {slotDisplay.text}
+        </text>
+      )}
+
       {/* Bird's Eye View emblem — floats above the castle for the buff's
           duration, fading in on start and out on end. */}
       {birdsEye && (
         <g transform="translate(0 -178)">
           <g className={`kingdom-site__birdseye kingdom-site__birdseye--${birdsEye}`} aria-hidden="true">
             <GiEagleEmblem size={72} x={-36} y={-36} color={color} />
+          </g>
+        </g>
+      )}
+
+      {/* Never-ending Nightmare: the dream catcher, hung above the castle for
+          as long as the victim is locked to their basic attack. */}
+      {nightmared && (
+        <g transform="translate(0 -178)">
+          <g className="kingdom-site__nightmare" aria-hidden="true">
+            <GiDreamCatcher size={76} x={-38} y={-38} color="#f7f7f2" />
           </g>
         </g>
       )}

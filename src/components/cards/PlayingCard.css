@@ -1,0 +1,174 @@
+/* The shared playing card — Joker's own design. Sized entirely from
+   `--card-w`, so a caller can blow it up to fill the screen or shrink it into
+   a hand without touching anything else. */
+.pcard {
+  --card-w: 9rem;
+  position: relative;
+  width: var(--card-w);
+  height: calc(var(--card-w) * 1.4);
+  box-sizing: border-box;
+  border-radius: calc(var(--card-w) * 0.075);
+  backface-visibility: hidden;
+  user-select: none;
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+/* ---- The back: red lacquer, gold trim, a spade crest ---- */
+
+.pcard--back {
+  padding: calc(var(--card-w) * 0.045);
+  background: linear-gradient(150deg, #8a0f1a, #e02434 45%, #8a0f1a);
+  border: calc(var(--card-w) * 0.022) solid #f2d68a;
+  box-shadow:
+    inset 0 0 calc(var(--card-w) * 0.14) rgba(0, 0, 0, 0.55),
+    0 calc(var(--card-w) * 0.06) calc(var(--card-w) * 0.16) rgba(0, 0, 0, 0.6);
+}
+
+.pcard__trim {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: calc(var(--card-w) * 0.014) solid rgba(242, 214, 138, 0.85);
+  border-radius: calc(var(--card-w) * 0.045);
+  overflow: hidden;
+}
+
+/* A fine gold lattice under the crest. */
+.pcard__weave {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(242, 214, 138, 0.22) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(242, 214, 138, 0.22) 0 1px, transparent 1px 7px);
+}
+
+.pcard__crest {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f7e6b4, #c9a227 65%, #6d5416);
+  box-shadow: 0 0 calc(var(--card-w) * 0.12) rgba(242, 214, 138, 0.55);
+}
+
+.pcard__crest-pip {
+  font-size: calc(var(--card-w) * 0.3);
+  line-height: 1;
+  color: #4a0b12;
+}
+
+/* Motes drifting under the lacquer — the "subtle magical" part. */
+.pcard__motes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pcard__mote {
+  position: absolute;
+  left: calc(8% + var(--i) * 15%);
+  bottom: -10%;
+  width: calc(var(--card-w) * 0.03);
+  height: calc(var(--card-w) * 0.03);
+  border-radius: 50%;
+  background: #ffeaa7;
+  opacity: 0;
+  animation: pcard-mote 3.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.45s);
+}
+
+@keyframes pcard-mote {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  25% { opacity: 0.9; }
+  100% { transform: translateY(calc(var(--card-w) * -1.3)) scale(1.1); opacity: 0; }
+}
+
+/* ---- The face ---- */
+
+.pcard--face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--card-w) * 0.06);
+  color: #14141a;
+  background: linear-gradient(160deg, #fffdf5, #ece4cf);
+  border: calc(var(--card-w) * 0.022) solid #f2d68a;
+  box-shadow:
+    inset 0 0 calc(var(--card-w) * 0.12) rgba(120, 90, 30, 0.25),
+    0 calc(var(--card-w) * 0.06) calc(var(--card-w) * 0.16) rgba(0, 0, 0, 0.6);
+}
+
+.pcard__centre {
+  font-size: calc(var(--card-w) * 0.5);
+  line-height: 1;
+}
+
+.pcard__name {
+  margin-top: calc(var(--card-w) * 0.05);
+  font-size: calc(var(--card-w) * 0.13);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6d5416;
+}
+
+.pcard__corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: calc(var(--card-w) * 0.15);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pcard__corner-pip {
+  font-size: calc(var(--card-w) * 0.12);
+}
+
+.pcard__corner--tl {
+  top: calc(var(--card-w) * 0.06);
+  left: calc(var(--card-w) * 0.07);
+}
+
+.pcard__corner--br {
+  right: calc(var(--card-w) * 0.07);
+  bottom: calc(var(--card-w) * 0.06);
+  transform: rotate(180deg);
+}
+
+/* Rarity: the better the card, the louder its face. */
+.pcard--face.pcard--face .pcard__centre { color: #14141a; }
+
+.pcard--face.pcard--joker {
+  background: linear-gradient(160deg, #fffdf5, #ffe9f4 45%, #e8f3ff);
+  border-color: #ff6b76;
+  animation: pcard-joker-rainbow 2.4s linear infinite;
+}
+
+@keyframes pcard-joker-rainbow {
+  0% { box-shadow: 0 0 calc(var(--card-w) * 0.3) #ff6b76; }
+  33% { box-shadow: 0 0 calc(var(--card-w) * 0.3) #6bf0a0; }
+  66% { box-shadow: 0 0 calc(var(--card-w) * 0.3) #6bb8ff; }
+  100% { box-shadow: 0 0 calc(var(--card-w) * 0.3) #ff6b76; }
+}
+
+.pcard--joker .pcard__name { color: #b3202f; }
+
+.pcard--face.pcard--face:not(.pcard--joker):not(.pcard--number) {
+  border-color: #e0b93c;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pcard__mote,
+  .pcard--joker {
+    animation: none;
+  }
+}

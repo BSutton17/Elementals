@@ -3,6 +3,7 @@ import { PixiStage } from '../render/stage'
 import {
   ABILITY_EFFECTS,
   ACID_RAIN_CONFIG,
+  FIREFLIES_CONFIG,
   AURA_EFFECTS,
   BFFS_CONFIG,
   BLACK_HOLE_CONFIG,
@@ -77,6 +78,11 @@ export function BattlefieldFx({ order, tickRate = 20 }: { order: SeatOrder[]; ti
   // 'blackHoleCollapsed' events) — while true, every attack-kind cast from
   // every kingdom is intercepted instead of dispatched normally.
   const blackHoleOpenRef = useRef(false)
+  // Kingdoms currently running Infinitum Tenebrae. Dark's ultimate changes what
+  // its BASIC attack looks like, so the cast handler needs to know who is
+  // empowered. Tracked across batches from the status events rather than read
+  // from game state, so it can never disagree with what the server announced.
+  const empoweredRef = useRef(new Set<string>())
 
   useEffect(() => {
     const frontHost = frontHostRef.current
@@ -156,7 +162,7 @@ export function BattlefieldFx({ order, tickRate = 20 }: { order: SeatOrder[]; ti
       }
 
       for (const event of events) {
-        dispatch(event, front, back, positionOf, kingdomOf, seats, supernovaWellMs, blackHoleOpenRef, tickRateRef.current, orionsMisses)
+        dispatch(event, front, back, positionOf, kingdomOf, seats, supernovaWellMs, blackHoleOpenRef, tickRateRef.current, orionsMisses, empoweredRef.current)
       }
     })
 
@@ -189,6 +195,8 @@ function dispatch(
   blackHoleOpenRef: { current: boolean },
   tickRate: number,
   orionsMisses: Set<string>,
+  /** Kingdoms running Infinitum Tenebrae — their Shadow Strike is empowered. */
+  empowered: Set<string>,
 ): void {
   switch (event.type) {
     case 'abilityCast': {
@@ -298,6 +306,12 @@ function dispatch(
         if (cast.abilityId === 'freezeToTheCore') {
           front.framework.playFreezeCast(to, FROZEN_ATMOSPHERE_CONFIG)
         }
+        // Light's Illumination on an already-swarmed kingdom: the glare lights
+        // the fireflies up — they flare white and whip into a frenzy. No-op if
+        // the target has no swarm, which is exactly the "cast it second" tell.
+        if (cast.abilityId === 'illumination') {
+          front.framework.agitateFireflies(auraKey('fireflies', targetId))
+        }
         // Scorching Sun's guaranteed Burn shows as bright solar flames coating
         // the target for the Burn window (5s). Self-stops on its own timer.
         if (cast.abilityId === 'scorchingSun') {
@@ -316,8 +330,14 @@ function dispatch(
           )
           continue
         }
+        // Dark's ultimate rewrites its basic attack: while Infinitum Tenebrae
+        // is up, Shadow Strike is a torrent of shadow rather than a single orb.
+        const effectId =
+          cast.abilityId === 'shadowStrike' && empowered.has(cast.casterId)
+            ? 'shadowStrikeEmpowered'
+            : cast.abilityId
         // `chargesUsed` scales Lightning Barrage; harmless for other abilities.
-        front.framework.playAbility(cast.abilityId, {
+        front.framework.playAbility(effectId, {
           from,
           to,
           sourceKingdom,
@@ -339,6 +359,18 @@ function dispatch(
       // persistent chemical-corrosion aura over the target for the status.
       if (applied.statusId === 'corroded') {
         front.framework.startAcidRain(auraKey('acidRain', applied.targetId), at, ACID_RAIN_CONFIG)
+        return
+      }
+      // Infinitum Tenebrae: remember who is empowered, so their Shadow Strike
+      // plays as a shadow torrent for as long as it holds.
+      if (applied.statusId === 'infinitumTenebrae') {
+        empowered.add(applied.targetId)
+      }
+      // Fireflies (Light): a swarm of little lights settles over the kingdom and
+      // dances there. It has NO duration — it stays until the victim pays the
+      // ransom, so nothing here ever expires it on a timer.
+      if (applied.statusId === 'fireflies') {
+        front.framework.startFireflies(auraKey('fireflies', applied.targetId), at, FIREFLIES_CONFIG)
         return
       }
       // Frozen (Ice's Freeze): a dense, oppressive cold atmosphere (mist, snow,
@@ -395,6 +427,15 @@ function dispatch(
       // Chilling Retribution faded — melt the frost into cold mist.
       if (expired.statusId === 'chillingRetribution') {
         front.framework.stopFrost(auraKey('frost', expired.playerId))
+        return
+      }
+      if (expired.statusId === 'infinitumTenebrae') {
+        empowered.delete(expired.playerId)
+      }
+      // The ransom was paid (or the swarm was otherwise removed) — the lights
+      // scatter outward and wink out rather than all vanishing at once.
+      if (expired.statusId === 'fireflies') {
+        front.framework.stopFireflies(auraKey('fireflies', expired.playerId))
         return
       }
       // Freeze ended — thaw the frozen atmosphere into cold mist.

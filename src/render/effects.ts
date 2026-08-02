@@ -6,6 +6,7 @@ import type {
   CupidsArrowConfig,
   EarthquakeConfig,
   EffectDefinition,
+  FirefliesConfig,
   FrostAuraConfig,
   OrionsBeltConfig,
   ProjectileShape,
@@ -39,11 +40,18 @@ interface BoltPalette {
  * exact motion/timing and differs ONLY by palette. Core/trail/impact/ember use
  * distinct hues so the bolt reads with depth, not as a flat disc.
  */
-function basicBolt(palette: BoltPalette, shape?: ProjectileShape): EffectDefinition {
+function basicBolt(
+  palette: BoltPalette,
+  shape?: ProjectileShape,
+  /** Scales ONLY the travelling element — the trail, impact, and burst are
+   *  untouched. Shaped bolts read smaller than a disc at the same radius, so
+   *  the pictorial ones (icicle, heart, spade) are sized up to compensate. */
+  travelScale = 1,
+): EffectDefinition {
   return {
     projectile: {
       durationMs: 420, // straight-line travel time A→B (data-editable)
-      size: 13,
+      size: 13 * travelScale,
       color: palette.core, // brighter than the trail
       easing: 'linear',
       faceDirection: true,
@@ -92,14 +100,205 @@ const WATER_BALL = basicBolt({ core: 0xcdeaff, trail: 0x1e6fd0, impact: 0x4aa3ff
 const A_LIGHT_BREEZE = basicBolt({ core: 0xffffff, trail: 0x8aa2e0, impact: 0xb7c9ff, ember: 0xd7e2ff })
 const ROCK_THROW = basicBolt({ core: 0xe8d3a8, trail: 0x7a5325, impact: 0xc9a56b, ember: 0xb08a4a })
 // Ice's Icicle is the shared bolt drawn as a sharp spike instead of a round blob.
-const ICICLE = basicBolt({ core: 0xeaffff, trail: 0x2aa0d8, impact: 0x8fe3ff, ember: 0xc4f0ff }, 'triangle')
+const ICICLE = basicBolt({ core: 0xeaffff, trail: 0x2aa0d8, impact: 0x8fe3ff, ember: 0xc4f0ff }, 'triangle', 1.5)
 const SLUDGE = basicBolt({ core: 0xd7ffcf, trail: 0x2f9e4f, impact: 0x6bd88a, ember: 0xa8f0b8 })
 // Time's Tik Tok — the shared bolt in grandfather-clock brown & beige.
 const TIK_TOK = basicBolt({ core: 0xf0e2c0, trail: 0x5c4326, impact: 0xa9834e, ember: 0xd9c39a })
 // Space's Shooting Star — the shared bolt in deep void-violet with starlight-cyan embers.
 const SHOOTING_STAR = basicBolt({ core: 0xc9b8ff, trail: 0x3a1a8e, impact: 0x6a2fd0, ember: 0x3ad0ff })
 // Love's Tough Love — the shared bolt drawn as a flying HEART in rose pink.
-const TOUGH_LOVE = basicBolt({ core: 0xffd1e3, trail: 0xb8265c, impact: 0xff4d8d, ember: 0xff6fa8 }, 'heart')
+const TOUGH_LOVE = basicBolt({ core: 0xffd1e3, trail: 0xb8265c, impact: 0xff4d8d, ember: 0xff6fa8 }, 'heart', 1.5)
+
+// Joker's Ace of Spades — the shared bolt drawn as a spade pip that flies
+// tip-first, in Joker's circus red and white. Sized up like the other pictorial
+// bolts so the pip reads at speed.
+const ACE_OF_SPADES = basicBolt(
+  { core: 0xf7f7f2, trail: 0x8a0f1a, impact: 0xe02434, ember: 0xff6b76 },
+  'spade',
+  1.5,
+)
+
+// Dark's Shadow Strike — the shared bolt as a white-rimmed shadow orb. Its
+// projectile colour is deliberately WHITE: the shadow node bakes its own dark
+// fill and pale rim, so the tint must be the identity or the rim goes dark too
+// and the bolt disappears into the battlefield (see `makeShadowNode`).
+const SHADOW_STRIKE = basicBolt({
+  core: 0xffffff,
+  trail: 0x2a2a3a,
+  impact: 0x12121a,
+  ember: 0xf7f7f2,
+})
+
+// Dark's Yin and Yang — the shared bolt drawn as the taijitu itself, so the
+// symbol the caster chose against is the thing that flies at the victim. Like
+// Shadow Strike its projectile colour is WHITE, because the node bakes its own
+// black-and-white halves and a tint would flatten them to one colour. Sized up
+// like the other pictorial bolts so the symbol reads at speed.
+const YIN_AND_YANG = basicBolt(
+  { core: 0xffffff, trail: 0x3a3a4a, impact: 0xf7f7f2, ember: 0xc9c9d4 },
+  'yinYang',
+  1.6,
+)
+
+/**
+ * Dark's Shadow Strike WHILE Infinitum Tenebrae is up. The ultimate doesn't
+ * just buff the numbers — it visibly changes what the basic attack is. This is
+ * Water's Waterfall wave, the same churning body/interior/crest machinery, with
+ * every colour swapped for Dark's: a torrent of shadow instead of water.
+ *
+ * Registered under its own id and selected at cast time (see BattlefieldFx),
+ * so the plain Shadow Strike is untouched the moment the buff drops.
+ */
+const SHADOW_TORRENT: EffectDefinition = {
+  wave: {
+    gatherMs: 260,
+    travelMs: 620,
+    size: 48,
+    bodyColor: 0x2a2a3a, // translucent shadow body (was blue)
+    deepColor: 0x05050a, // near-black interior (was deep blue)
+    foamColor: 0xf7f7f2, // white crest — Dark's only bright note
+    blobs: 5,
+    sprayRate: 80,
+    easing: 'easeInOut',
+  },
+  impact: { durationMs: 380, size: 120, color: 0xf7f7f2, easing: 'easeOut' },
+  particles: {
+    count: 28,
+    speed: [160, 440],
+    spread: Math.PI,
+    lifetimeMs: 560,
+    size: 5,
+    color: 0xc9c9d4,
+    gravity: 380,
+    fade: true,
+  },
+  shake: { magnitude: 5, durationMs: 240 },
+}
+
+/**
+ * Dark's Unlimited Rage — Scorching Sun's solar laser inverted: the same
+ * BeamSystem machinery, but a column of pure black edged in white, and it
+ * holds far longer. Every point of punishment Dark has absorbed comes back at
+ * once, so the beam is not a flash but a sustained outpouring.
+ *
+ * The core is the DARK part and the corona is white: on a dark battlefield a
+ * black beam alone would be invisible, so the white edge is what draws it.
+ */
+const UNLIMITED_RAGE: EffectDefinition = {
+  beam: {
+    chargeMs: 900, // a long, menacing gather — the debt being called in
+    fireMs: 1900, // held far longer than Scorching Sun's 320ms snap
+    width: 18,
+    color: 0x0b0b12,
+    chargeSize: 52,
+    easing: 'easeIn',
+    coreColor: 0x000000, // pure black centre
+    innerColor: 0x12121a, // near-black inner column
+    plasmaColor: 0x3a3a4a, // charcoal plasma
+    coronaColor: 0xf7f7f2, // the WHITE outline that makes it visible
+    emberColor: 0xf7f7f2, // white motes peeling off it
+  },
+  impact: { durationMs: 700, size: 175, color: 0xf7f7f2, easing: 'easeOut' },
+  particles: {
+    count: 40,
+    speed: [240, 660],
+    spread: Math.PI,
+    lifetimeMs: 780,
+    size: 6,
+    color: 0xf7f7f2,
+    gravity: 300,
+    fade: true,
+  },
+  shake: { magnitude: 15, durationMs: 900 },
+}
+
+/**
+ * Light's Light Beam — an actual beam rather than a travelling bolt. It reuses
+ * the solar-laser BeamSystem that Scorching Sun runs on, cut down to a basic
+ * attack: a brief charge, a thin white-gold lance, and a small flash. Same
+ * machinery, a fraction of the scale.
+ */
+const LIGHT_BEAM: EffectDefinition = {
+  beam: {
+    chargeMs: 180, // a quick wind-up, not Scorching Sun's dramatic hold
+    fireMs: 260, // the lance snaps out and is gone
+    width: 7, // the blinding CORE width; outer layers scale around it
+    color: 0xfff6d5,
+    chargeSize: 18,
+    easing: 'easeIn',
+    coreColor: 0xffffff, // white-hot centre
+    innerColor: 0xfff6d5, // warm inner light
+    plasmaColor: 0xffe9a8, // pale gold
+    coronaColor: 0xf7f7f2, // near-white outer corona
+    emberColor: 0xfff2c4, // motes peeling off the lance
+  },
+  impact: { durationMs: 260, size: 52, color: 0xfff6d5, easing: 'easeOut' },
+  particles: {
+    count: 16,
+    speed: [160, 400],
+    spread: Math.PI,
+    lifetimeMs: 460,
+    size: 4,
+    color: 0xfff2c4,
+    gravity: 220,
+    fade: true,
+  },
+  shake: { magnitude: 4, durationMs: 160 },
+}
+
+/**
+ * Light's Illumination — the heavy, and a genuine solar-class laser. Where
+ * Light Beam is a thin lance, this is the same BeamSystem opened right up: a
+ * long, dramatic charge, a wide multi-layer white-gold column, and a detonation
+ * with a screen kick in Scorching Sun's league.
+ *
+ * It also lights up any Fireflies already on the target — the swarm flares and
+ * whips into a frenzy (see BattlefieldFx). That synergy is the reason to cast
+ * it second.
+ */
+const ILLUMINATION: EffectDefinition = {
+  beam: {
+    chargeMs: 420, // a real hold, like Scorching Sun's
+    fireMs: 340,
+    width: 15, // wide blinding core; the outer layers scale up around it
+    color: 0xfff6d5,
+    chargeSize: 44,
+    easing: 'easeIn',
+    coreColor: 0xffffff, // blinding white centre
+    innerColor: 0xfffbe8, // brilliant near-white inner beam
+    plasmaColor: 0xffe9a8, // pale gold plasma
+    coronaColor: 0xffd98a, // warm gold corona
+    emberColor: 0xfff2c4,
+  },
+  impact: { durationMs: 580, size: 158, color: 0xfff6d5, easing: 'easeOut' },
+  particles: {
+    count: 36,
+    speed: [230, 640],
+    spread: Math.PI,
+    lifetimeMs: 660,
+    size: 6,
+    color: 0xfff2c4,
+    gravity: 300,
+    fade: true,
+  },
+  // The heavy kick the user asked for — a shade past Scorching Sun's.
+  shake: { magnitude: 15, durationMs: 560 },
+}
+
+/**
+ * Light's Fireflies — the swarm that settles over a kingdom and dances there
+ * until the ransom is paid. Driven by the `fireflies` status rather than the
+ * cast, because it outlives the cast by design (FirefliesSystem).
+ *
+ * `litColor` is what they burn while Illumination has them agitated.
+ */
+export const FIREFLIES_CONFIG: FirefliesConfig = {
+  glowColor: 0xffe9a8, // warm resting amber
+  litColor: 0xffffff, // blinding white once Illumination hits them
+  radius: 74, // they range over the whole castle
+  flySize: 7,
+  intensity: 0.95,
+}
 
 // Time's Half Past 12 — the "temporal pulse" that lands on the victim: a fast
 // faint strike, a massive expanding ring of distorted space (pale-blue), and a
@@ -790,6 +989,34 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   blackHole: {},
   // Love specials.
   toughLove: TOUGH_LOVE,
+  // Blackjack's whole visual is the casino card reveal (BlackjackReveal, an
+  // overlay driven by the `cardDrawn` event) — empty suppresses the generic
+  // fallback projectile so no bolt flies alongside the cinematic.
+  blackjack: {},
+  // Lucky Draw is the five-card selection overlay (LuckyDrawOverlay); it is a
+  // self-cast with nothing to throw, so suppress the fallback too.
+  luckyDraw: {},
+  // Light / Joker / Dark basics.
+  lightBeam: LIGHT_BEAM,
+  illumination: ILLUMINATION,
+  // Fireflies is a persistent swarm driven by the `fireflies` status
+  // (FirefliesSystem), not a projectile — suppress the generic fallback bolt.
+  fireflies: {},
+  // Flash Bang has no projectile and no impact: it is a blinding pop felt on
+  // every screen at once (FlashBangOverlay, driven by the cast event). Empty
+  // suppresses the generic bolt the caster would otherwise fling at itself.
+  flashBang: {},
+  // Light Show's whole visual is the arena-space warning + volley
+  // (LightShowLayer, driven by the `strikeIncoming` event). Empty suppresses
+  // the fallback projectile on the self-targeted cast.
+  lightShow: {},
+  aceOfSpades: ACE_OF_SPADES,
+  shadowStrike: SHADOW_STRIKE,
+  yinAndYang: YIN_AND_YANG,
+  // Not a server ability id: the empowered Shadow Strike, played in place of
+  // the plain one while Infinitum Tenebrae is up.
+  shadowStrikeEmpowered: SHADOW_TORRENT,
+  unlimitedRage: UNLIMITED_RAGE,
   cupidsArrow: CUPIDS_ARROW_FX,
   // BFFS!!!'s cast (twin pendants → ribbon snap) is driven directly from the
   // abilityCast event in BattlefieldFx (needs BOTH targetIds); empty suppresses

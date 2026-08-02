@@ -19,8 +19,11 @@ interface ShopOverlayProps {
   maxRepairs: number
   /** Seconds left on the buy-shield break cooldown (0 = ready). */
   shieldCooldownSeconds?: number
+  /** A swarm on YOUR castle bars you from buying a shield (Light's Fireflies)
+   *  — the server rejects the purchase, so grey it out and say why. */
+  shieldBlockedBySwarm?: boolean
   theme: KingdomTheme | null
-  onBuyItem: (id: 'citizen' | 'repair' | 'shield') => void
+  onBuyItem: (id: 'citizen' | 'repair' | 'shield' | 'dispel') => void
   onClose: () => void
 }
 
@@ -37,6 +40,7 @@ export function ShopOverlay({
   repairsUsed,
   maxRepairs,
   shieldCooldownSeconds = 0,
+  shieldBlockedBySwarm = false,
   theme,
   onBuyItem,
   onClose,
@@ -50,7 +54,8 @@ export function ShopOverlay({
 
   const canAffordCitizen = currency >= nextCitizenCost
   const canAffordRepair = currency >= nextRepairCost && !isFullHp && !repairsExhausted
-  const canAffordShield = currency >= shieldCost && !hasActiveShield && !shieldOnCooldown
+  const canAffordShield =
+    currency >= shieldCost && !hasActiveShield && !shieldOnCooldown && !shieldBlockedBySwarm
 
   const themeVars = {
     '--bar-primary': theme?.primary || '#4aa3ff',
@@ -142,7 +147,11 @@ export function ShopOverlay({
             <span className="shop-item__stat">
               Active Shield: {shieldHp > 0 ? `${shieldHp} HP` : 'None'}
             </span>
-            {shieldOnCooldown ? (
+            {shieldBlockedBySwarm ? (
+              <span className="shop-item__cost-needed">
+                Fireflies are swarming your castle — shoo them off first.
+              </span>
+            ) : shieldOnCooldown ? (
               <span className="shop-item__cost-needed">
                 Shield broken — ready in {Math.ceil(shieldCooldownSeconds)}s
               </span>
@@ -158,16 +167,21 @@ export function ShopOverlay({
           <button
             type="button"
             className="shop-item__buy-btn"
-            disabled={!canAffordShield || hasActiveShield || shieldOnCooldown}
+            disabled={
+              !canAffordShield || hasActiveShield || shieldOnCooldown || shieldBlockedBySwarm
+            }
             onClick={() => onBuyItem('shield')}
           >
             {hasActiveShield
               ? 'Active'
-              : shieldOnCooldown
-                ? `${Math.ceil(shieldCooldownSeconds)}s`
-                : `Buy (${shieldCost}g)`}
+              : shieldBlockedBySwarm
+                ? 'Swarmed'
+                : shieldOnCooldown
+                  ? `${Math.ceil(shieldCooldownSeconds)}s`
+                  : `Buy (${shieldCost}g)`}
           </button>
         </div>
+
       </div>
     </div>
   )

@@ -1,0 +1,718 @@
+/* Joker's Slot Machine — a circus cabinet in Joker's red-and-white with heavy
+   gold trim, dropped over the victim's screen. Blocking by design: there is no
+   dismiss, the only way out is to pull the lever, so this one DOES take pointer
+   events.
+
+   `--intensity` (0→1) is set from the component and falls as each reel locks;
+   the shake, the light show, and the litter all scale off it, so the whole
+   machine settles down onto the verdict instead of stopping dead. */
+.slot {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: radial-gradient(circle at 50% 40%, rgba(94, 10, 19, 0.72), rgba(5, 5, 8, 0.92));
+  animation: slot-fade-in 0.35s ease-out;
+  /* Last-resort safety on a very short viewport: scroll rather than clip, and
+     `safe` centring so an overflowing cabinet is never cut off at the top. */
+  overflow-y: auto;
+  align-items: safe center;
+}
+
+@keyframes slot-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The cabinet leaves as deliberately as it arrived, so a queued Roulette table
+   has clear air to wheel into (see casinoQueue.ts). */
+.slot--done .slot__cabinet {
+  animation: slot-drop-in 0.45s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+.slot__cabinet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(30rem, 94vw);
+  padding: 1.1rem 1.4rem 1.4rem;
+  color: #f7f7f2;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  /* Big-top stripes down the cabinet sides. */
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #e02434 0 1.5rem,
+      #f7f7f2 1.5rem 3rem
+    );
+  /* Rich gold trim: a bright bevelled edge over a deep casino red. */
+  border: 4px solid #ffd24a;
+  border-radius: 1.25rem;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 246, 200, 0.65),
+    0 0 0 4px #5e0a13,
+    0 0 34px rgba(255, 210, 74, 0.35),
+    0 24px 70px rgba(0, 0, 0, 0.75);
+  animation: slot-drop-in 0.45s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+@keyframes slot-drop-in {
+  from { transform: translateY(-3rem) scale(0.9); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* The whole cabinet works while the reels are loose: a light rattle plus a
+   pulsing gold glow, both scaled by how many reels are still turning. */
+.slot__cabinet--working {
+  animation:
+    slot-drop-in 0.45s cubic-bezier(0.2, 1.3, 0.4, 1),
+    slot-rattle 0.13s linear infinite,
+    slot-cabinet-glow 0.9s ease-in-out infinite;
+}
+
+@keyframes slot-rattle {
+  0% { transform: translate(calc(var(--intensity) * -1.5px), 0) rotate(calc(var(--intensity) * -0.12deg)); }
+  25% { transform: translate(calc(var(--intensity) * 1.5px), calc(var(--intensity) * -1px)); }
+  50% { transform: translate(0, calc(var(--intensity) * 1.5px)) rotate(calc(var(--intensity) * 0.12deg)); }
+  75% { transform: translate(calc(var(--intensity) * -1px), calc(var(--intensity) * 0.5px)); }
+  100% { transform: translate(calc(var(--intensity) * 1.5px), 0); }
+}
+
+@keyframes slot-cabinet-glow {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 246, 200, 0.65),
+      0 0 0 4px #5e0a13,
+      0 0 34px rgba(255, 210, 74, 0.35),
+      0 24px 70px rgba(0, 0, 0, 0.75);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 235, 0.95),
+      0 0 0 4px #7d1420,
+      0 0 60px rgba(255, 210, 74, 0.8),
+      0 24px 70px rgba(0, 0, 0, 0.75);
+  }
+}
+
+/* ---- Magical smoke ---- */
+
+.slot__smoke {
+  position: absolute;
+  inset: -2.5rem -1rem auto;
+  height: 6rem;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.slot__puff {
+  position: absolute;
+  bottom: 0;
+  left: var(--x);
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 138, 0.5), rgba(180, 90, 200, 0.18) 60%, transparent 72%);
+  filter: blur(4px);
+  opacity: 0;
+  animation: slot-puff 3.4s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes slot-puff {
+  0% { transform: translateY(1rem) scale(0.5) rotate(0deg); opacity: 0; }
+  25% { opacity: 0.85; }
+  100% { transform: translateY(-4.5rem) scale(1.9) rotate(40deg); opacity: 0; }
+}
+
+/* ---- Gold flanks: filigree, gears, sparkling bulbs ---- */
+
+.slot__flank {
+  position: absolute;
+  top: 3.2rem;
+  bottom: 3.2rem;
+  width: 1.5rem;
+  pointer-events: none;
+  /* The filigree itself: a gold rope down the cabinet edge. */
+  background:
+    linear-gradient(180deg, transparent, rgba(255, 210, 74, 0.9) 12%, rgba(255, 246, 200, 0.95) 50%, rgba(255, 210, 74, 0.9) 88%, transparent);
+  background-size: 2px 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.slot__flank--left { left: -0.15rem; }
+.slot__flank--right { right: -0.15rem; }
+
+.slot__gear {
+  position: absolute;
+  left: 50%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe9a8, #d9a12a 55%, #8a5f12);
+  box-shadow: 0 0 8px rgba(255, 210, 74, 0.75), inset 0 0 6px rgba(0, 0, 0, 0.45);
+}
+
+.slot__gear--big {
+  top: 12%;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: -0.75rem;
+}
+
+.slot__gear--small {
+  bottom: 16%;
+  width: 1rem;
+  height: 1rem;
+  margin-left: -0.5rem;
+}
+
+/* Gears idle slowly and speed up while the machine is working. */
+.slot__gear--big { animation: slot-gear-cw 7s linear infinite; }
+.slot__gear--small { animation: slot-gear-ccw 5s linear infinite; }
+.slot__gear--big.slot__gear--turning { animation-duration: 1.5s; }
+.slot__gear--small.slot__gear--turning { animation-duration: 1s; }
+
+@keyframes slot-gear-cw {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slot-gear-ccw {
+  to { transform: rotate(-360deg); }
+}
+
+.slot__tooth {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.26rem;
+  height: 0.26rem;
+  margin: -0.13rem 0 0 -0.13rem;
+  border-radius: 1px;
+  background: #e5b23c;
+  /* Precomputed angle — CSS calc() cannot divide by a var(). */
+  transform: rotate(var(--a)) translateY(-0.72rem);
+}
+
+.slot__gear--small .slot__tooth {
+  transform: rotate(var(--a)) translateY(-0.5rem);
+}
+
+/* Bulbs set into the filigree that twinkle out of step with one another. */
+.slot__sparkle {
+  position: absolute;
+  left: 50%;
+  top: calc(24% + var(--i) * 18%);
+  width: 0.34rem;
+  height: 0.34rem;
+  margin-left: -0.17rem;
+  border-radius: 50%;
+  background: #fff6c8;
+  animation: slot-sparkle 1.7s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.31s);
+}
+
+@keyframes slot-sparkle {
+  0%, 100% { opacity: 0.25; box-shadow: none; transform: scale(0.8); }
+  50% { opacity: 1; box-shadow: 0 0 10px #ffd24a, 0 0 18px rgba(255, 210, 74, 0.7); transform: scale(1.25); }
+}
+
+/* ---- Marquee ---- */
+
+.slot__marquee {
+  position: relative;
+  width: 100%;
+  padding: 0.5rem 2.25rem;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #7d1420, #5e0a13);
+  border: 2px solid #ffd24a;
+  border-radius: 0.75rem;
+  box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.6), 0 0 16px rgba(255, 210, 74, 0.3);
+}
+
+.slot__marquee-text {
+  font-size: clamp(1rem, 4vw, 1.4rem);
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  color: #ffd24a;
+  text-shadow: 0 0 12px rgba(255, 210, 74, 0.8);
+}
+
+/* Chase lights running around the marquee. */
+.slot__bulbs {
+  position: absolute;
+  inset: 0.3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.slot__bulb {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: #ffd24a;
+  opacity: 0.25;
+  animation: slot-chase 1.2s linear infinite;
+  animation-delay: calc(var(--i) * 0.086s);
+}
+
+/* While the reels turn, the chase runs hot and fast. */
+.slot__cabinet--working .slot__bulb {
+  animation-duration: 0.5s;
+}
+
+@keyframes slot-chase {
+  0%, 70% { opacity: 0.25; box-shadow: none; }
+  20% { opacity: 1; box-shadow: 0 0 8px #ffd24a, 0 0 16px rgba(255, 210, 74, 0.6); }
+}
+
+.slot__subtitle {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2a0409;
+  background: rgba(247, 247, 242, 0.92);
+  border-radius: 0.5rem;
+}
+
+/* ---- Reels + lever ---- */
+
+.slot__body {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.slot__reels {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  background: #2a0409;
+  border: 3px solid #ffd24a;
+  border-radius: 0.75rem;
+  box-shadow:
+    inset 0 0 22px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(255, 210, 74, 0.28);
+}
+
+.slot__reel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(3.2rem, 15vw, 4.4rem);
+  height: clamp(3.8rem, 18vw, 5.2rem);
+  overflow: hidden;
+  background: linear-gradient(#fdfdf8, #d8d8cd);
+  border-radius: 0.45rem;
+  box-shadow: inset 0 6px 10px rgba(0, 0, 0, 0.28), inset 0 -6px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* The strip carries three symbols and is slid by the reel's own position, so
+   neighbours scroll through the window continuously. */
+.slot__strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  will-change: transform, filter;
+}
+
+.slot__symbol {
+  font-size: clamp(1.9rem, 9vw, 2.8rem);
+  line-height: 1.15;
+  height: 1.15em;
+}
+
+/* The symbols entering and leaving the window sit outside it. */
+.slot__symbol--ghost {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.slot__symbol--ghost:first-child { bottom: 100%; }
+.slot__symbol--ghost:last-child { top: 100%; }
+
+/* Curved glass: a highlight across the top and a shadow along the bottom, so
+   the reel reads as a cylinder rather than a flat card. */
+.slot__glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 0.45rem;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.06) 28%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.16) 78%,
+    rgba(0, 0, 0, 0.36)
+  );
+}
+
+/* A reel locking into place flashes gold. */
+.slot__lock-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.45rem;
+  background: radial-gradient(circle, rgba(255, 246, 200, 0.95), rgba(255, 210, 74, 0.4) 55%, transparent 72%);
+  animation: slot-lock 0.42s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes slot-lock {
+  0% { opacity: 0.95; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+.slot__lever {
+  position: relative;
+  width: 2.4rem;
+  height: clamp(4.6rem, 20vw, 6rem);
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.slot__lever:disabled {
+  cursor: default;
+}
+
+.slot__lever-track {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 0.5rem;
+  height: 100%;
+  background: #2a0409;
+  border-radius: 999px;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+/* The arm pivots from its base, so the knob swings down the track. */
+.slot__lever-arm {
+  position: absolute;
+  left: 50%;
+  bottom: 0.35rem;
+  transform-origin: 50% 100%;
+  transform: translateX(-50%);
+  width: 0.4rem;
+  height: 78%;
+  background: linear-gradient(#ffe9a8, #b98c1e);
+  border-radius: 999px;
+  transition: height 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.slot__lever-knob {
+  position: absolute;
+  left: 50%;
+  top: -0.55rem;
+  transform: translateX(-50%);
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff6b76, #b3202f 60%, #5e0a13);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 107, 118, 0.5);
+}
+
+/* An un-pulled lever beckons. */
+.slot--idle .slot__lever-knob {
+  animation: slot-knob-beckon 1.4s ease-in-out infinite;
+}
+
+@keyframes slot-knob-beckon {
+  0%, 100% { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 107, 118, 0.5); }
+  50% { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6), 0 0 22px rgba(255, 210, 74, 0.95); }
+}
+
+.slot__lever:hover:not(:disabled) .slot__lever-arm {
+  height: 70%;
+}
+
+/* Pulled: the arm collapses down the track and stays there. */
+.slot__lever--pulled .slot__lever-arm {
+  height: 22%;
+}
+
+/* ---- Coin tray ---- */
+
+.slot__tray {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 0.7rem;
+}
+
+.slot__tray-coin {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c8, #e5b23c 60%, #8a5f12);
+  animation: slot-tray-glint 2.4s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.18s);
+}
+
+@keyframes slot-tray-glint {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 8px rgba(255, 210, 74, 0.9); }
+}
+
+/* ---- Litter thrown while the machine works ---- */
+
+.slot__litter {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Poker chips bouncing up off the floor. */
+.slot__chip {
+  position: absolute;
+  bottom: 0;
+  left: var(--x);
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.75);
+  box-sizing: border-box;
+  animation: slot-chip-bounce 1.5s cubic-bezier(0.3, 0, 0.6, 1) infinite;
+  animation-delay: var(--delay);
+}
+
+.slot__chip--red { background: #e02434; }
+.slot__chip--white { background: #f7f7f2; border-color: rgba(224, 36, 52, 0.8); }
+.slot__chip--gold { background: #e5b23c; }
+
+@keyframes slot-chip-bounce {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  35% { transform: translateY(-7rem) rotate(220deg); }
+  55% { transform: translateY(-1rem) rotate(300deg); }
+  70% { transform: translateY(-3.5rem) rotate(400deg); }
+  85% { transform: translateY(-0.5rem) rotate(460deg); }
+  100% { transform: translateY(-1.5rem) rotate(520deg); opacity: 0; }
+}
+
+/* Coins flung up out of the cabinet. */
+.slot__coin {
+  position: absolute;
+  bottom: 30%;
+  left: var(--x);
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6c8, #e5b23c 55%, #8a5f12);
+  box-shadow: 0 0 10px rgba(255, 210, 74, 0.8);
+  animation: slot-coin-fly 2.1s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes slot-coin-fly {
+  0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  /* Up fast, then arc back down under gravity. */
+  45% { transform: translateY(-11rem) scale(1) rotate(calc(var(--spin) * 0.6)); opacity: 1; }
+  100% { transform: translateY(2rem) scale(0.85) rotate(var(--spin)); opacity: 0; }
+}
+
+/* Sparks bursting outward off the trim. */
+.slot__spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #fff6c8;
+  box-shadow: 0 0 8px #ffd24a;
+  animation: slot-spark-burst 1.25s ease-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes slot-spark-burst {
+  0% { transform: translate(-50%, -50%) rotate(var(--a)) translateX(4rem) scale(0.4); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) rotate(var(--a)) translateX(20rem) scale(1); opacity: 0; }
+}
+
+/* ---- Result panel ---- */
+
+.slot__result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.45rem 0.8rem;
+  box-sizing: border-box;
+  background: #2a0409;
+  border: 3px solid #ffd24a;
+  border-radius: 0.6rem;
+}
+
+.slot__result-placeholder {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 210, 74, 0.55);
+}
+
+/* A landed verdict blinks, the way a real payout display does. */
+.slot__result--lit {
+  animation: slot-panel-flash 0.65s steps(1, end) infinite;
+}
+
+.slot__result-text {
+  font-size: clamp(0.95rem, 3.6vw, 1.15rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #ffd24a;
+  text-shadow: 0 0 14px rgba(255, 210, 74, 0.9);
+  animation: slot-text-blink 0.65s steps(1, end) infinite;
+}
+
+@keyframes slot-panel-flash {
+  0%, 50% { border-color: #ffd24a; box-shadow: 0 0 22px rgba(255, 210, 74, 0.55); }
+  50.01%, 100% { border-color: #f7f7f2; box-shadow: 0 0 22px rgba(247, 247, 242, 0.35); }
+}
+
+@keyframes slot-text-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0.35; }
+}
+
+/* Mobile LANDSCAPE (short and wide): height is the scarce axis, so flatten the
+   cabinet — a slim marquee, smaller reels, and the subtitle folded away. The
+   lever stays beside the reels because width is plentiful here. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  .slot {
+    padding: 0.5rem;
+  }
+  .slot__cabinet {
+    width: min(34rem, 96vw);
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem 0.7rem;
+    border-width: 3px;
+    border-radius: 0.9rem;
+  }
+  .slot__marquee {
+    padding: 0.25rem 2rem;
+    border-radius: 0.5rem;
+  }
+  .slot__marquee-text {
+    font-size: 0.95rem;
+    letter-spacing: 0.16em;
+  }
+  .slot__subtitle {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem;
+  }
+  .slot__reels {
+    padding: 0.4rem;
+    gap: 0.35rem;
+  }
+  .slot__reel {
+    width: clamp(2.6rem, 9vh, 3.4rem);
+    height: clamp(3rem, 11vh, 4rem);
+  }
+  .slot__symbol {
+    font-size: clamp(1.5rem, 6vh, 2rem);
+  }
+  .slot__lever {
+    height: clamp(3.4rem, 13vh, 4.6rem);
+  }
+  .slot__result {
+    min-height: 2rem;
+    padding: 0.3rem 0.6rem;
+    border-width: 2px;
+  }
+  .slot__result-text {
+    font-size: 0.9rem;
+  }
+  /* The flanks and smoke would crowd a short cabinet. */
+  .slot__flank { top: 2rem; bottom: 2rem; width: 1.1rem; }
+  .slot__gear--big { width: 1.1rem; height: 1.1rem; margin-left: -0.55rem; }
+  .slot__gear--small { width: 0.8rem; height: 0.8rem; margin-left: -0.4rem; }
+  .slot__smoke { display: none; }
+  .slot__tray { display: none; }
+}
+
+/* Narrow phones: stack the lever under the reels so nothing is squeezed. */
+@media (max-width: 26rem) {
+  .slot__body {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .slot__lever {
+    width: 100%;
+    height: 2.6rem;
+  }
+  .slot__lever-track {
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 0.5rem;
+  }
+  .slot__lever-arm {
+    left: auto;
+    right: 0.35rem;
+    bottom: 50%;
+    transform: translateY(50%);
+    width: 78%;
+    height: 0.4rem;
+    transition: width 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+  .slot__lever-knob {
+    left: -0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .slot__lever:hover:not(:disabled) .slot__lever-arm { height: 0.4rem; width: 70%; }
+  .slot__lever--pulled .slot__lever-arm { height: 0.4rem; width: 22%; }
+  /* Narrow cabinets have no room for gold flanks beside the reels. */
+  .slot__flank { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot,
+  .slot__cabinet,
+  .slot__cabinet--working,
+  .slot__bulb,
+  .slot__puff,
+  .slot__gear,
+  .slot__sparkle,
+  .slot__chip,
+  .slot__coin,
+  .slot__spark,
+  .slot__tray-coin,
+  .slot__lever-knob,
+  .slot__lock-flash,
+  .slot__result--lit,
+  .slot__result-text {
+    animation: none;
+  }
+  /* The reels are driven from JS rather than CSS, so the blur is toned down
+     here rather than switched off — the spin still has to read as a spin. */
+  .slot__strip { filter: none !important; }
+  .slot__smoke,
+  .slot__litter { display: none; }
+}

@@ -13,6 +13,22 @@ function seededRng(seed = 1): () => number {
   }
 }
 
+/**
+ * Advances a framework the way a real frame loop would — in ~16ms steps rather
+ * than one giant jump. It matters for anything short-lived: a single 410ms
+ * update spawns the beam's convergence sparks and then ages them past their own
+ * 260–420ms lifetimes in the SAME call, so almost all of them are pruned before
+ * they can be observed.
+ */
+function advance(fw: { update: (ms: number) => void }, totalMs: number, stepMs = 16): void {
+  let left = totalMs
+  while (left > 0) {
+    const step = Math.min(stepMs, left)
+    fw.update(step)
+    left -= step
+  }
+}
+
 function fakeNode(): DisplayNode {
   const scale = {
     x: 1,
@@ -91,7 +107,7 @@ test('scorching sun charges a beam, then fires + bursts on the target', () => {
   // Charge almost fully (derive from the config so it survives retuning): still
   // charging, nothing has fired yet — but solar energy converges into the orb.
   const chargeMs = ss.beam!.chargeMs
-  fw.update(chargeMs - 40)
+  advance(fw, chargeMs - 40)
   expect(fw.impacts.active).toBe(0)
   expect(fw.camera.shaking).toBe(false)
   expect(fw.beams.particleCount).toBeGreaterThan(0) // convergence sparks

@@ -1,0 +1,66 @@
+/* Light's Flash Bang: the screen is blown out in a single frame, then bleeds
+   back over a couple of seconds. Click-through and above everything — a flash
+   bang doesn't care what you were looking at.
+
+   Getting it to read BRIGHTER is not a matter of a whiter white: #fff at full
+   opacity is already the brightest the display can do. The punch comes from
+   over-exposing the battlefield UNDERNEATH it — `backdrop-filter: brightness()`
+   drives the real pixels past white — plus a hot core that blooms outward. So
+   even mid-fade, when the sheet is translucent, what shows through is still
+   glaring rather than just a grey wash. */
+.flashbang {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  /* A hot core over a full-white sheet: the centre reads as the detonation. */
+  background:
+    radial-gradient(circle at 50% 50%, #ffffff 0%, #ffffff 55%, rgba(255, 253, 245, 0.92) 100%);
+  animation: flashbang-recover 2.6s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+}
+
+@keyframes flashbang-recover {
+  /* Total white-out, instantly — there is no wind-up to a flash bang. The
+     backdrop is pushed far past white so the scene behind is destroyed. */
+  0% {
+    opacity: 1;
+    backdrop-filter: brightness(6) saturate(0.2) blur(3px);
+    -webkit-backdrop-filter: brightness(6) saturate(0.2) blur(3px);
+  }
+  /* It HOLDS blinding — longer than before, which is most of what sells it. */
+  22% {
+    opacity: 1;
+    backdrop-filter: brightness(5) saturate(0.3) blur(2px);
+    -webkit-backdrop-filter: brightness(5) saturate(0.3) blur(2px);
+  }
+  /* Then the long, uneven recovery. The backdrop stays over-exposed well into
+     the fade, so colour and detail come back LAST — the way eyes actually
+     recover — instead of the scene simply reappearing behind a grey sheet. */
+  45% {
+    opacity: 0.72;
+    backdrop-filter: brightness(3.2) saturate(0.55);
+    -webkit-backdrop-filter: brightness(3.2) saturate(0.55);
+  }
+  75% {
+    opacity: 0.3;
+    backdrop-filter: brightness(1.8) saturate(0.85);
+    -webkit-backdrop-filter: brightness(1.8) saturate(0.85);
+  }
+  100% {
+    opacity: 0;
+    backdrop-filter: brightness(1) saturate(1);
+    -webkit-backdrop-filter: brightness(1) saturate(1);
+  }
+}
+
+/* Reduced motion still needs the information "you were flashed", but without
+   a full-screen strobe: a brief, gentle haze instead. */
+@media (prefers-reduced-motion: reduce) {
+  .flashbang {
+    animation: flashbang-gentle 1.2s ease-out forwards;
+  }
+  @keyframes flashbang-gentle {
+    0% { opacity: 0.45; }
+    100% { opacity: 0; }
+  }
+}

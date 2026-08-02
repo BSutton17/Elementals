@@ -1,0 +1,58 @@
+/* Night Terrors blackout for the attacker who provoked Dark. Sits above the
+   battlefield and the HUD, click-through so the victim can still act blind. */
+.darkened-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.9s ease-out;
+}
+
+/* Snaps on fast (the lights go OUT), lifts slowly. */
+.darkened-overlay--on {
+  opacity: 1;
+  transition: opacity 0.25s ease-in;
+}
+
+/* Heavy wash — the bulk of the blackout. */
+.darkened-overlay__wash {
+  position: absolute;
+  inset: 0;
+  background: #05050a;
+  opacity: 0.9;
+  animation: darkened-breathe 3.2s ease-in-out infinite;
+}
+
+/* Vignette squeezing in from the edges, so the readable area collapses toward
+   the centre instead of everything dimming evenly. */
+.darkened-overlay__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(5, 5, 10, 0) 0%,
+    rgba(5, 5, 10, 0.55) 38%,
+    rgba(5, 5, 10, 0.95) 68%,
+    #05050a 100%
+  );
+  animation: darkened-close-in 4s ease-in-out infinite alternate;
+}
+
+@keyframes darkened-breathe {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.82; }
+}
+
+@keyframes darkened-close-in {
+  from { transform: scale(1.18); }
+  to { transform: scale(1); }
+}
+
+/* The blackout is the mechanic, so it stays — only the crawl is dropped. */
+@media (prefers-reduced-motion: reduce) {
+  .darkened-overlay__wash,
+  .darkened-overlay__vignette {
+    animation: none;
+  }
+}

@@ -469,6 +469,31 @@
   text-anchor: middle;
 }
 
+/* Joker's Slot Machine readout above a kingdom: "Spinning…" while their reels
+   turn, then the emojis they landed. Joker's gold, in Joker's cabinet font. */
+.battlefield__slot {
+  fill: #ffd24a;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-anchor: middle;
+}
+
+.battlefield__slot--spinning {
+  font-size: 24px;
+  fill: #f7f7f2;
+  animation: battlefield-slot-pulse 1s ease-in-out infinite;
+}
+
+@keyframes battlefield-slot-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battlefield__slot--spinning { animation: none; opacity: 0.8; }
+}
+
 .battlefield__stat-text {
   fill: #cdd4e2;
   font-size: 24px;
@@ -532,4 +557,29 @@
   color: var(--kingdom-primary);
   text-shadow: 0 0 16px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.05em;
+}
+
+/* Never-ending Nightmare: a dream catcher hung over the locked victim's castle
+   for the whole duration. It sways rather than hovers — something dangling
+   above them, not something watching over them. Sizes are SVG user units. */
+.kingdom-site__nightmare {
+  transform-origin: center top;
+  filter: drop-shadow(0 0 8px rgba(120, 90, 200, 0.85));
+  animation:
+    nightmare-fade-in 0.45s ease-out both,
+    nightmare-sway 4.2s ease-in-out infinite;
+}
+
+@keyframes nightmare-fade-in {
+  from { opacity: 0; }
+  to { opacity: 0.92; }
+}
+
+@keyframes nightmare-sway {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kingdom-site__nightmare { animation: nightmare-fade-in 0.45s ease-out both; }
 }

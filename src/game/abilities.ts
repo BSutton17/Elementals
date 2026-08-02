@@ -2,17 +2,20 @@ import type { IconType } from 'react-icons'
 import { PiDropFill, PiFireFill, PiWindFill, PiEyeFill, PiMeteorFill, PiLightningFill, PiBiohazardFill, PiSkullFill } from 'react-icons/pi'
 import { BsWater, BsArrowThroughHeartFill, BsEmojiHeartEyesFill } from 'react-icons/bs'
 import { MdFlood } from 'react-icons/md'
-import { FaSun, FaIcicles, FaMountain, FaSnowman, FaHeart } from 'react-icons/fa'
+import { FaSun, FaIcicles, FaMountain, FaSnowman, FaHeart, FaLightbulb, FaYinYang } from 'react-icons/fa'
 import { FaBottleWater, FaHurricane } from 'react-icons/fa6'
 import { GiWaveSurfer, GiFireDash, GiStonePile, GiDefensiveWall, GiLightningFlame, GiLightningDome, GiThunderSkull, GiMeltingIceCube, GiSnowing, GiAppleCore, GiPoisonGas, GiTimeSynchronization, GiBlackHoleBolas, GiFallingStar, GiStoneSphere, GiLoveInjection, GiChainedHeart } from 'react-icons/gi'
-import { TbTornado, TbTemperatureMinusFilled, TbDeviceLaptop, TbCloudRain, TbBrandSupernova } from 'react-icons/tb'
+import { TbTornado, TbTemperatureMinusFilled, TbDeviceLaptop, TbCloudRain, TbBrandSupernova, TbRoulette } from 'react-icons/tb'
 import { WiFog } from 'react-icons/wi'
 import { SiBunnydotnet, SiSaturn } from 'react-icons/si'
 import { RiEarthquakeFill, RiSnowflakeFill, RiRewindStartFill } from 'react-icons/ri'
 import { CiClock2 } from 'react-icons/ci'
 import { CgSandClock } from 'react-icons/cg'
 import { LiaUserTimesSolid } from 'react-icons/lia'
-import { GiCardJoker, GiJesterHat, GiTopHat, GiBalloons, GiClown, GiSunbeams, GiSunrise, GiSunRadiations, GiCandleLight, GiHolyGrail, GiNightSky, GiRaven, GiMoonBats, GiShadowFollower, GiEclipse } from 'react-icons/gi'
+import { GiFlashGrenade, GiLighthouse, GiCardAceSpades, GiCardExchange, GiCardRandom, GiRollingDices, GiEvilLove, GiDreamCatcher, GiDelighted } from 'react-icons/gi'
+import { IoFlashlight } from 'react-icons/io5'
+import { PiBugDroid } from 'react-icons/pi'
+import { BsShadows } from 'react-icons/bs'
 
 export interface ClientAbilityMetadata {
   id: string
@@ -31,6 +34,12 @@ export interface ClientAbilityMetadata {
    * server-derived (`GamePlayer.abilityPrices[id].charges`).
    */
   charges?: true
+  /**
+   * The cast must name one of these (Dark's Yin and Yang). The card renders a
+   * small button per option instead of a single cast button; the pick is sent
+   * as `choice` and validated server-side against the same list.
+   */
+  choices?: readonly { value: string; label: string; hint: string }[]
 }
 
 export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
@@ -608,172 +617,177 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     icon: GiChainedHeart,
   },
   // Joker Abilities — PLACEHOLDER (see Server/src/data/jokerAbilities.ts)
-  jokerAbility1: {
-    id: 'jokerAbility1',
-    name: 'JokerAbility1',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Joker kit is designed.',
+  aceOfSpades: {
+    id: 'aceOfSpades',
+    name: 'Ace of Spades',
+    description: 'Basic Joker attack. Also pulls every 2 and 3 out of your Blackjack deck for 5 seconds',
     hotkey: 'Q',
     kind: 'attack',
     element: 'joker',
     color: '#e02434',
     gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
-    icon: GiCardJoker,
+    icon: GiCardAceSpades,
   },
-  jokerAbility2: {
-    id: 'jokerAbility2',
-    name: 'JokerAbility2',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Joker kit is designed.',
+  blackjack: {
+    id: 'blackjack',
+    name: 'Blackjack',
+    description: 'Draws one card from a full 52-card deck and hits for what it is worth: number cards deal rank x 75, face cards a flat 750, and either joker deals 1000. An Ace is the worst draw in the deck.',
     hotkey: 'E',
     kind: 'attack',
     element: 'joker',
     color: '#e02434',
     gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
-    icon: GiJesterHat,
+    icon: GiCardExchange,
   },
-  jokerAbility3: {
-    id: 'jokerAbility3',
-    name: 'JokerAbility3',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Joker kit is designed.',
+  roulette: {
+    id: 'roulette',
+    name: 'Roulette',
+    description: 'Force a kingdom to play a game of Roulette. Takes half damage on a win and full damage on a loss. Betting on green grants them healing on a win but extra damage on a loss',
     hotkey: 'F',
     kind: 'attack',
     element: 'joker',
     color: '#e02434',
     gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
-    icon: GiTopHat,
+    icon: TbRoulette,
   },
-  jokerAbility4: {
-    id: 'jokerAbility4',
-    name: 'JokerAbility4',
-    description: 'Placeholder utility — a short self buff standing in until the real Joker kit is designed.',
+  luckyDraw: {
+    id: 'luckyDraw',
+    name: 'Lucky Draw',
+    description: 'Take a card. One of five effects at random, each a 1-in-5: +10% attack, +10% damage reduction, or +10% gold production for 20 seconds, a free 1000hp shield, or 750hp healed.',
     hotkey: 'R',
     kind: 'utility',
     element: 'joker',
     color: '#e02434',
     gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
-    icon: GiBalloons,
+    icon: GiCardRandom,
   },
-  jokerAbility5: {
-    id: 'jokerAbility5',
-    name: 'JokerAbility5',
-    description: 'Placeholder ultimate — one heavy hit standing in until the real Joker kit is designed.',
+  slotMachine: {
+    id: 'slotMachine',
+    name: 'Slot Machine',
+    description: 'Ultimate. Drops a slot machine on every other kingdom. Their gold production stops until they pull the lever — and then the reels decide what happens to them.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'joker',
     color: '#e02434',
     gradient: 'linear-gradient(135deg, #5e0a13, #e02434, #f7f7f2)',
-    icon: GiClown,
+    icon: GiRollingDices,
   },
-  // Light Abilities — PLACEHOLDER (see Server/src/data/lightAbilities.ts)
-  lightAbility1: {
-    id: 'lightAbility1',
-    name: 'LightAbility1',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Light kit is designed.',
+  // Light Abilities — attacks designed; utility + ultimate still placeholders
+  // (see Server/src/data/lightAbilities.ts).
+  lightBeam: {
+    id: 'lightBeam',
+    name: 'Light Beam',
+    description: 'Basic Light attack. A focused beam of pure light — and it burns hotter against a kingdom already crawling with your Fireflies.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'light',
     color: '#f7f7f2',
     gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
-    icon: GiSunbeams,
+    icon: IoFlashlight,
   },
-  lightAbility2: {
-    id: 'lightAbility2',
-    name: 'LightAbility2',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Light kit is designed.',
+  fireflies: {
+    id: 'fireflies',
+    name: 'Fireflies',
+    description: 'Sends a swarm to infest an enemy castle. They must pay to shoo it away — the bill scales with their population — and a shielded castle repels the swarm entirely. While your swarm is out, you cannot buy a shield of your own.',
     hotkey: 'E',
     kind: 'attack',
     element: 'light',
     color: '#f7f7f2',
     gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
-    icon: GiSunrise,
+    icon: PiBugDroid,
   },
-  lightAbility3: {
-    id: 'lightAbility3',
-    name: 'LightAbility3',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Light kit is designed.',
+  illumination: {
+    id: 'illumination',
+    name: 'Illumination',
+    description: 'Heavy Light attack. The glare whips an existing swarm into a frenzy, driving up what the victim owes to be rid of it. Does nothing extra if they have no Fireflies.',
     hotkey: 'F',
     kind: 'attack',
     element: 'light',
     color: '#f7f7f2',
     gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
-    icon: GiSunRadiations,
+    icon: FaLightbulb,
   },
-  lightAbility4: {
-    id: 'lightAbility4',
-    name: 'LightAbility4',
-    description: 'Placeholder utility — a short self buff standing in until the real Light kit is designed.',
+  flashBang: {
+    id: 'flashBang',
+    name: 'Flash Bang',
+    description: 'A blinding pop that stretches every cooldown already running — on every kingdom, yours included. Abilities sitting ready are untouched, so it only bites a field that has just spent its kit.',
     hotkey: 'R',
     kind: 'utility',
     element: 'light',
     color: '#f7f7f2',
     gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
-    icon: GiCandleLight,
+    icon: GiFlashGrenade,
   },
-  lightAbility5: {
-    id: 'lightAbility5',
-    name: 'LightAbility5',
-    description: 'Placeholder ultimate — one heavy hit standing in until the real Light kit is designed.',
+  lightShow: {
+    id: 'lightShow',
+    name: 'Light Show',
+    description: 'Ultimate. The sky lights up and comes down on everyone 3 seconds later — everyone can see it coming. Any kingdom without a shield when it lands takes heavy damage; a shielded one loses its shield outright, whatever its health, and takes nothing.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'light',
     color: '#f7f7f2',
     gradient: 'linear-gradient(135deg, #9a9a93, #f7f7f2)',
-    icon: GiHolyGrail,
+    icon: GiLighthouse,
   },
   // Dark Abilities — PLACEHOLDER (see Server/src/data/darkAbilities.ts)
-  darkAbility1: {
-    id: 'darkAbility1',
-    name: 'DarkAbility1',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Dark kit is designed.',
+  shadowStrike: {
+    id: 'shadowStrike',
+    name: 'Shadow Strike',
+    description: 'Basic Dark attack. A strike out of your own shadow.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'dark',
     color: '#12121a',
     gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
-    icon: GiNightSky,
+    icon: BsShadows,
   },
-  darkAbility2: {
-    id: 'darkAbility2',
-    name: 'DarkAbility2',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Dark kit is designed.',
+  yinAndYang: {
+    id: 'yinAndYang',
+    name: 'Yin and Yang',
+    description: 'Call a side, and your victim loses either way. Yin punishes them for hiring a citizen; Yang punishes them for refusing to. Reading you correctly only halves the bill — it never avoids it. Settles the moment they hire, or when the window closes.',
     hotkey: 'E',
     kind: 'attack',
     element: 'dark',
     color: '#12121a',
     gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
-    icon: GiRaven,
+    icon: FaYinYang,
+    choices: [
+      { value: 'yin', label: 'Yin', hint: 'Punish them for HIRING a citizen' },
+      { value: 'yang', label: 'Yang', hint: 'Punish them for NOT hiring a citizen' },
+    ],
   },
-  darkAbility3: {
-    id: 'darkAbility3',
-    name: 'DarkAbility3',
-    description: 'Placeholder attack — a plain damaging cast standing in until the real Dark kit is designed.',
+  unlimitedRage: {
+    id: 'unlimitedRage',
+    name: 'Unlimited Rage',
+    description: 'Every point of damage you absorb feeds the Rage meter — the harder you are hit, the faster it climbs. Unusable until completely full, then it returns everything at once and leaves the victim blind. Empties on use.',
     hotkey: 'F',
     kind: 'attack',
     element: 'dark',
     color: '#12121a',
     gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
-    icon: GiMoonBats,
+    icon: GiEvilLove,
   },
-  darkAbility4: {
-    id: 'darkAbility4',
-    name: 'DarkAbility4',
-    description: 'Placeholder utility — a short self buff standing in until the real Dark kit is designed.',
+  neverEndingNightmare: {
+    id: 'neverEndingNightmare',
+    name: 'Never-ending Nightmare',
+    description: 'Strip a kingdom back to its opening move: for their next 3 attacks they can cast nothing but their basic attack — no medium, no heavy, no ultimate. Their utilities still work.',
     hotkey: 'R',
     kind: 'utility',
     element: 'dark',
     color: '#12121a',
     gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
-    icon: GiShadowFollower,
+    icon: GiDreamCatcher,
   },
-  darkAbility5: {
-    id: 'darkAbility5',
-    name: 'DarkAbility5',
-    description: 'Placeholder ultimate — one heavy hit standing in until the real Dark kit is designed.',
+  infinitumTenebrae: {
+    id: 'infinitumTenebrae',
+    name: 'Infinitum Tenebrae',
+    description: 'Ultimate. For 30 seconds your attacks can name up to three kingdoms at once and land on each in FULL — no damage split — hit 30% harder, and plunge the screen of everyone they touch into darkness.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'dark',
     color: '#12121a',
     gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
-    icon: GiEclipse,
+    icon: GiDelighted,
   },
 }
 

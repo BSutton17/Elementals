@@ -1,0 +1,36 @@
+/* The Yin and Yang verdict, hung above the wagered kingdom. Drawn inside the
+   arena SVG, so lengths are in arena units and scale with the battlefield. */
+.wager-result {
+  pointer-events: none;
+}
+
+.wager-result__mark {
+  animation: wager-verdict 2.6s ease-out forwards;
+}
+
+/* It drops in hard, holds long enough to be read from across the field, then
+   lifts away. */
+@keyframes wager-verdict {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* A right read is a relief; a wrong one stings. The glow carries that without
+   needing any text. */
+.wager-result__mark--right {
+  filter: drop-shadow(0 0 10px rgba(143, 227, 160, 0.9));
+}
+
+.wager-result__mark--wrong {
+  filter: drop-shadow(0 0 10px rgba(255, 143, 154, 0.9));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wager-result__mark { animation: wager-verdict-still 2.6s steps(1, end) forwards; }
+  @keyframes wager-verdict-still {
+    0%, 92% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+}

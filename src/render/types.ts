@@ -44,7 +44,15 @@ export type ThemeToken = 'primary' | 'secondary' | 'dark'
  *  Icicle), a tilted spinning ring (Space's Saturn's Rings), a heart (Love's
  *  Tough Love), or an arrow (Love's Cupid's Arrow). Selects which pooled node
  *  factory the system draws from. */
-export type ProjectileShape = 'circle' | 'triangle' | 'ring' | 'heart' | 'arrow'
+export type ProjectileShape =
+  | 'circle'
+  | 'triangle'
+  | 'ring'
+  | 'heart'
+  | 'arrow'
+  | 'spade'
+  | 'shadow'
+  | 'yinYang'
 
 /**
  * A projectile that travels in a STRAIGHT LINE from A to B over `durationMs`
@@ -670,6 +678,23 @@ export interface FrostAuraConfig {
   baseDurationMs: number
   /** Melt time on expiry, in ms. */
   dissolveMs: number
+}
+
+/**
+ * Light's Fireflies — a swarm of little lights dancing around a kingdom until
+ * the ransom is paid. It has no duration: the swarm persists until dispelled.
+ */
+export interface FirefliesConfig {
+  /** Resting glow colour of a fly. */
+  glowColor: number
+  /** Colour a fly burns while the swarm is agitated (Illumination). */
+  litColor: number
+  /** Radius of the volume the swarm dances through, in world units. */
+  radius: number
+  /** Size of a single fly, in world units (varied per fly around this). */
+  flySize: number
+  /** Overall brightness multiplier, 0→1. */
+  intensity: number
 }
 
 /** One styled polyline layer of a lightning bolt (glow / branches / core). */

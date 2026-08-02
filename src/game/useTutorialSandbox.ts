@@ -315,7 +315,9 @@ export function useTutorialSandbox(options: TutorialSandboxOptions = {}) {
       },
 
       /** The Repairs & Shields shop, sandbox edition. */
-      buyItem(id: 'citizen' | 'repair' | 'shield') {
+      // 'dispel' is accepted for prop compatibility with the real shop but is
+      // a no-op here: the sandbox never inflicts a dispellable status.
+      buyItem(id: 'citizen' | 'repair' | 'shield' | 'dispel') {
         setState((s) => {
           if (id === 'citizen') {
             const cost = nextCitizenCostFor(s.citizensPurchased)

@@ -1,0 +1,50 @@
+/* Dark's Yin and Yang on the victim's screen. Click-through: it is a marker,
+   not a modal — the victim has to keep playing, which is the whole point. */
+.yinyang {
+  position: fixed;
+  inset: 0;
+  z-index: 4200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: yinyang-arrive 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+@keyframes yinyang-arrive {
+  /* It lands as if thrown at the screen — the bolt that just hit them. */
+  from { opacity: 0; transform: scale(2.2); }
+  to { opacity: 1; transform: none; }
+}
+
+.yinyang__symbol {
+  width: clamp(9rem, 34vmin, 20rem);
+  height: clamp(9rem, 34vmin, 20rem);
+  filter: drop-shadow(0 0 2rem rgba(0, 0, 0, 0.85));
+  /* Slow and steady — an ominous presence rather than an animation demanding
+     attention. It turns AND breathes for as long as the wager is live.
+     Two animations on separate properties (transform / opacity), so they
+     compose instead of overwriting one another. */
+  animation:
+    yinyang-turn 9s linear infinite,
+    yinyang-breathe 3.6s ease-in-out infinite;
+}
+
+@keyframes yinyang-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Fading in and out: it never fully disappears, so the victim can't mistake a
+   dim moment for the wager having ended. */
+@keyframes yinyang-breathe {
+  0%, 100% { opacity: 0.18; }
+  50% { opacity: 0.62; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yinyang,
+  .yinyang__symbol { animation: none; }
+  /* Still visible, just still. */
+  .yinyang__symbol { opacity: 0.45; }
+}

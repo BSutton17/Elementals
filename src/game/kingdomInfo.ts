@@ -110,20 +110,36 @@ export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
       description: 'Whenever another kingdom heals, you receive a share of it too.',
     },
   ],
-  // Placeholder kingdoms: named but not designed. The server declares no
-  // passive primitives for them yet (`KINGDOM_PASSIVES` in data/kingdoms.ts),
-  // so nothing applies in a match — these entries exist so the lobby's detail
-  // panel still shows the shape of the kingdom. Replace both together.
+  // Joker, Light, and Dark have their real passives; only their ABILITY kits
+  // are still placeholders.
   joker: [
-    { name: 'JokerPassive1', description: 'Not designed yet — no effect in a match.' },
-    { name: 'JokerPassive2', description: 'Not designed yet — no effect in a match.' },
+    {
+      name: 'Beginners luck',
+      description: 'Your attacks land critical hits twice as often as anyone else.',
+    },
+    {
+      name: 'Why so serious?',
+      description: 'While your shield is up, attacks against you sometimes miss entirely.',
+    },
   ],
   light: [
-    { name: 'LightPassive1', description: 'Not designed yet — no effect in a match.' },
-    { name: 'LightPassive2', description: 'Not designed yet — no effect in a match.' },
+    {
+      name: 'Speed of light',
+      description: 'Every ability you cast hurries all your other abilities off cooldown.',
+    },
+    {
+      name: 'Bright idea',
+      description: 'Upgrading your abilities costs less.',
+    },
   ],
   dark: [
-    { name: 'DarkPassive1', description: 'Not designed yet — no effect in a match.' },
-    { name: 'DarkPassive2', description: 'Not designed yet — no effect in a match.' },
+    {
+      name: 'Night terrors',
+      description: 'Kingdoms that attack you risk having their own screen plunged into darkness.',
+    },
+    {
+      name: 'Black Magic',
+      description: 'Both of your chosen perks work noticeably harder than they would for anyone else.',
+    },
   ],
 }

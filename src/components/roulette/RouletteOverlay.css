@@ -1,0 +1,322 @@
+/* Joker's Roulette — a casino table wheeled over the victim's screen. Blocking
+   by design: the only way out is to call a colour, so this takes pointer
+   events. Green felt and brass, against Joker's red-and-white cabinet. */
+.roulette {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: flex;
+  align-items: safe center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: radial-gradient(circle at 50% 40%, rgba(94, 10, 19, 0.7), rgba(5, 5, 8, 0.93));
+  animation: roulette-fade-in 0.35s ease-out;
+}
+
+@keyframes roulette-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.roulette__table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(32rem, 95vw);
+  padding: 1rem 1.25rem 1.25rem;
+  box-sizing: border-box;
+  color: #f4efe2;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, #1b6b3f, #0d3f25 70%, #072418);
+  border: 4px solid #c9a227;
+  border-radius: 1.25rem;
+  box-shadow: 0 0 0 4px #5e0a13, 0 24px 70px rgba(0, 0, 0, 0.75);
+  animation: roulette-drop-in 0.45s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+@keyframes roulette-drop-in {
+  from { transform: translateY(-2.5rem) scale(0.92); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.roulette__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.roulette__title {
+  font-size: clamp(1rem, 4vw, 1.35rem);
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  color: #f2d68a;
+  text-shadow: 0 0 12px rgba(242, 214, 138, 0.7);
+}
+
+.roulette__sub {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(244, 239, 226, 0.85);
+}
+
+/* Wheel + chips. Side by side when there's room, stacked when there isn't. */
+.roulette__felt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.roulette__wheel {
+  width: clamp(11rem, 44vw, 15rem);
+  height: clamp(11rem, 44vw, 15rem);
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
+}
+
+.roulette__chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.roulette__chip {
+  position: relative;
+  width: 5.4rem;
+  padding: 0.6rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #f4efe2;
+  background: var(--chip);
+  border: 3px dashed rgba(244, 239, 226, 0.75);
+  border-radius: 50%;
+  aspect-ratio: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+}
+
+.roulette__chip:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+}
+
+.roulette__chip:disabled {
+  cursor: default;
+}
+
+/* Unpicked chips fade off the table once a bet is down. */
+.roulette__chips:has(.roulette__chip--picked) .roulette__chip:not(.roulette__chip--picked) {
+  opacity: 0.25;
+}
+
+.roulette__chip--picked {
+  transform: scale(1.08);
+  border-style: solid;
+  border-color: #f2d68a;
+  box-shadow: 0 0 18px rgba(242, 214, 138, 0.8);
+}
+
+.roulette__chip-label {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Result board. */
+.roulette__result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.75rem;
+  box-sizing: border-box;
+  background: rgba(7, 36, 24, 0.9);
+  border: 3px solid #c9a227;
+  border-radius: 0.6rem;
+}
+
+.roulette__result-placeholder {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(242, 214, 138, 0.55);
+}
+
+.roulette__result--lit {
+  animation: roulette-board-flash 0.7s steps(1, end) 4;
+}
+
+.roulette__result-text {
+  font-size: clamp(0.85rem, 3.4vw, 1.05rem);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.roulette__result-text--red { color: #ff6b76; }
+.roulette__result-text--black { color: #cfd2dd; }
+.roulette__result-text--green { color: #6bf0a0; }
+
+@keyframes roulette-board-flash {
+  0%, 50% { border-color: #f2d68a; box-shadow: 0 0 20px rgba(242, 214, 138, 0.6); }
+  50.01%, 100% { border-color: #c9a227; box-shadow: none; }
+}
+
+/* Mobile PORTRAIT: stack the chips under the wheel in a row so the wheel keeps
+   its size and the chips stay comfortably tappable. */
+@media (max-width: 30rem) {
+  .roulette__felt {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .roulette__chips {
+    flex-direction: row;
+    justify-content: center;
+  }
+  .roulette__wheel {
+    width: min(15rem, 62vw);
+    height: min(15rem, 62vw);
+  }
+  .roulette__chip {
+    width: 4.4rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Mobile LANDSCAPE: height is scarce. Keep wheel and chips side by side, size
+   the wheel off the VIEWPORT HEIGHT, and trim every vertical gap. */
+@media (orientation: landscape) and (max-height: 30rem) {
+  .roulette {
+    padding: 0.4rem;
+  }
+  .roulette__table {
+    width: min(38rem, 97vw);
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem 0.7rem;
+    border-width: 3px;
+    border-radius: 0.9rem;
+  }
+  .roulette__title {
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+  }
+  .roulette__sub {
+    font-size: 0.68rem;
+  }
+  .roulette__felt {
+    flex-direction: row;
+    gap: 0.8rem;
+  }
+  .roulette__wheel {
+    width: clamp(7rem, 46vh, 11rem);
+    height: clamp(7rem, 46vh, 11rem);
+  }
+  .roulette__chips {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .roulette__chip {
+    width: clamp(3rem, 15vh, 4rem);
+    padding: 0.3rem;
+    font-size: 0.62rem;
+    border-width: 2px;
+  }
+  .roulette__result {
+    min-height: 1.9rem;
+    padding: 0.25rem 0.5rem;
+    border-width: 2px;
+  }
+  .roulette__result-text {
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roulette,
+  .roulette__table,
+  .roulette__result--lit {
+    animation: none;
+  }
+}
+
+/* ---- Tucked aside ----------------------------------------------------------
+   Once the bet is placed the table has nothing left to ask, so clicking off it
+   shrinks it into the same corner card Joker watches from. Crucially this is a
+   RESTYLE, not a re-mount: the wheel's CSS transition is mid-flight and keeps
+   running, so the ball carries on from exactly where it was. */
+.roulette--mini {
+  /* No longer a modal: it stops covering the battlefield and stops taking
+     clicks, so the player is back in the match while the ball finishes. */
+  inset: auto 0.75rem 50% auto;
+  transform: translateY(50%);
+  z-index: 4000;
+  display: block;
+  padding: 0;
+  overflow: visible;
+  background: none;
+  pointer-events: none;
+  animation: none;
+}
+
+.roulette--mini .roulette__table {
+  width: 8.5rem;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-width: 2px;
+  border-radius: 0.6rem;
+  background: linear-gradient(#0d3f25, #072418);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  /* Slide across to the corner rather than snapping there. */
+  animation: roulette-tuck 0.45s cubic-bezier(0.3, 1.1, 0.4, 1);
+}
+
+@keyframes roulette-tuck {
+  from { transform: scale(2.4); opacity: 0.85; }
+  to { transform: none; opacity: 1; }
+}
+
+.roulette--mini .roulette__title { font-size: 0.62rem; letter-spacing: 0.16em; }
+.roulette--mini .roulette__sub { font-size: 0.55rem; }
+
+.roulette--mini .roulette__felt {
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.3rem;
+}
+
+.roulette--mini .roulette__wheel {
+  width: 6.5rem;
+  height: 6.5rem;
+}
+
+/* The chips are spent — the bet is already down. */
+.roulette--mini .roulette__chips { display: none; }
+
+.roulette--mini .roulette__result {
+  min-height: 0;
+  padding: 0.2rem 0.3rem;
+  border-width: 1px;
+}
+
+.roulette--mini .roulette__result-text,
+.roulette--mini .roulette__result-placeholder {
+  font-size: 0.55rem;
+  letter-spacing: 0.02em;
+}
+
+/* On a phone the corner card would cover the action bar — sit it top-right. */
+@media (max-width: 30rem), (orientation: landscape) and (max-height: 30rem) {
+  .roulette--mini {
+    inset: 0.75rem 0.75rem auto auto;
+    transform: none;
+  }
+  .roulette--mini .roulette__table { width: 6.5rem; }
+  .roulette--mini .roulette__wheel { width: 5rem; height: 5rem; }
+}

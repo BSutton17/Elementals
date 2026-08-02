@@ -231,7 +231,7 @@ describe('BattlefieldView — Air multi-select targeting', () => {
     fireEvent.click(screen.getByLabelText('Target Cleo'))
     fireEvent.click(screen.getByLabelText('Cast A Light Breeze'))
 
-    expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['b', 'c'], undefined)
+    expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['b', 'c'], undefined, undefined)
   })
 
   it('non-multi kingdoms keep single, server-tracked targeting', () => {
