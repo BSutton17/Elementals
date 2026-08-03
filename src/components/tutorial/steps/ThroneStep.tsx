@@ -12,6 +12,17 @@ import { inkFor, outlineFor } from '../../../game/contrast'
 // COUNT in the title is derived for the same reason — it read "Ten Kingdoms"
 // for a while after there were thirteen.
 
+/**
+ * How long the pulse takes to travel all the way round the ring, in seconds.
+ *
+ * The per-orb delay is derived from this and the roster size, so the wave
+ * always makes exactly ONE lap per cycle however many kingdoms there are. It
+ * used to be a flat 0.35s per orb, which was tuned when the ring was much
+ * smaller — at thirteen that overshot the cycle and the wave lapped itself,
+ * reading as a fast flicker rather than a travelling pulse.
+ */
+const ORBIT_WAVE_SECONDS = 5.2
+
 /** Spelled-out count, so the headline never disagrees with the ring below it. */
 const COUNT_WORDS = [
   'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
@@ -29,7 +40,11 @@ export function ThroneStep() {
       title={`${countWord(KINGDOMS.length)} Kingdoms. One Throne.`}
       lead="Every match is a free-for-all between elemental kingdoms. Alliances are temporary. Grudges are forever. The last castle standing takes the throne."
     >
-      <div className="howto-orbit" aria-hidden="true">
+      <div
+        className="howto-orbit"
+        aria-hidden="true"
+        style={{ '--orb-cycle': `${ORBIT_WAVE_SECONDS}s` } as React.CSSProperties}
+      >
         <span className="howto-orbit__crown">
           <FaCrown />
         </span>
@@ -46,7 +61,9 @@ export function ThroneStep() {
                   '--orb-ink': inkFor(k.color),
                   '--orb-outline': outlineFor(k.color),
                   '--orb-angle': `${angle}deg`,
-                  '--orb-delay': `${i * 0.35}s`,
+                  // One lap per cycle, spread across however many kingdoms
+                  // there are — never a fixed step that can outrun the cycle.
+                  '--orb-delay': `${(i / KINGDOMS.length) * ORBIT_WAVE_SECONDS}s`,
                 } as React.CSSProperties
               }
             >

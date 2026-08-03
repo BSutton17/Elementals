@@ -426,19 +426,16 @@
 .lobby__kingdom-btn--selected {
   border-color: var(--k);
   /* The second ring is the readability outline: `--k-outline` is white only for
-     a kingdom whose colour is too dark to see against this panel (Dark), and
-     transparent for every other, so it appears exactly where it's needed. */
+     a kingdom whose colour is too dark to show a selection edge at all (Dark),
+     and transparent for every other. Unselected cards get no ring — every card
+     is legible by its LABEL, so an always-on outline just made one kingdom look
+     permanently picked. */
   box-shadow:
     inset 0 0 0 1px var(--k),
     inset 0 0 0 2.5px var(--k-outline, transparent);
-  background: color-mix(in srgb, var(--k) 18%, transparent);
-}
-
-/* Selected or not, a near-black kingdom needs an edge to be findable in the
-   grid at all. */
-.lobby__kingdom-btn {
   outline: 1.5px solid var(--k-outline, transparent);
   outline-offset: -1.5px;
+  background: color-mix(in srgb, var(--k) 18%, transparent);
 }
 
 .lobby__kingdom-btn--taken {

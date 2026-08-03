@@ -342,7 +342,9 @@
   box-shadow: 0 0 18px color-mix(in srgb, var(--orb-color) 70%, transparent);
   transform: rotate(var(--orb-angle)) translateY(calc(min(300px, 66vw) / -2 + 6px))
     rotate(calc(-1 * var(--orb-angle)));
-  animation: howto-orb-pulse 2.6s ease-in-out infinite;
+  /* The cycle is set on the ring so it and the per-orb delays are derived from
+     the same number — otherwise the wave laps itself (see ThroneStep). */
+  animation: howto-orb-pulse var(--orb-cycle, 5.2s) ease-in-out infinite;
   animation-delay: var(--orb-delay);
 }
 

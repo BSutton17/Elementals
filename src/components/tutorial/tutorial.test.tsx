@@ -55,3 +55,28 @@ describe('the tutorial keeps up with the roster', () => {
     expect(container.textContent).not.toMatch(/coming soon/i)
   })
 })
+
+describe('the orbit wave scales with the roster', () => {
+  it('spreads one full lap across however many kingdoms there are', () => {
+    const { container } = render(<ThroneStep />)
+    const orbs = [...container.querySelectorAll('.howto-orbit__orb')] as HTMLElement[]
+    const cycle = parseFloat(
+      (container.querySelector('.howto-orbit') as HTMLElement).style.getPropertyValue(
+        '--orb-cycle',
+      ),
+    )
+    expect(cycle).toBeGreaterThan(0)
+
+    const delays = orbs.map((o) => parseFloat(o.style.getPropertyValue('--orb-delay')))
+    expect(delays[0]).toBe(0)
+    // Every delay stays INSIDE one cycle, so the wave makes exactly one lap
+    // rather than overtaking itself — the failure mode when the per-orb step
+    // was a flat 0.35s and the roster grew.
+    for (const d of delays) expect(d).toBeLessThan(cycle)
+    expect(Math.max(...delays)).toBeGreaterThan(cycle * 0.8)
+
+    // Evenly spaced around the ring.
+    const step = cycle / orbs.length
+    delays.forEach((d, i) => expect(d).toBeCloseTo(step * i, 5))
+  })
+})
