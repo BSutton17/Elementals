@@ -20,15 +20,16 @@ export function rarityOf(card: string): CardRarity {
   return 'number'
 }
 
-/** The pip a card front shows. Aces and numbers take spades; faces get their
- *  own letter, and the Joker its own mark. */
-const PIP: Record<string, string> = {
-  Joker: '★',
-  Ace: '♠',
-  Jack: '♠',
-  Queen: '♠',
-  King: '♠',
+/** The pip for each suit. A joker has no suit and takes its own mark. */
+const SUIT_PIP: Record<string, string> = {
+  spades: '♠',
+  hearts: '♥',
+  diamonds: '♦',
+  clubs: '♣',
 }
+
+/** Hearts and diamonds are red; spades and clubs black. */
+const RED_SUITS = new Set(['hearts', 'diamonds'])
 
 /** The corner letter/number for a card. */
 function cornerOf(card: string): string {
@@ -69,20 +70,27 @@ export function CardBack({ className }: { className?: string }) {
 
 export function CardFace({
   card,
+  suit = null,
   className,
 }: {
   /** "2".."10", "Ace", "Jack", "Queen", "King", or "Joker". */
   card: string
+  /** The suit drawn. Null for a joker, which has none. */
+  suit?: string | null
   className?: string
 }) {
   const rarity = rarityOf(card)
   const corner = cornerOf(card)
-  const pip = PIP[card] ?? '♠'
+  // The suit is real now — it decides what the hit leaves behind, so the card
+  // has to show which one it actually was rather than a stock spade.
+  const pip = card === 'Joker' ? '★' : (suit ? SUIT_PIP[suit] ?? '♠' : '♠')
+  const red = suit != null && RED_SUITS.has(suit)
   return (
     <div
-      className={`pcard pcard--face pcard--${rarity}${className ? ` ${className}` : ''}`}
+      className={`pcard pcard--face pcard--${rarity}${red ? ' pcard--red' : ''}${className ? ` ${className}` : ''}`}
       data-testid="playing-card-face"
       data-card={card}
+      data-suit={suit ?? ''}
     >
       <span className="pcard__corner pcard__corner--tl">
         {corner}

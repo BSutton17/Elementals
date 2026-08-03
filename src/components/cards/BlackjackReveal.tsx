@@ -27,6 +27,8 @@ export interface BlackjackCinematic {
   key: number
   /** The drawn card: "2".."10", "Ace", "Jack", "Queen", "King", "Joker". */
   card: string
+  /** Its suit, or null for a joker. Decides the pip and what the hit leaves. */
+  suit?: string | null
   /** Where the card is summoned, in viewport %. */
   from: { x: number; y: number }
   /** Where it is thrown, in viewport %. */
@@ -85,7 +87,7 @@ export function BlackjackReveal({ cast }: { cast: BlackjackCinematic | null }) {
             <CardBack />
           </div>
           <div className="bj__card-side bj__card-side--front">
-            <CardFace card={cast.card} />
+            <CardFace card={cast.card} suit={cast.suit} />
           </div>
         </div>
       </div>

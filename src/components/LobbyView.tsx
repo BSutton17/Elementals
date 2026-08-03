@@ -3,6 +3,7 @@ import { RoomCode } from './RoomCode'
 import { HowToPlay } from '../pages/HowToPlay'
 import { KINGDOMS, SELECTABLE_KINGDOMS, type KingdomId } from '../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../game/kingdomInfo'
+import { outlineFor } from '../game/contrast'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { MIN_PLAYERS_TO_START, type LobbyMatch } from '../game/lobby'
 import {
@@ -205,7 +206,14 @@ export function LobbyView({
                 key={k.id}
                 type="button"
                 className={`lobby__kingdom-btn${selected ? ' lobby__kingdom-btn--selected' : ''}${takenByOther ? ' lobby__kingdom-btn--taken' : ''}`}
-                style={{ '--k': k.color } as CSSProperties}
+                style={
+                  {
+                    '--k': k.color,
+                    // Dark's colour is near-black; without this ring its card
+                    // is invisible against the lobby's dark panel.
+                    '--k-outline': outlineFor(k.color),
+                  } as CSSProperties
+                }
                 disabled={takenByOther || (playersFull && !selected)}
                 onClick={() => onSelectKingdom(k.id)}
               >

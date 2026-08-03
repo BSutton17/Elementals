@@ -1,0 +1,39 @@
+/* Your two perks, pinned to the top-left of the inventory bar. Absolutely
+   positioned so adding them never reflows the stats they sit above. */
+.perk-chips {
+  position: absolute;
+  top: 0.35rem;
+  left: 0.5rem;
+  z-index: 3;
+  display: flex;
+  gap: 0.3rem;
+  pointer-events: auto;
+}
+
+.perk-chips__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.4rem;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: var(--perk);
+  background: color-mix(in srgb, var(--perk) 14%, rgba(11, 14, 23, 0.85));
+  border: 1px solid color-mix(in srgb, var(--perk) 55%, transparent);
+  border-radius: 999px;
+  cursor: help;
+}
+
+.perk-chips__icon {
+  display: inline-flex;
+  font-size: 0.78rem;
+}
+
+/* Tight screens: the icons alone carry it — the name is in the tooltip. */
+@media (max-width: 46rem), (orientation: landscape) and (max-height: 30rem) {
+  .perk-chips__name { display: none; }
+  .perk-chips__chip { padding: 0.15rem 0.28rem; }
+}

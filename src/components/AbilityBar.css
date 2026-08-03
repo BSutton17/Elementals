@@ -20,6 +20,9 @@
 
 /* Glassmorphic main bottom bar */
 .ability-bar {
+  /* Anchors the perk chips to the bar's own top-left corner, where they sit in
+     the existing padding without displacing any stat. */
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: 1rem;

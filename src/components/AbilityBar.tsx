@@ -7,6 +7,7 @@ import { type KingdomTheme } from '../game/kingdomThemes'
 import { AbilityButton } from './AbilityButton'
 import { ShopOverlay } from './ShopOverlay'
 import { DispelButton } from './DispelButton'
+import { PerkChips } from './PerkChips'
 import { FrostCoat } from './FrostCoat'
 import { SupernovaMeter } from './SupernovaMeter'
 import { RageMeter } from './RageMeter'
@@ -60,6 +61,9 @@ interface AbilityBarProps {
   /** Damage Dark must absorb to fill Unlimited Rage (server-owned, from the
    *  match config — never a constant on this side). */
   rageFull?: number
+  /** The two perks this player locked in at the lobby, shown on the bar so
+   *  their always-on bonuses aren't invisible for the whole match. */
+  perks?: readonly string[]
   /** Time's Half Past 12: the whole bar wobbles, jitters, and leaves temporal
    *  afterimages while the victim's UI is scrambled (purely cosmetic; buttons
    *  stay clickable). */
@@ -109,6 +113,7 @@ export function AbilityBar({
   frozen = false,
   nightmared = false,
   rageFull,
+  perks,
   scrambled = false,
   scramble = null,
   fatherTimeMarked = false,
@@ -245,6 +250,9 @@ export function AbilityBar({
       <div className="ability-bar">
         {/* Left Side: Player Statistics Panel */}
         <div className="ability-bar__stats">
+          {/* The perks you're playing with, pinned top-left. They change the
+              numbers on this very bar, so they belong beside them. */}
+          <PerkChips perks={perks} />
           {/* Gold Stats — the income readout goes toxic while citizens are poisoned. */}
           <div className="ability-bar__stat-group" title="Gold & Income">
             <span className="ability-bar__stat-icon"><GiReceiveMoney /></span>

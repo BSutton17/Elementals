@@ -69,7 +69,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   flood: {
     id: 'flood',
     name: 'Flood',
-    description: 'Heavy Water attack. Washes over the target, preventing them from targeting you for a few seconds — even longer if they are caught in a Current.',
+    description: ' Washes over the target, preventing them from targeting you for a few seconds — even longer if they are caught in a Current.',
     hotkey: 'E',
     kind: 'attack',
     element: 'water',

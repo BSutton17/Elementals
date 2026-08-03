@@ -172,3 +172,10 @@
     animation: none;
   }
 }
+
+/* Hearts and diamonds are red, spades and clubs black — the suit is real
+   gameplay now (it decides the rider), so it has to be legible at a glance. */
+.pcard--red .pcard__centre,
+.pcard--red .pcard__corner {
+  color: #c8102e;
+}

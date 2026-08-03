@@ -260,6 +260,7 @@ export function BattlefieldView({
           setBlackjack({
             key: ++blackjackKey.current,
             card: draw.card,
+            suit: draw.suit ?? null,
             from: { x: (caster?.x ?? 500) / 10, y: (caster?.y ?? 500) / 10 },
             to: { x: (victim?.x ?? 500) / 10, y: (victim?.y ?? 500) / 10 },
           })
@@ -565,6 +566,7 @@ export function BattlefieldView({
           // unlocked (null for every other kingdom hides it).
           rageMeter={you.unlocked?.unlimitedRage ? you.rageMeter ?? 0 : null}
           rageFull={match.config?.rageFull}
+          perks={you.perks}
           abilities={getAbilitiesForKingdom(you.kingdomId).map((metadata) => {
             // Bought abilities show as level 1; upgrade tiers stack on top.
             const isUnlocked = you.unlocked?.[metadata.id] ?? false

@@ -3,6 +3,8 @@ import { TutorialStep } from '../TutorialStep'
 import { SELECTABLE_KINGDOMS, type KingdomId } from '../../../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../../../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../../../game/abilities'
+import { KINGDOM_ICONS } from '../kingdomIcons'
+import { accentFor, outlineFor } from '../../../game/contrast'
 
 // Page 8 — meet the kingdoms: tap through each one's personality, passives, and
 // signature ultimate. Fully data-driven off the selectable kingdom list /
@@ -19,10 +21,9 @@ const FLAVOR: Record<KingdomId, string> = {
   time: 'Speeds up, slows down, and rewinds the clock.',
   space: 'No one can hear you scream.',
   love: 'Awww, I love you too!',
-  // Placeholder kingdoms — flavour lands with their real kits.
   joker: 'May the odds be ever in your favor.',
-  light: 'Nothing left to hide behind.',
-  dark: 'Something moved.',
+  light: 'All of the lights.',
+  dark: 'Who turned off the lights?',
 }
 
 export function KingdomsStep() {
@@ -46,9 +47,21 @@ export function KingdomsStep() {
               role="tab"
               aria-selected={k.id === selected}
               className={`howto-kingdoms__tab${k.id === selected ? ' howto-kingdoms__tab--active' : ''}`}
-              style={{ '--k': k.color } as CSSProperties}
+              style={
+                {
+                  '--k': k.color,
+                  '--k-outline': outlineFor(k.color),
+                  '--k-accent': accentFor(k.color),
+                } as CSSProperties
+              }
               onClick={() => setSelected(k.id)}
             >
+              <span className="howto-kingdoms__tab-icon" aria-hidden="true">
+                {(() => {
+                  const Icon = KINGDOM_ICONS[k.id]
+                  return <Icon />
+                })()}
+              </span>
               {k.label}
             </button>
           ))}
@@ -57,10 +70,24 @@ export function KingdomsStep() {
         <div
           key={selected}
           className="howto-kingdoms__card"
-          style={{ '--k': kingdom.color } as CSSProperties}
+          style={
+            {
+              '--k': kingdom.color,
+              '--k-outline': outlineFor(kingdom.color),
+              '--k-accent': accentFor(kingdom.color),
+            } as CSSProperties
+          }
           data-testid="kingdom-card"
         >
-          <h3 className="howto-kingdoms__name">{kingdom.label}</h3>
+          <h3 className="howto-kingdoms__name">
+            <span className="howto-kingdoms__name-icon" aria-hidden="true">
+              {(() => {
+                const Icon = KINGDOM_ICONS[selected]
+                return <Icon />
+              })()}
+            </span>
+            {kingdom.label}
+          </h3>
           <p className="howto-kingdoms__flavor">{FLAVOR[selected]}</p>
 
           <ul className="howto-kingdoms__passives">

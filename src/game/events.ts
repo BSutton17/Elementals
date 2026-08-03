@@ -149,6 +149,9 @@ export interface CardDrawnEvent {
   abilityId: string
   /** The card's label — "2".."10", "Ace", "Jack", "Queen", "King", "Joker". */
   card: string
+  /** The suit drawn, or null for a joker. Decides the pip on the reveal and
+   *  the rider the card leaves behind. */
+  suit?: string | null
   /** Pre-pipeline damage the card rolled (display only). */
   damage: number
 }

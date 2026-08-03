@@ -1,32 +1,31 @@
-import { FaCrown, FaMountain, FaLeaf, FaHeart } from 'react-icons/fa'
-import { PiDropFill, PiFireFill, PiWindFill, PiLightningFill } from 'react-icons/pi'
-import { RiSnowflakeFill } from 'react-icons/ri'
-import { CgSandClock } from 'react-icons/cg'
-import { GiBlackHoleBolas } from 'react-icons/gi'
-import type { IconType } from 'react-icons'
+import { FaCrown } from 'react-icons/fa'
 import { TutorialStep } from '../TutorialStep'
 import { KINGDOMS } from '../../../game/kingdoms'
+import { KINGDOM_ICONS } from '../kingdomIcons'
+import { inkFor, outlineFor } from '../../../game/contrast'
 
-// Page 1 — the hook. Ten elements circle one throne.
+// Page 1 — the hook. Every element in the game circles one throne.
+//
+// The ring is built from KINGDOMS itself and the icons come from the shared
+// map, so adding a kingdom puts it in the orbit with a face automatically. The
+// COUNT in the title is derived for the same reason — it read "Ten Kingdoms"
+// for a while after there were thirteen.
 
-const ELEMENT_ICONS: Record<string, IconType> = {
-  water: PiDropFill,
-  fire: PiFireFill,
-  air: PiWindFill,
-  earth: FaMountain,
-  electricity: PiLightningFill,
-  ice: RiSnowflakeFill,
-  nature: FaLeaf,
-  time: CgSandClock,
-  space: GiBlackHoleBolas,
-  love: FaHeart,
+/** Spelled-out count, so the headline never disagrees with the ring below it. */
+const COUNT_WORDS = [
+  'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
+  'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen',
+]
+
+function countWord(n: number): string {
+  return COUNT_WORDS[n] ?? String(n)
 }
 
 export function ThroneStep() {
   return (
     <TutorialStep
       kicker="Welcome to Elementals"
-      title="Ten Kingdoms. One Throne."
+      title={`${countWord(KINGDOMS.length)} Kingdoms. One Throne.`}
       lead="Every match is a free-for-all between elemental kingdoms. Alliances are temporary. Grudges are forever. The last castle standing takes the throne."
     >
       <div className="howto-orbit" aria-hidden="true">
@@ -34,7 +33,7 @@ export function ThroneStep() {
           <FaCrown />
         </span>
         {KINGDOMS.map((k, i) => {
-          const Icon = ELEMENT_ICONS[k.id] ?? PiDropFill
+          const Icon = KINGDOM_ICONS[k.id]
           const angle = (360 / KINGDOMS.length) * i
           return (
             <span
@@ -43,6 +42,8 @@ export function ThroneStep() {
               style={
                 {
                   '--orb-color': k.color,
+                  '--orb-ink': inkFor(k.color),
+                  '--orb-outline': outlineFor(k.color),
                   '--orb-angle': `${angle}deg`,
                   '--orb-delay': `${i * 0.35}s`,
                 } as React.CSSProperties
