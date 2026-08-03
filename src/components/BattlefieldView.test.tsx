@@ -241,3 +241,54 @@ describe('BattlefieldView — Air multi-select targeting', () => {
     expect(changeTarget).toHaveBeenCalledWith('b')
   })
 })
+
+// The host can let a knocked-out player keep watching the board properly.
+describe('eliminated vision (host rule)', () => {
+  const barsVisible = (container: HTMLElement) =>
+    container.querySelectorAll('[data-testid="health-bar"]').length
+
+  // The shared fixture hands Alice a Bird's Eye View status so other tests can
+  // read enemy stats. That would mask this rule entirely, so these start from a
+  // player with no vision of their own.
+  const blind = (overrides: Partial<GamePlayer> = {}) =>
+    game([{ statuses: [], ...overrides }])
+
+  it("hides other kingdoms' health from a living player, as normal", () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId="a" players={blind()} />,
+    )
+    // Only your own bar — everyone else's is hidden while you're alive.
+    expect(barsVisible(container)).toBe(1)
+  })
+
+  it('still hides them from an eliminated player when the rule is off', () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId="a" players={blind({ eliminated: true })} />,
+    )
+    expect(barsVisible(container)).toBe(1)
+  })
+
+  it('shows every kingdom once you are eliminated and the host allowed it', () => {
+    const { container } = render(
+      <BattlefieldView
+        match={{ ...match, eliminatedSeeAllHealth: true }}
+        youId="a"
+        players={blind({ eliminated: true })}
+      />,
+    )
+    expect(barsVisible(container)).toBe(3)
+  })
+
+  it('grants a LIVING player nothing, even with the rule on', () => {
+    // The rule is about watching after you're out — it must never become a
+    // vision advantage for someone still in the game.
+    const { container } = render(
+      <BattlefieldView
+        match={{ ...match, eliminatedSeeAllHealth: true }}
+        youId="a"
+        players={blind()}
+      />,
+    )
+    expect(barsVisible(container)).toBe(1)
+  })
+})

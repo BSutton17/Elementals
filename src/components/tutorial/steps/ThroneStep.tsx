@@ -1,6 +1,7 @@
 import { FaCrown } from 'react-icons/fa'
 import { TutorialStep } from '../TutorialStep'
 import { KINGDOMS } from '../../../game/kingdoms'
+import { MAX_ACTIVE_PLAYERS, MIN_PLAYERS_TO_START } from '../../../game/lobby'
 import { KINGDOM_ICONS } from '../kingdomIcons'
 import { inkFor, outlineFor } from '../../../game/contrast'
 
@@ -55,7 +56,7 @@ export function ThroneStep() {
         })}
       </div>
       <p className="howto-step__footnote">
-        2–8 players. Real time. No second place.
+        {MIN_PLAYERS_TO_START}–{MAX_ACTIVE_PLAYERS} players. Real time. No second place.
       </p>
     </TutorialStep>
   )

@@ -4,6 +4,17 @@
 /** Minimum connected players before the host can start (mirrors server). */
 export const MIN_PLAYERS_TO_START = 2
 
+/**
+ * Kingdom-playing seats in a room. A room holds one more person than this, but
+ * that last seat is spectator-only — so this, not the room's total capacity, is
+ * the number to show a player deciding whether they can get in.
+ *
+ * Mirrors the server's `MATCH.MAX_ACTIVE_PLAYERS`; live lobbies read
+ * `match.maxActivePlayers` off the sync instead. This is only for copy shown
+ * before a room exists (the tutorial).
+ */
+export const MAX_ACTIVE_PLAYERS = 7
+
 export interface LobbyPlayer {
   id: string
   name: string
@@ -36,6 +47,9 @@ export interface LobbyMatch {
   maxPlayers: number
   /** Max kingdom-playing participants (7); seats beyond this must spectate. */
   maxActivePlayers?: number
+  /** Host rule: an eliminated player keeps seeing every surviving kingdom's
+   *  health bar. Off unless the host turned it on. */
+  eliminatedSeeAllHealth?: boolean
   tick: number
   winnerId: string | null
   config?: MatchConfig | null
@@ -51,6 +65,9 @@ export interface MatchSnapshot {
   winnerId: string | null
   maxPlayers: number
   maxActivePlayers?: number
+  /** Host rule: an eliminated player keeps seeing every surviving kingdom's
+   *  health bar. Off unless the host turned it on. */
+  eliminatedSeeAllHealth?: boolean
   config: MatchConfig | null
   you: LobbyPlayer | null
   players: LobbyPlayer[]

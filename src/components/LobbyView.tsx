@@ -21,6 +21,8 @@ interface LobbyViewProps {
   onToggleReady: () => void
   onSelectKingdom: (kingdom: KingdomId) => void
   onSelectPerks: (perks: string[]) => void
+  /** Host-only: toggle whether eliminated players keep seeing health bars. */
+  onSetEliminatedSeeAllHealth?: (on: boolean) => void
   onSpectate: () => void
   onStart: () => void
   onLeave: () => void
@@ -104,6 +106,7 @@ export function LobbyView({
   onToggleReady,
   onSelectKingdom,
   onSelectPerks,
+  onSetEliminatedSeeAllHealth,
   onSpectate,
   onStart,
   onLeave,
@@ -135,6 +138,7 @@ export function LobbyView({
   // The kingdom-playing seats are capped; once full, only spectating is left.
   const maxActive = match.maxActivePlayers ?? 7
   const activeCount = match.players.filter((p) => !p.spectator && p.kingdomId !== null).length
+  const spectatorCount = match.players.filter((p) => p.spectator).length
   const playersFull = activeCount >= maxActive && !(me && !me.spectator && me.kingdomId !== null)
 
   // Tell the host exactly what's blocking the start.
@@ -166,7 +170,15 @@ export function LobbyView({
       <div className="lobby__body">
       <section className="lobby__players" aria-label="Players">
         <h2 className="lobby__heading">
-          Players <span className="lobby__count">{match.playerCount}/{match.maxPlayers}</span>
+          {/* Counted against the KINGDOM seats, not the room's total seats.
+              Showing 7/8 implied one more player could still pick a kingdom
+              when in fact the last seat can only ever spectate. */}
+          Players <span className="lobby__count">{activeCount}/{maxActive}</span>
+          {spectatorCount > 0 && (
+            <span className="lobby__count lobby__count--spectators">
+              +{spectatorCount} watching
+            </span>
+          )}
         </h2>
         <ul className="lobby__list">
           {match.players.map((p) => (
@@ -222,6 +234,29 @@ export function LobbyView({
               </button>
             )
           })}
+        </div>
+
+        {/* Host-only room rules. Shown to everyone so the table knows what
+            game they've agreed to, but only the host can change them. */}
+        <div className="lobby__rules">
+          <label className="lobby__rule">
+            <input
+              type="checkbox"
+              className="lobby__rule-box"
+              checked={match.eliminatedSeeAllHealth ?? false}
+              disabled={!isHost}
+              onChange={(e) => onSetEliminatedSeeAllHealth?.(e.target.checked)}
+              data-testid="rule-eliminated-see-all"
+            />
+            <span className="lobby__rule-text">
+              <span className="lobby__rule-name">Eliminated players see all health</span>
+              <span className="lobby__rule-desc">
+                {isHost
+                  ? 'Once knocked out, a player can watch every surviving kingdom’s health.'
+                  : 'Set by the host.'}
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="lobby__spectate-row">

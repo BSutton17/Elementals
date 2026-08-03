@@ -123,8 +123,8 @@ export function BattlefieldScreen() {
       <BackToTheFutureOverlay active={goldRewinding} />
       {/* Night Terrors: your own screen goes dark for provoking Dark. */}
       <DarkenedOverlay active={darkened} />
-      {/* Flash Bang blinds EVERY screen in the match, the caster's included. */}
-      <FlashBangOverlay />
+      {/* Flash Bang blinds every screen but the caster's — Light looked away. */}
+      <FlashBangOverlay youId={youId} />
       {/* Yin and Yang: a slowly turning taijitu while the wager is live. */}
       <YinYangOverlay active={wagered} />
       {/* Joker's casino: one game at a time, the next waiting its turn. */}

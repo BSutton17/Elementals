@@ -160,6 +160,18 @@ export async function selectPerks(perks: readonly string[]): Promise<void> {
   if (!res.ok) setState({ error: res.error?.message ?? 'Cannot pick that perk' })
 }
 
+/**
+ * Host-only room rule: whether an eliminated player keeps seeing every
+ * surviving kingdom's health. Rejected by the server for anyone else, and once
+ * the match has started.
+ */
+export async function setEliminatedSeeAllHealth(on: boolean): Promise<void> {
+  const res = (await socket.emitWithAck('lobby:setRules', {
+    eliminatedSeeAllHealth: on,
+  })) as Ack
+  if (!res.ok) setState({ error: res.error?.message ?? 'Cannot change that rule' })
+}
+
 /** Opt this seat out of playing — watch the match as a spectator instead. */
 export async function spectate(): Promise<void> {
   await socket.emitWithAck('lobby:selectKingdom', { kingdom: 'spectator' })

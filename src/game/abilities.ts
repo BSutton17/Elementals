@@ -161,7 +161,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   aLightBreeze: {
     id: 'aLightBreeze',
     name: 'A Light Breeze',
-    description: 'Basic Air attack. Slices the target with compressed wind currents. While Bird\'s Eye View is active, a multi-kingdom cast ricochets between the selected kingdoms — full damage each landing, 50% to bounce again (up to 4 hits), never the same castle twice in a row.',
+    description: 'Basic Air attack. Slices the target with compressed wind currents. While Bird\'s Eye View is active, the attacks have a chance to bounce between kingdoms.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'air',
@@ -183,7 +183,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   thickFog: {
     id: 'thickFog',
     name: 'Thick Fog',
-    description: 'Moderate Air attack that blankets the target\'s screen in fog, hiding battlefield information from them for a short time. Up to three players can be fogged at once.',
+    description: 'Moderate Air attack that blankets the target\'s screen in fog, hiding battlefield information from them for a short time.',
     hotkey: 'E',
     kind: 'attack',
     element: 'air',
@@ -434,7 +434,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   toxicGas: {
     id: 'toxicGas',
     name: 'Toxic Gas',
-    description: 'Envelop the target in a choking cloud of Toxic Gas — while it lingers, they cannot hire citizens or repair their castle.',
+    description: 'Envelop all players in a choking cloud of Toxic Gas — while it lingers, they cannot hire citizens or repair their castle.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'nature',
@@ -469,7 +469,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   fatherTime: {
     id: 'fatherTime',
     name: 'Father Time',
-    description: 'Heavy Time attack. Father Time hates wasting time: the victim takes damage each second they have not landed a damaging attack.',
+    description: 'Father Time hates wasting time: the victim takes damage each second they have not landed a damaging attack.',
     hotkey: 'E',
     kind: 'attack',
     element: 'time',
@@ -564,7 +564,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   toughLove: {
     id: 'toughLove',
     name: 'Tough Love',
-    description: 'Basic Love attack. A firm, caring smack to get the point across.',
+    description: 'Basic Love attack. Love hurts.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'love',
@@ -586,7 +586,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   bffs: {
     id: 'bffs',
     name: 'BFFS!!!',
-    description: 'Deals damage to your target and a second, random enemy, then links their fates: damage and status effects hitting either one hit both.',
+    description: 'Choose two targets and link them together: damage and status effects hitting either one hit both.',
     hotkey: 'E',
     kind: 'attack',
     element: 'love',
@@ -631,7 +631,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   blackjack: {
     id: 'blackjack',
     name: 'Blackjack',
-    description: 'Draws one card from a full 52-card deck and hits for what it is worth: number cards deal rank x 75, face cards a flat 750, and either joker deals 1000. An Ace is the worst draw in the deck.',
+    description: 'Draws one card from a full 52-card deck and hits for what it is worth, the higher the number, the bigger the damage.',
     hotkey: 'E',
     kind: 'attack',
     element: 'joker',
@@ -653,7 +653,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   luckyDraw: {
     id: 'luckyDraw',
     name: 'Lucky Draw',
-    description: 'Take a card. One of five effects at random, each a 1-in-5: +10% attack, +10% damage reduction, or +10% gold production for 20 seconds, a free 1000hp shield, or 750hp healed.',
+    description: 'Take a card. One of five effects is randomly applied to your castle',
     hotkey: 'R',
     kind: 'utility',
     element: 'joker',
@@ -664,7 +664,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   slotMachine: {
     id: 'slotMachine',
     name: 'Slot Machine',
-    description: 'Ultimate. Drops a slot machine on every other kingdom. Their gold production stops until they pull the lever — and then the reels decide what happens to them.',
+    description: 'Drops a slot machine on every other kingdom. Their gold production stops until they pull the lever — and then the reels decide what happens to them.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'joker',
@@ -688,7 +688,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   fireflies: {
     id: 'fireflies',
     name: 'Fireflies',
-    description: 'Sends a swarm to infest an enemy castle. They must pay to shoo it away — the bill scales with their population — and a shielded castle repels the swarm entirely. While your swarm is out, you cannot buy a shield of your own.',
+    description: 'Sends a swarm to infest an enemy castle. They must pay to shoo it away but a shielded castle repels the swarm entirely. While swarmed, the opposing castle cannot purchase a shield.',
     hotkey: 'E',
     kind: 'attack',
     element: 'light',
@@ -699,7 +699,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   illumination: {
     id: 'illumination',
     name: 'Illumination',
-    description: 'Heavy Light attack. The glare whips an existing swarm into a frenzy, driving up what the victim owes to be rid of it. Does nothing extra if they have no Fireflies.',
+    description: 'The glare whips an existing swarm into a frenzy, driving up what the victim owes to be rid of it. Does nothing extra if they have no Fireflies.',
     hotkey: 'F',
     kind: 'attack',
     element: 'light',
@@ -710,7 +710,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   flashBang: {
     id: 'flashBang',
     name: 'Flash Bang',
-    description: 'A blinding pop that stretches every cooldown already running — on every kingdom, yours included. Abilities sitting ready are untouched, so it only bites a field that has just spent its kit.',
+    description: 'A blinding pop that stretches every cooldown already running on every OPPOSING kingdom — you are spared. Abilities sitting ready are untouched, so it only bites a field that has just spent its kit.',
     hotkey: 'R',
     kind: 'utility',
     element: 'light',
@@ -721,7 +721,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   lightShow: {
     id: 'lightShow',
     name: 'Light Show',
-    description: 'Ultimate. The sky lights up and comes down on everyone 3 seconds later — everyone can see it coming. Any kingdom without a shield when it lands takes heavy damage; a shielded one loses its shield outright, whatever its health, and takes nothing.',
+    description: 'The sky lights up and comes down on everyone 3 seconds later. Any kingdom without a shield when it lands takes heavy damage; a shielded one loses its shield outright, whatever its health, and takes nothing.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'light',
@@ -744,7 +744,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   yinAndYang: {
     id: 'yinAndYang',
     name: 'Yin and Yang',
-    description: 'Call a side, and your victim loses either way. Yin punishes them for hiring a citizen; Yang punishes them for refusing to. Reading you correctly only halves the bill — it never avoids it. Settles the moment they hire, or when the window closes.',
+    description: 'Call a side, and your victim loses either way. Yin punishes them for hiring a citizen; Yang punishes them for refusing to. Choosing correctly halves the damage. Settles the moment they hire, or when the window closes.',
     hotkey: 'E',
     kind: 'attack',
     element: 'dark',
@@ -781,7 +781,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   infinitumTenebrae: {
     id: 'infinitumTenebrae',
     name: 'Infinitum Tenebrae',
-    description: 'Ultimate. For 30 seconds your attacks can name up to three kingdoms at once and land on each in FULL — no damage split — hit 30% harder, and plunge the screen of everyone they touch into darkness.',
+    description: 'For 30 seconds your attacks can target up to three kingdoms at once and land on each in FULL — no damage split — hit 30% harder, and plunge the screen of everyone they touch into darkness.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'dark',

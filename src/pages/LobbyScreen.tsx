@@ -4,6 +4,7 @@ import {
   leaveRoom,
   selectKingdom,
   selectPerks,
+  setEliminatedSeeAllHealth,
   spectate,
   startMatch,
   toggleReady,
@@ -24,6 +25,7 @@ export function LobbyScreen() {
       onToggleReady={() => void toggleReady()}
       onSelectKingdom={(k) => void selectKingdom(k)}
       onSelectPerks={(p) => void selectPerks(p)}
+      onSetEliminatedSeeAllHealth={(on) => void setEliminatedSeeAllHealth(on)}
       onSpectate={() => void spectate()}
       onStart={() => void startMatch()}
       onLeave={() => void leaveRoom()}

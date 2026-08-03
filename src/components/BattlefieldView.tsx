@@ -302,6 +302,10 @@ export function BattlefieldView({
 
   const yourTheme = getKingdomTheme(you.kingdomId)
   const hasAirVision = you.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
+  // Host rule: once you're out, you can watch the rest of the game properly.
+  // Only meaningful while you ARE eliminated, so a living player never gains
+  // vision from it.
+  const deadSeesAll = (match.eliminatedSeeAllHealth ?? false) && you.eliminated === true
   // Nature's Toxic Gas chemically seals the Repairs & Shields menu shut.
   const shopLocked = you.statuses?.some((s) => s.id === 'toxicGas') ?? false
   // Gastro Acid can poison the citizens, sapping income.
@@ -419,7 +423,7 @@ export function BattlefieldView({
                 isYou={isYou}
                 isYourTarget={!spectator && isTargeted(p.id)}
                 tickRate={tickRate}
-                showStats={spectator || isYou || hasAirVision}
+                showStats={spectator || isYou || hasAirVision || deadSeesAll}
                 ultShield={ultShieldIds.has(p.id) && p.castle.shield > 0}
                 slotDisplay={slotDisplayFor(p)}
                 onSelect={
