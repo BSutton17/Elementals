@@ -342,15 +342,21 @@
   box-shadow: 0 0 18px color-mix(in srgb, var(--orb-color) 70%, transparent);
   transform: rotate(var(--orb-angle)) translateY(calc(min(300px, 66vw) / -2 + 6px))
     rotate(calc(-1 * var(--orb-angle)));
-  /* The cycle is set on the ring so it and the per-orb delays are derived from
-     the same number — otherwise the wave laps itself (see ThroneStep). */
-  animation: howto-orb-pulse var(--orb-cycle, 5.2s) ease-in-out infinite;
+  /* The cycle is set on the ring (see ThroneStep): the orb pulses for the first
+     part of it and rests for the remainder, so the wave fires in passes rather
+     than shimmering without pause. */
+  animation: howto-orb-pulse var(--orb-cycle, 4s) ease-in-out infinite;
   animation-delay: var(--orb-delay);
 }
 
+/* Keyframe OFFSETS must be literal percentages — `var()` is not allowed there,
+   so these can't be driven from the JS constants and are kept in step by a test
+   instead (tutorial.test.tsx). 32.5%/65% of the 4s cycle is the original 2.6s
+   pulse; the flat run from 65% to 100% is the rest between passes. */
 @keyframes howto-orb-pulse {
-  0%, 100% { filter: brightness(1); scale: 1; }
-  50% { filter: brightness(1.25); scale: 1.12; }
+  0% { filter: brightness(1); scale: 1; }
+  32.5% { filter: brightness(1.25); scale: 1.12; }
+  65%, 100% { filter: brightness(1); scale: 1; }
 }
 
 /* --- Page 3: economy ------------------------------------------------------ */

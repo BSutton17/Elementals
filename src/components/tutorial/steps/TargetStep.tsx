@@ -14,7 +14,7 @@ export function TargetStep() {
       title="Pick On Somebody"
       lead={
         locked
-          ? 'Locked on! Your attacks now fly at this unlucky kingdom. You can switch targets at any moment mid-match — loyalty is optional.'
+          ? 'Locked on! Your attacks now fly at this unlucky kingdom. You can switch targets at any moment mid-match.'
           : 'It’s a free-for-all, so aim before you fire: click a rival castle to make it your target.'
       }
     >

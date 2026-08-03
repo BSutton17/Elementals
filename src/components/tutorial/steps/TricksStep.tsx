@@ -29,8 +29,8 @@ export function TricksStep() {
       title="Every Element Has Tricks"
       lead={
         soaked
-          ? 'See the water line? Sir Practiceton is caught in a Current — while it lasts, Water attacks heal the caster and Flood bites harder. Statuses set up combos.'
-          : 'Attacks do more than damage: they stick statuses onto their victim. Cast Waterfall and watch what happens to the dummy.'
+          ? 'See the water line? This kingdom is caught in a Current — while it lasts, Water attacks heal the caster and Flood bites harder. Statuses set up combos.'
+          : 'Attacks do more than damage: they stick statuses onto their victim. Cast Waterfall and watch what happens to the fire kingdom.'
       }
     >
       <div className="howto-tricks">
@@ -73,8 +73,7 @@ export function TricksStep() {
         </div>
 
         <p className="howto-step__footnote">
-          Burns tick, Freezes silence, Poisons stack, Thunderdomes amplify… every
-          kingdom's kit hides a combo. Finding yours is half the game.
+          Every kingdom's kit hides a combo. Finding yours is half the game.
         </p>
       </div>
     </TutorialStep>

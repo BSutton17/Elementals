@@ -13,15 +13,34 @@ import { inkFor, outlineFor } from '../../../game/contrast'
 // for a while after there were thirteen.
 
 /**
- * How long the pulse takes to travel all the way round the ring, in seconds.
- *
- * The per-orb delay is derived from this and the roster size, so the wave
- * always makes exactly ONE lap per cycle however many kingdoms there are. It
- * used to be a flat 0.35s per orb, which was tuned when the ring was much
- * smaller — at thirteen that overshot the cycle and the wave lapped itself,
- * reading as a fast flicker rather than a travelling pulse.
+ * Gap between one orb lighting up and the next — the wave's travel SPEED, kept
+ * at its original value regardless of how many kingdoms are on the ring.
  */
-const ORBIT_WAVE_SECONDS = 5.2
+const ORB_STEP_SECONDS = 0.35
+
+/**
+ * How often the wave fires. Each orb pulses (the original 2.6s shape) and then
+ * rests until the next pass, rather than shimmering continuously.
+ *
+ * The rest is what stops thirteen orbs reading as constant flicker: at a 0.35s
+ * step the lap takes 4.2s, so without a pause between passes the tail of one
+ * wave runs into the head of the next.
+ */
+const ORBIT_CYCLE_SECONDS = 4
+
+/**
+ * How much of the cycle the pulse itself occupies; the remainder is the rest.
+ * The keyframes in HowToPlay.css encode this as literal percentages (32.5% and
+ * 65%) because CSS forbids `var()` in a keyframe offset — a test keeps the two
+ * from drifting apart.
+ */
+export const PULSE_FRACTION = 2.6 / ORBIT_CYCLE_SECONDS
+
+/** Exported for that test. */
+export const ORBIT_TIMING = {
+  stepSeconds: ORB_STEP_SECONDS,
+  cycleSeconds: ORBIT_CYCLE_SECONDS,
+}
 
 /** Spelled-out count, so the headline never disagrees with the ring below it. */
 const COUNT_WORDS = [
@@ -38,12 +57,14 @@ export function ThroneStep() {
     <TutorialStep
       kicker="Welcome to Elementals"
       title={`${countWord(KINGDOMS.length)} Kingdoms. One Throne.`}
-      lead="Every match is a free-for-all between elemental kingdoms. Alliances are temporary. Grudges are forever. The last castle standing takes the throne."
+      lead="Every match is a free-for-all between elemental kingdoms. The last castle standing takes the throne."
     >
       <div
         className="howto-orbit"
         aria-hidden="true"
-        style={{ '--orb-cycle': `${ORBIT_WAVE_SECONDS}s` } as React.CSSProperties}
+        style={
+          { '--orb-cycle': `${ORBIT_CYCLE_SECONDS}s` } as React.CSSProperties
+        }
       >
         <span className="howto-orbit__crown">
           <FaCrown />
@@ -61,9 +82,9 @@ export function ThroneStep() {
                   '--orb-ink': inkFor(k.color),
                   '--orb-outline': outlineFor(k.color),
                   '--orb-angle': `${angle}deg`,
-                  // One lap per cycle, spread across however many kingdoms
-                  // there are — never a fixed step that can outrun the cycle.
-                  '--orb-delay': `${(i / KINGDOMS.length) * ORBIT_WAVE_SECONDS}s`,
+                  // A constant step, so the wave travels at the same speed
+                  // whatever the roster size.
+                  '--orb-delay': `${i * ORB_STEP_SECONDS}s`,
                 } as React.CSSProperties
               }
             >

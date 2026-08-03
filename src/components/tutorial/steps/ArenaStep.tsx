@@ -73,7 +73,7 @@ export function ArenaStep() {
         })}
       </svg>
       <p className="howto-step__footnote">
-        Poor Fire. Keep an eye on every health bar — including your own.
+        Poor Fire. Keep an eye on your health bar. You won't be able to see oponents unless you urse special abilities in your kit (like air).
       </p>
     </TutorialStep>
   )

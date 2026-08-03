@@ -1,9 +1,12 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { ThroneStep } from './steps/ThroneStep'
 import { KingdomsStep } from './steps/KingdomsStep'
 import { KINGDOM_ICONS } from './kingdomIcons'
 import { KINGDOMS, SELECTABLE_KINGDOMS } from '../../game/kingdoms'
+import { ORBIT_TIMING, PULSE_FRACTION } from './steps/ThroneStep'
 
 // The tutorial is the first thing a new player reads, so it drifting from the
 // roster is worse than most bugs: it taught "Ten Kingdoms" for a while after
@@ -56,27 +59,43 @@ describe('the tutorial keeps up with the roster', () => {
   })
 })
 
-describe('the orbit wave scales with the roster', () => {
-  it('spreads one full lap across however many kingdoms there are', () => {
+describe('the orbit wave', () => {
+  it('travels at a constant speed, whatever the roster size', () => {
     const { container } = render(<ThroneStep />)
     const orbs = [...container.querySelectorAll('.howto-orbit__orb')] as HTMLElement[]
-    const cycle = parseFloat(
-      (container.querySelector('.howto-orbit') as HTMLElement).style.getPropertyValue(
-        '--orb-cycle',
-      ),
-    )
-    expect(cycle).toBeGreaterThan(0)
-
     const delays = orbs.map((o) => parseFloat(o.style.getPropertyValue('--orb-delay')))
-    expect(delays[0]).toBe(0)
-    // Every delay stays INSIDE one cycle, so the wave makes exactly one lap
-    // rather than overtaking itself — the failure mode when the per-orb step
-    // was a flat 0.35s and the roster grew.
-    for (const d of delays) expect(d).toBeLessThan(cycle)
-    expect(Math.max(...delays)).toBeGreaterThan(cycle * 0.8)
 
-    // Evenly spaced around the ring.
-    const step = cycle / orbs.length
-    delays.forEach((d, i) => expect(d).toBeCloseTo(step * i, 5))
+    expect(delays[0]).toBe(0)
+    // A fixed step per orb — the wave's speed, independent of how many there
+    // are. (Deriving it from the count instead made the wave slower with every
+    // kingdom added, which is not what "same speed" means.)
+    delays.forEach((d, i) => expect(d).toBeCloseTo(ORBIT_TIMING.stepSeconds * i, 5))
+  })
+
+  it('fires in passes with a rest, rather than shimmering continuously', () => {
+    const { container } = render(<ThroneStep />)
+    const ring = container.querySelector('.howto-orbit') as HTMLElement
+    expect(ring.style.getPropertyValue('--orb-cycle')).toBe(
+      `${ORBIT_TIMING.cycleSeconds}s`,
+    )
+    // The pulse must leave real idle time in the cycle, or there is no rest.
+    expect(PULSE_FRACTION).toBeLessThan(1)
+    expect(PULSE_FRACTION).toBeGreaterThan(0)
+  })
+
+  it('keeps the CSS keyframe offsets in step with the timing constants', () => {
+    // Keyframe offsets have to be literal percentages — `var()` is invalid
+    // there — so the pulse/rest split is duplicated in CSS and can silently
+    // drift from the constants it is meant to express.
+    const css = readFileSync('src/pages/HowToPlay.css', 'utf8')
+    const at = css.indexOf('@keyframes howto-orb-pulse')
+    expect(at, 'the orb pulse keyframes vanished').toBeGreaterThan(-1)
+    const open = css.indexOf('{', at)
+    const block = css.slice(open, css.indexOf(String.fromCharCode(10) + '}', open))
+
+    const peak = (PULSE_FRACTION / 2) * 100
+    const end = PULSE_FRACTION * 100
+    expect(block).toContain(peak.toFixed(1) + '%')
+    expect(block).toContain(end.toFixed(0) + '%')
   })
 })
