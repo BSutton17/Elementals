@@ -3,7 +3,7 @@ import { TutorialStep } from '../TutorialStep'
 import { SELECTABLE_KINGDOMS, type KingdomId } from '../../../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../../../game/kingdomInfo'
 import { getAbilitiesForKingdom } from '../../../game/abilities'
-import { KINGDOM_ICONS } from '../kingdomIcons'
+import { KINGDOM_ICONS } from '../../../game/kingdomIcons'
 import { accentFor, outlineFor } from '../../../game/contrast'
 
 // Page 8 — meet the kingdoms: tap through each one's personality, passives, and
@@ -24,6 +24,9 @@ const FLAVOR: Record<KingdomId, string> = {
   joker: 'May the odds be ever in your favor.',
   light: 'All of the lights.',
   dark: 'Who turned off the lights?',
+  // Placeholder flavour — lands with the real kit.
+  kitsune: 'Nine tails can be pretty hot...',
+  magma: 'Fire\'s hot headed older brother.',
 }
 
 export function KingdomsStep() {

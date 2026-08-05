@@ -4,9 +4,11 @@ import './RageMeter.css'
  * Fallback cap, used only until the match config arrives. The REAL number is
  * the server's `DARK.RAGE_FULL`, sent as `config.rageFull` — this file used to
  * keep its own copy and duly advertised 6000 long after the engine had moved
- * to 2500. Never hardcode the live value here again.
+ * on. The live cap comes from the synced match config; the constant below is
+ * only what to draw before the first sync arrives. Never hardcode the live
+ * value here again.
  */
-const RAGE_FULL_FALLBACK = 2500
+export const RAGE_FULL_FALLBACK = 2000
 
 /**
  * Dark's Unlimited Rage readout — sits above the ability buttons once the

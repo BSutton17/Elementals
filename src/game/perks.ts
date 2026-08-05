@@ -63,7 +63,7 @@ export const PERKS: readonly Perk[] = [
   {
     id: 'extraRepairs',
     name: 'Extra Repairs',
-    description: '-15% cooldown',
+    description: '-10% cooldown',
     icon: BsLightningChargeFill,
     color: '#a855f7',
   },
@@ -104,9 +104,22 @@ export function resolvePerks(ids: readonly string[] | undefined): Perk[] {
   return ids.map((id) => BY_ID.get(id)).filter((p): p is Perk => p !== undefined)
 }
 
+/**
+ * How many perks THIS kingdom picks. Kitsune's "Three tailed fox" takes one
+ * more than everyone else, so the allowance is a function of the kingdom rather
+ * than a constant. Mirrors the server's `perksAllowedFor` — the server is the
+ * authority and will reject an over-full selection regardless.
+ */
+export function perksAllowedFor(kingdomId: string | null | undefined): number {
+  return kingdomId === 'kitsune' ? PERKS_PER_PLAYER + 1 : PERKS_PER_PLAYER
+}
+
 /** Whether a selection is complete — the gate on readying up (mirrors server). */
-export function hasFullPerkSelection(ids: readonly string[] | undefined): boolean {
-  return (ids?.length ?? 0) === PERKS_PER_PLAYER
+export function hasFullPerkSelection(
+  ids: readonly string[] | undefined,
+  kingdomId?: string | null,
+): boolean {
+  return (ids?.length ?? 0) === perksAllowedFor(kingdomId)
 }
 
 /**
@@ -117,8 +130,9 @@ export function hasFullPerkSelection(ids: readonly string[] | undefined): boolea
 export function togglePerk(
   selected: readonly string[],
   id: string,
+  kingdomId?: string | null,
 ): string[] {
   if (selected.includes(id)) return selected.filter((p) => p !== id)
-  if (selected.length >= PERKS_PER_PLAYER) return [...selected]
+  if (selected.length >= perksAllowedFor(kingdomId)) return [...selected]
   return [...selected, id]
 }

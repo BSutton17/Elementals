@@ -16,6 +16,10 @@ import './FogOverlay.css'
 //     drawn as curved crescent gusts "slicing" the air.
 //   • 'toxic' — Nature's Toxic Gas (status `toxicGas`): sickly green, sparser,
 //     drawn as soft round gas puffs rather than crescents.
+//   • 'smoke' — Magma's Smoke Screen (status `smokeScreen`): the same dense
+//     blinding wall as Air's fog, in dark volcanic grey. Structurally identical
+//     on purpose — it is the same experience for the victim, so it should read
+//     the same and only the colour should say who did it.
 
 interface Blob {
   x: number
@@ -55,7 +59,7 @@ const NATURE_LAYERS: FogLayer[] = [
   { count: 10, radius: [90, 170], speed: [20, 38], swirl: 14, alpha: 0.58 },
 ]
 
-export type FogVariant = 'fog' | 'toxic'
+export type FogVariant = 'fog' | 'toxic' | 'smoke'
 
 interface VariantSpec {
   rgb: string
@@ -64,9 +68,14 @@ interface VariantSpec {
   crescent: boolean
 }
 
-const VARIANTS: Record<FogVariant, VariantSpec> = {
+/** Exported so tests can assert Smoke Screen reuses Thick Fog's density
+ *  rather than growing a second kind of blindness. */
+export const VARIANTS: Record<FogVariant, VariantSpec> = {
   fog: { rgb: '206, 213, 227', layers: AIR_LAYERS, crescent: true }, // cool misty grey-blue
   toxic: { rgb: '107, 216, 138', layers: NATURE_LAYERS, crescent: false }, // nature green
+  // Volcanic smoke: Thick Fog's density and crescent gusts, but dark grey
+  // rather than pale — soot billowing off a mountain, not mist.
+  smoke: { rgb: '74, 70, 68', layers: AIR_LAYERS, crescent: true },
 }
 
 const FADE_IN_MS = 420

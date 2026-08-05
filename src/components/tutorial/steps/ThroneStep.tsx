@@ -2,7 +2,7 @@ import { FaCrown } from 'react-icons/fa'
 import { TutorialStep } from '../TutorialStep'
 import { KINGDOMS } from '../../../game/kingdoms'
 import { MAX_ACTIVE_PLAYERS, MIN_PLAYERS_TO_START } from '../../../game/lobby'
-import { KINGDOM_ICONS } from '../kingdomIcons'
+import { KINGDOM_ICONS } from '../../../game/kingdomIcons'
 import { inkFor, outlineFor } from '../../../game/contrast'
 
 // Page 1 — the hook. Every element in the game circles one throne.

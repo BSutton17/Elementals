@@ -292,3 +292,101 @@ describe('eliminated vision (host rule)', () => {
     expect(barsVisible(container)).toBe(1)
   })
 })
+
+// The besieged bonus raises your gold production silently — the number just
+// moves. The marker is the only thing that says why.
+describe('besieged boost marker', () => {
+  // Cleo is eliminated in the shared fixture; these need her alive to besiege.
+  const targeting = (targets: (string | null)[]) =>
+    game([
+      { statuses: [], target: targets[0] },
+      { target: targets[1] },
+      { target: targets[2], eliminated: false },
+    ])
+
+  it('is hidden in a fair fight — one attacker earns nothing', () => {
+    // Only Bob is on you; Cleo is targeting nobody.
+    const { queryByTestId } = render(
+      <BattlefieldView match={match} youId="a" players={targeting([null, 'a', null])} />,
+    )
+    expect(queryByTestId('besieged-boost')).toBeNull()
+  })
+
+  it('shows once a second kingdom piles on', () => {
+    const { getByTestId } = render(
+      <BattlefieldView match={match} youId="a" players={targeting([null, 'a', 'a'])} />,
+    )
+    expect(getByTestId('besieged-boost')).toBeTruthy()
+  })
+
+  it('ignores kingdoms attacking someone else', () => {
+    const { queryByTestId } = render(
+      <BattlefieldView match={match} youId="a" players={targeting([null, 'c', 'b'])} />,
+    )
+    expect(queryByTestId('besieged-boost')).toBeNull()
+  })
+
+  it('does not count an eliminated attacker', () => {
+    // Cleo is eliminated in the fixture, so her target must not prop up the
+    // count — a dead kingdom is not besieging anyone.
+    const players = game([
+      { statuses: [], target: null },
+      { target: 'a' },
+      { target: 'a', eliminated: true },
+    ])
+    const { queryByTestId } = render(
+      <BattlefieldView match={match} youId="a" players={players} />,
+    )
+    expect(queryByTestId('besieged-boost')).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Magma's volcano. It arrives on `state:sync` rather than as an event, so the
+// whole chain — sync payload → store → screen → view → layer — has to be
+// wired for it to appear at all.
+// ---------------------------------------------------------------------------
+
+describe('the volcano on the battlefield', () => {
+  const volcano = { ownerId: 'c', hp: 2400, maxHp: 3000, ticksRemaining: 200 }
+
+  it('appears in the middle of the field for everyone', () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId="a" players={game()} volcano={volcano} />,
+    )
+    expect(container.querySelector('[data-testid="volcano"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="volcano-hud"]')).not.toBeNull()
+  })
+
+  it('is absent when there is no volcano', () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId="a" players={game()} />,
+    )
+    expect(container.querySelector('[data-testid="volcano"]')).toBeNull()
+  })
+
+  it('can be clicked to target it, and tells the server', () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId="a" players={game()} volcano={volcano} />,
+    )
+    fireEvent.click(container.querySelector('[data-testid="volcano-hit"]')!)
+    expect(changeTarget).toHaveBeenCalledWith('__volcano__')
+  })
+
+  it('gives Magma no way to attack its own eruption', () => {
+    // 'c' owns it. The server rejects the target, so the click must not exist.
+    const { container } = render(
+      <BattlefieldView match={match} youId="c" players={game()} volcano={volcano} />,
+    )
+    expect(container.querySelector('[data-testid="volcano"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="volcano-hit"]')).toBeNull()
+  })
+
+  it('shows spectators the mountain but no way to hit it', () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId={null} players={game()} volcano={volcano} spectator />,
+    )
+    expect(container.querySelector('[data-testid="volcano"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="volcano-hit"]')).toBeNull()
+  })
+})

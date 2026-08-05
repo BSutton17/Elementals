@@ -115,6 +115,20 @@ export const KINGDOM_THEMES: Record<string, KingdomTheme> = {
     // sprite's near-black outline with its white accent (see CastleSprite).
     outline: '#f7f7f2',
   },
+  kitsune: {
+    id: 'kitsune',
+    name: 'Kitsune',
+    primary: '#0f52ba', // deep sapphire
+    secondary: '#1b2f7a', // indigo companion
+    dark: '#08183f', // midnight
+  },
+  magma: {
+    id: 'magma',
+    name: 'Magma',
+    primary: '#a8320a', // molten rock
+    secondary: '#ff7518', // the glow running through it
+    dark: '#3d0f04', // cooled basalt
+  },
 }
 
 export function getKingdomTheme(kingdomId: string | null): KingdomTheme | null {

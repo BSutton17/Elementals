@@ -15,13 +15,15 @@ import {
   statusMultiTargetLimit,
   MULTI_SELECT_ABILITIES,
 } from '../game/kingdoms'
-import { placeKingdoms } from '../game/placement'
+import { placeKingdoms, VOLCANO_TARGET_ID } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
 // import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
 import { LightShowLayer } from './lightShow/LightShowLayer'
 import { WagerResultLayer } from './wager/WagerResultLayer'
+import { HotAshLayer } from './hotAsh/HotAshLayer'
+import { VolcanoLayer } from './volcano/VolcanoLayer'
 import { BlackHoleAccumulator } from './BlackHoleAccumulator'
 import { FloatingNumbers } from './FloatingNumbers'
 import { EmpathyReaction } from './EmpathyReaction'
@@ -33,7 +35,7 @@ import { LuckyDrawOverlay } from './cards/LuckyDrawOverlay'
 import { useScrambleValues } from './scramble/useScrambleValues'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
-import type { GamePlayer } from '../game/gameState'
+import type { GamePlayer, VolcanoSnapshot } from '../game/gameState'
 import type { LobbyMatch } from '../game/lobby'
 import './BattlefieldView.css'
 
@@ -85,6 +87,7 @@ export function BattlefieldView({
   players,
   tick = 0,
   spectator = false,
+  volcano = null,
 }: {
   match: LobbyMatch
   youId: string | null
@@ -93,6 +96,8 @@ export function BattlefieldView({
   tick?: number
   /** Watch-only mode: fullscreen arena, no header, no controls, no targeting. */
   spectator?: boolean
+  /** Magma's volcano, when one is standing. Shown to everyone. */
+  volcano?: VolcanoSnapshot | null
 }) {
   const tickRate = match.config?.tickRate ?? DEFAULT_TICK_RATE
 
@@ -302,6 +307,13 @@ export function BattlefieldView({
 
   const yourTheme = getKingdomTheme(you.kingdomId)
   const hasAirVision = you.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
+  // "Besieged": living kingdoms currently targeting you BEYOND the first. The
+  // bonus starts at two attackers — a fair 1v1 earns nothing — so this mirrors
+  // the server's `besiegedStacks` exactly rather than counting targeters.
+  const besiegedStacks = Math.max(
+    0,
+    players.filter((p) => !p.eliminated && p.id !== you.id && p.target === you.id).length - 1,
+  )
   // Host rule: once you're out, you can watch the rest of the game properly.
   // Only meaningful while you ARE eliminated, so a living player never gains
   // vision from it.
@@ -362,6 +374,24 @@ export function BattlefieldView({
             strokeDasharray="4 10"
           />
         </g>
+
+        {/* Layer: Magma's volcano — the mountain in the middle of the field.
+            Under the kingdoms so the castles are never hidden behind it, but
+            over the arena furniture. Visible to EVERYONE, including spectators
+            and Magma: the whole point is that the table can see the clock. */}
+        <VolcanoLayer
+          volcano={volcano}
+          tickRate={tickRate}
+          targeted={you?.target === VOLCANO_TARGET_ID}
+          onTarget={
+            // Magma cannot attack its own eruption, and spectators cannot
+            // attack anything — the server rejects both, so neither gets a
+            // click that would only fail.
+            !spectator && volcano && you && !you.eliminated && volcano.ownerId !== you.id
+              ? () => toggleTarget(VOLCANO_TARGET_ID)
+              : undefined
+          }
+        />
 
         {/* Layer: target indicators (#199) — under the kingdoms. Your own
             multi-select (Air) draws one line per selected kingdom; everyone
@@ -446,6 +476,10 @@ export function BattlefieldView({
 
         {/* Layer: the Yin and Yang verdict — did they read the wager right? */}
         <WagerResultLayer positionOf={positionOf} />
+
+        {/* Layer: Magma's "Hot ash" — who is currently aiming at Magma. Shown
+            to Magma alone; the layer gates on the event's owner. */}
+        <HotAshLayer positionOf={positionOf} tickRate={tickRate} youId={youId} />
 
         {/* Layer: Blip! travel-attack rewinds — a mote in the attacker's colour
             streaks from the victim back to the caster (the shot un-happening).
@@ -538,9 +572,12 @@ export function BattlefieldView({
             you.castle.nextRepairCost ??
             Math.round(500 * Math.pow(1.25, you.castle.repairs ?? 0))
           }
+          // The server's own price wins; these literals only cover the frames
+          // before the first sync lands. They mirror SHIELD.COST /
+          // SHIELD.COST_GROWTH and have to be retuned alongside them.
           shieldCost={
             you.castle.nextShieldCost ??
-            Math.round(500 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
+            Math.round(400 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
           }
           shieldCooldownSeconds={(you.castle.shieldCooldownRemaining ?? 0) / tickRate}
           // Light's Fireflies: a swarm on your castle bars you from buying a
@@ -551,7 +588,8 @@ export function BattlefieldView({
           }
           dispel={you.dispel ?? null}
           repairsUsed={you.castle.repairs ?? 0}
-          maxRepairs={3}
+          // Mirrors CASTLE.MAX_REPAIRS; the server enforces the real cap.
+          maxRepairs={4}
           lockedOut={shopLocked}
           citizensPoisoned={citizensPoisoned}
           frozen={frozen}
@@ -570,7 +608,12 @@ export function BattlefieldView({
           // unlocked (null for every other kingdom hides it).
           rageMeter={you.unlocked?.unlimitedRage ? you.rageMeter ?? 0 : null}
           rageFull={match.config?.rageFull}
+          // Kitsune only: "Swift Tails" charges whether they act or not, so the
+          // meter is always worth watching. null hides it for everyone else.
+          memoryMeter={you.kingdomId === 'kitsune' ? you.ancientMemory ?? 0 : null}
+          memoryFull={match.config?.memoryFull}
           perks={you.perks}
+          besieged={besiegedStacks > 0}
           abilities={getAbilitiesForKingdom(you.kingdomId).map((metadata) => {
             // Bought abilities show as level 1; upgrade tiers stack on top.
             const isUnlocked = you.unlocked?.[metadata.id] ?? false

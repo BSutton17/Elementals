@@ -68,18 +68,20 @@
     gap: 2rem;
   }
   .lobby__players {
-    flex: 2;
+    flex: 1.6;
     min-width: 0;
   }
+  /* The widest column by a distance: it carries the picker AND the dossier for
+     whatever is selected, and the dossier is the longest text in the lobby. */
   .lobby__kingdoms {
-    flex: 3;
+    flex: 4.6;
     min-width: 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
   .lobby__perks {
-    flex: 2;
+    flex: 1.8;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -124,8 +126,11 @@
     padding: 0.75rem;
   }
   .lobby__kingdom-btn {
-    padding: 0.45rem;
-    font-size: 0.8rem;
+    padding: 0.35rem 0.2rem;
+    font-size: 0.66rem;
+  }
+  .lobby__kingdom-icon {
+    font-size: 1.15rem;
   }
   /* Short screens: perk cards drop to a single compact line each. */
   .lobby__perk-grid {
@@ -197,8 +202,10 @@
     padding: 1rem 0.75rem;
     gap: 1rem;
   }
+  /* Phones: the tiles are already small, so let them pack four across rather
+     than forcing the old two-column text layout. */
   .lobby__kingdom-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
   }
   .lobby__kingdom-details {
     padding: 0.85rem;
@@ -405,22 +412,52 @@
   color: #8b93a7;
 }
 
+/* Compact icon tiles rather than a row of wide text buttons: fifteen labels
+   at 7.5rem apiece ran to a wall of rows, and the same fifteen marks fit in a
+   fraction of the height while being quicker to find by shape than by word. */
 .lobby__kingdom-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
+  gap: 0.4rem;
 }
 
 .lobby__kingdom-btn {
-  padding: 0.7rem;
-  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
   color: #e8ecf5;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 0.6rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+
+.lobby__kingdom-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* The kingdom's signature mark — the same one stamped on its castle. */
+.lobby__kingdom-icon {
+  font-size: 1.45rem;
+  color: var(--k-ink, currentColor);
+  flex-shrink: 0;
+}
+
+.lobby__kingdom-name {
+  display: block;
+  /* Long names (Electricity) shrink to fit rather than wrapping the tile to a
+     different height than its neighbours and breaking the grid's rhythm. */
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .lobby__kingdom-btn--selected {
@@ -443,12 +480,76 @@
   cursor: default;
 }
 
+.lobby__kingdom-btn--taken:hover {
+  transform: none;
+}
+
 .lobby__kingdom-taken {
   display: block;
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #8b93a7;
+}
+
+/* ---- Kingdom section: picker beside the dossier ---- */
+
+/* Stacked by default; two columns as soon as there is width for it. Fifteen
+   kingdoms in a single column pushed the description down to a few scrolling
+   lines under a wall of buttons, which is exactly backwards — the description
+   is what a player is trying to READ, the buttons are just targets. */
+.lobby__kingdoms-split {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.lobby__kingdom-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.lobby__kingdom-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+@media (min-width: 64rem) {
+  .lobby__kingdoms-split {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+  /* The picker takes only what the tiles need; everything else goes to the
+     text. It scrolls on its own if the roster ever outgrows the column. */
+  .lobby__kingdom-picker {
+    flex: 0 1 17rem;
+    min-width: 13rem;
+    overflow-y: auto;
+  }
+  .lobby__kingdom-detail {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .lobby__kingdom-details {
+    margin-top: 0;
+  }
+}
+
+/* Very wide screens: the dossier can afford two columns of cards, so passives
+   and abilities stop being one long scroll. */
+@media (min-width: 100rem) {
+  .lobby__details-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-items: start;
+  }
 }
 
 /* ---- Kingdom details panel (passives + abilities) ---- */

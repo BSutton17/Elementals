@@ -35,3 +35,9 @@ export function placeKingdoms(
   }
   return positions
 }
+
+/**
+ * The sentinel target id meaning "the volcano", not a kingdom (Magma's
+ * "The End of the World"). Must match the server's `VOLCANO_TARGET_ID`.
+ */
+export const VOLCANO_TARGET_ID = '__volcano__'

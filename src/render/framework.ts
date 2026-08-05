@@ -3,6 +3,12 @@ import type {
   BffsConfig,
   BlackHoleConfig,
   CupidsArrowConfig,
+  BlobNode,
+  EruptionConfig,
+  FoxOrbitConfig,
+  LavaFloorConfig,
+  FoxPackConfig,
+  TrailConfig,
   BoltNode,
   DisplayNode,
   EffectDefinition,
@@ -23,6 +29,7 @@ import type {
   WindDeflectionConfig,
 } from './types'
 import { angleBetween, distance, lerpPoint } from './trajectory'
+import { ERUPTION_LAUNCH_LEAD_MS, VOLCANO_WINDUP_MS } from './types'
 import { ARENA_CENTER } from '../game/placement'
 import { ProjectileSystem } from './systems/projectiles'
 import { ImpactSystem } from './systems/impacts'
@@ -35,6 +42,9 @@ import { ThunderdomeSystem } from './systems/thunderdome'
 import { AcidRainSystem } from './systems/acidRain'
 import { FrostAuraSystem } from './systems/frostAura'
 import { FirefliesSystem } from './systems/fireflies'
+import { FoxOrbitSystem } from './systems/foxOrbit'
+import { FlameSystem } from './systems/flames'
+import { LavaFloorSystem } from './systems/lavaFloor'
 import { AuraSystem } from './systems/aura'
 import { Camera } from './camera'
 import { AnimationTimeline } from './timeline'
@@ -64,6 +74,12 @@ export interface NodeFactories {
   projectileArrow?: () => DisplayNode
   /** Joker's Ace of Spades pip. */
   projectileSpade?: () => DisplayNode
+  /** Running-fox silhouette (Kitsune's Old Friends). Falls back to the circle. */
+  projectileFox?: () => DisplayNode
+  /** Tapered flame tongue (Kitsune's Fox Fire). Falls back to the particle. */
+  flame?: () => DisplayNode
+  /** Filled molten sheet (Magma's Floor is Lava). Falls back to a no-op. */
+  lavaBlob?: () => BlobNode
   /** Dark's Shadow Strike orb (white-rimmed so it reads on a dark field). */
   projectileShadow?: () => DisplayNode
   /** Dark's Yin and Yang taijitu, drawn at its final black/white colours. */
@@ -186,6 +202,12 @@ function withColor<T extends { color: number }>(
   return color === undefined ? config : { ...config, color }
 }
 
+/** A BlobNode that draws nothing — used when no blob factory is injected, so
+ *  the rest of a lava flood (bubbles, timing, lifecycle) still runs headless. */
+function makeNoopBlob(): BlobNode {
+  return { draw() {}, clear() {}, destroy() {} }
+}
+
 export class AnimationFramework {
   readonly projectiles: ProjectileSystem
   readonly impacts: ImpactSystem
@@ -198,6 +220,9 @@ export class AnimationFramework {
   readonly acidRains: AcidRainSystem
   readonly frostAuras: FrostAuraSystem
   readonly fireflies: FirefliesSystem
+  readonly foxOrbits: FoxOrbitSystem
+  readonly flames: FlameSystem
+  readonly lavaFloors: LavaFloorSystem
   readonly auras: AuraSystem
   readonly camera: Camera
   readonly timeline = new AnimationTimeline()
@@ -224,6 +249,7 @@ export class AnimationFramework {
         ...(nodes.projectileHeart ? { heart: nodes.projectileHeart } : {}),
         ...(nodes.projectileArrow ? { arrow: nodes.projectileArrow } : {}),
         ...(nodes.projectileSpade ? { spade: nodes.projectileSpade } : {}),
+        ...(nodes.projectileFox ? { fox: nodes.projectileFox } : {}),
         ...(nodes.projectileShadow ? { shadow: nodes.projectileShadow } : {}),
         ...(nodes.projectileYinYang ? { yinYang: nodes.projectileYinYang } : {}),
       },
@@ -273,6 +299,24 @@ export class AnimationFramework {
     )
     // Fireflies are pure additive glow — one node factory is all they need.
     this.fireflies = new FirefliesSystem(nodes.auraGlow ?? nodes.particle, baseRadius)
+    // The ring falls back to plain circles when no fox sprite is injected,
+    // exactly as every other shaped system does.
+    // Falls back to plain circles when no flame sprite is injected, exactly
+    // as every other shaped system does.
+    this.flames = new FlameSystem(nodes.flame ?? nodes.particle, baseRadius)
+    // The blob factory has no sprite fallback (it draws geometry, not a
+    // sprite), so tests that omit it get a no-op sheet and the rest of the
+    // effect — bubbles, timing, lifecycle — still runs.
+    this.lavaFloors = new LavaFloorSystem(
+      nodes.lavaBlob ?? (() => makeNoopBlob()),
+      nodes.particle,
+      baseRadius,
+    )
+    this.foxOrbits = new FoxOrbitSystem(
+      nodes.projectileFox ?? nodes.projectile,
+      nodes.particle,
+      baseRadius,
+    )
     this.auras = new AuraSystem(
       nodes.aura ?? nodes.particle,
       nodes.auraGlow ?? nodes.particle,
@@ -298,6 +342,9 @@ export class AnimationFramework {
     this.acidRains.update(dtMs)
     this.frostAuras.update(dtMs)
     this.fireflies.update(dtMs)
+    this.foxOrbits.update(dtMs)
+    this.flames.update(dtMs)
+    this.lavaFloors.update(dtMs)
     this.auras.update(dtMs)
     this.timeline.update(dtMs)
     this.camera.update(dtMs)
@@ -346,6 +393,16 @@ export class AnimationFramework {
     // scale cosmic effects built on the same primitives), scaled by charge level.
     if (def.supernova) {
       this.playSupernova(args.from, args.to, def.supernova, args.level ?? 1)
+      return
+    }
+    // Magma's Eruption — rumble, then lava thrown in an arc.
+    if (def.eruption) {
+      this.playEruption(args.from, args.to, def.eruption)
+      return
+    }
+    // A pack of foxes that runs to the target (Kitsune's Old Friends).
+    if (def.foxPack) {
+      this.playFoxPack(args.from, args.to, def.foxPack, () => this.burst(def, args.to, color))
       return
     }
     // A weaving enchanted arrow (Love's Cupid's Arrow).
@@ -2055,6 +2112,471 @@ export class AnimationFramework {
     this.auras.start(key, def.emitters, at, durationMs)
   }
 
+  /**
+   * Kitsune's Old Friends: a handful of foxes break from the caster and run the
+   * field together.
+   *
+   * They are one pack, so they set off close behind each other and hold a loose
+   * formation the whole way - but every fox gets its own lane, head start,
+   * stride phase, weave and travel time. Without that variation they move as
+   * one rigid object; with it they read as animals running alongside each
+   * other. `onArrive` fires once, on the LAST fox in, so the burst lands when
+   * the pack does rather than when the leader does.
+   */
+  playFoxPack(from: Vec2, to: Vec2, cfg: FoxPackConfig, onArrive?: () => void): void {
+    const count = Math.max(1, Math.round(cfg.count))
+    const jitter = cfg.durationJitter ?? 0.12
+    // Perpendicular to the run: the axis the formation spreads across.
+    const axis = angleBetween(from, to)
+    const nx = -Math.sin(axis)
+    const ny = Math.cos(axis)
+
+    // The pack's lanes, spread evenly across the formation width and then
+    // shuffled, so the running order is not simply left-to-right.
+    const lanes: number[] = []
+    for (let i = 0; i < count; i++) {
+      const t = count === 1 ? 0 : i / (count - 1) - 0.5
+      lanes.push(t * 2 * cfg.spread)
+    }
+    for (let i = lanes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const swap = lanes[i]!
+      lanes[i] = lanes[j]!
+      lanes[j] = swap
+    }
+
+    // When each fox gets in. The last one home fires the burst.
+    const arrivals: number[] = []
+    for (let i = 0; i < count; i++) {
+      arrivals.push(i * cfg.staggerMs + cfg.durationMs * (1 + (Math.random() * 2 - 1) * jitter))
+    }
+    let lastArrival = 0
+    for (let i = 1; i < count; i++) {
+      if (arrivals[i]! > arrivals[lastArrival]!) lastArrival = i
+    }
+
+    for (let i = 0; i < count; i++) {
+      const lane = lanes[i]!
+      const isLast = i === lastArrival
+      const duration = arrivals[i]! - i * cfg.staggerMs
+      // Each fox runs its own lane by starting AND finishing offset from the
+      // castle centres, so the formation keeps its shape across the field
+      // instead of collapsing to a point at both ends.
+      const start = { x: from.x + nx * lane, y: from.y + ny * lane }
+      // They converge as they arrive - a pack closing on one castle, not a line
+      // hitting a wall - so the landing offset is a fraction of the lane.
+      const end = { x: to.x + nx * lane * 0.35, y: to.y + ny * lane * 0.35 }
+
+      const projectile: ProjectileConfig = {
+        durationMs: Math.max(1, duration),
+        size: cfg.size,
+        color: cfg.color,
+        easing: 'linear',
+        faceDirection: true,
+        shape: 'fox',
+        gait: {
+          bounce: cfg.bounce ?? 9,
+          rate: cfg.gaitRate ?? 5.5,
+          tilt: 0.16,
+          phase: Math.random(),
+        },
+        ...(cfg.weave
+          ? {
+              // A slow, wide weave - well under two turns, so it reads as a
+              // loping line rather than a corkscrew, and it holds its width the
+              // whole way (a taper would pull the pack into single file).
+              spiral: {
+                turns: 1.5,
+                radius: cfg.weave * (0.6 + Math.random() * 0.8),
+                envelope: 'even' as const,
+                phase: Math.random(),
+              },
+            }
+          : {}),
+      }
+
+      const trail: TrailConfig = {
+        emitEveryMs: 60,
+        particles: {
+          count: 1,
+          speed: [5, 30],
+          spread: Math.PI,
+          lifetimeMs: 380,
+          size: 4,
+          color: cfg.trailColor,
+          gravity: -50, // foxfire motes drift up off their paws
+          fade: true,
+        },
+      }
+      const onStep = this.makeTrailEmitter(trail, undefined)
+
+      this.schedule(i * cfg.staggerMs, () => {
+        this.projectiles.spawn(
+          projectile,
+          start,
+          end,
+          isLast && onArrive ? () => onArrive() : undefined,
+          onStep,
+        )
+      })
+    }
+  }
+
+  /**
+   * Kitsune Rush: a ring of foxes laps the caster's own castle for as long as
+   * the Rush holds. Like the fireflies it has no natural lifetime here -
+   * `stopFoxOrbit` (driven by the status expiring) is the only exit, so the
+   * ring can never outlive or under-run the buff it is showing.
+   */
+  startFoxOrbit(key: string, at: Vec2, config: FoxOrbitConfig): void {
+    this.foxOrbits.start(key, at, config)
+  }
+
+  /** Ends a fox ring; they sprint outward and fade rather than blinking out. */
+  stopFoxOrbit(key: string): void {
+    this.foxOrbits.stop(key)
+  }
+
+  /** True while a fox ring is circling under `key`. */
+  hasFoxOrbit(key: string): boolean {
+    return this.foxOrbits.has(key)
+  }
+
+  /**
+   * Magma's Eruption. Several seconds of rumble, then the mountain opens and
+   * throws lava over the field in an arc.
+   *
+   * The buildup carries the ability. A heavy hit that simply appears is a basic
+   * attack with bigger numbers; a long shake first tells the whole table what is
+   * coming and, because the shake is at MAGMA, who it is coming from — and the
+   * arc then says who it is coming for, well before it lands.
+   */
+  playEruption(from: Vec2, to: Vec2, cfg: EruptionConfig): void {
+    // The vent: the mouth of the mountain, above the castle's centre.
+    const vent: Vec2 = { x: from.x, y: from.y + cfg.ventY }
+
+    // 1. The ground shakes, harder as pressure builds, with smoke venting.
+    const shakes = 6
+    for (let i = 0; i < shakes; i++) {
+      const at = (i / shakes) * cfg.buildupMs
+      const ramp = (i + 1) / shakes
+      this.schedule(at, () => {
+        this.camera.shake({
+          magnitude: cfg.shake * ramp * 0.55,
+          durationMs: cfg.buildupMs / shakes + 90,
+        })
+        this.particles.emit(
+          {
+            count: 3 + Math.round(ramp * 5),
+            speed: [40, 120 + ramp * 160],
+            spread: Math.PI * 0.5,
+            direction: -Math.PI / 2, // straight up out of the vent
+            lifetimeMs: 900,
+            size: 7,
+            color: cfg.smokeColor,
+            gravity: -60,
+            fade: true,
+          },
+          vent,
+        )
+      })
+    }
+
+    // 2. The mountain opens: a hard kick, a flash at the vent, and a fountain
+    // of lava thrown straight up before any of it starts travelling.
+    this.schedule(cfg.buildupMs, () => {
+      this.camera.shake({ magnitude: cfg.shake, durationMs: 620 })
+      this.impacts.spawn(
+        { durationMs: 420, size: 96, color: cfg.coreColor, easing: 'easeOut', startScale: 0.25 },
+        vent,
+      )
+      this.particles.emit(
+        {
+          count: 34,
+          speed: [280, 620],
+          spread: Math.PI * 0.55,
+          direction: -Math.PI / 2,
+          lifetimeMs: 900,
+          size: 8,
+          color: cfg.lavaColor,
+          gravity: 520, // thrown up, falls back — the fountain
+          fade: true,
+        },
+        vent,
+      )
+      this.particles.emit(
+        {
+          count: 20,
+          speed: [120, 380],
+          spread: Math.PI * 0.7,
+          direction: -Math.PI / 2,
+          lifetimeMs: 1200,
+          size: 9,
+          color: cfg.smokeColor,
+          gravity: -90,
+          fade: true,
+        },
+        vent,
+      )
+    })
+
+    // 3. The gobs themselves, lobbed one after another onto the target. The
+    // LAST one carries the heavy landing so the sequence has a punch line.
+    for (let i = 0; i < cfg.gobs; i++) {
+      const last = i === cfg.gobs - 1
+      this.schedule(cfg.buildupMs + ERUPTION_LAUNCH_LEAD_MS + i * cfg.gobStaggerMs, () => {
+        const projectile: ProjectileConfig = {
+          durationMs: cfg.travelMs,
+          size: cfg.gobSize * (last ? 1.35 : 0.75 + Math.random() * 0.5),
+          color: cfg.coreColor,
+          easing: 'linear',
+          // Each gob is thrown a little differently, so the volley scatters
+          // instead of arriving as one repeated sprite.
+          arc: cfg.arc * (last ? 1 : 0.7 + Math.random() * 0.55),
+        }
+        // Molten dribble falling off the gob in flight.
+        const onStep = this.makeTrailEmitter(
+          {
+            emitEveryMs: 26,
+            particles: {
+              count: 2,
+              speed: [10, 60],
+              spread: Math.PI,
+              lifetimeMs: 520,
+              size: 6,
+              color: cfg.lavaColor,
+              gravity: 260,
+              fade: true,
+            },
+          },
+          undefined,
+        )
+        // Scattered around the castle rather than all on one pixel.
+        const landing: Vec2 = last
+          ? to
+          : { x: to.x + (Math.random() * 2 - 1) * 48, y: to.y + (Math.random() * 2 - 1) * 34 }
+        this.projectiles.spawn(projectile, vent, landing, (at) => this.lavaSplash(at, cfg, last), onStep)
+      })
+    }
+  }
+
+  /** One gob landing: a molten splat, spitting lava, and (for the final gob) a
+   *  heavier ring and a screen kick. */
+  private lavaSplash(at: Vec2, cfg: EruptionConfig, heavy: boolean): void {
+    const scale = heavy ? 1 : 0.55
+    this.impacts.spawn(
+      {
+        durationMs: heavy ? 460 : 300,
+        size: (heavy ? 130 : 70) * 1,
+        color: cfg.coreColor,
+        easing: 'easeOut',
+        startScale: 0.3,
+      },
+      at,
+    )
+    this.particles.emit(
+      {
+        count: Math.round(30 * scale) + 8,
+        speed: [160, 520],
+        spread: Math.PI,
+        lifetimeMs: 760,
+        size: 6,
+        color: cfg.lavaColor,
+        gravity: 420, // molten spatter falls
+        fade: true,
+      },
+      at,
+    )
+    this.particles.emit(
+      {
+        count: Math.round(14 * scale) + 4,
+        speed: [80, 260],
+        spread: Math.PI,
+        lifetimeMs: 900,
+        size: 4,
+        color: cfg.emberColor,
+        gravity: -70, // embers lift off the splat
+        fade: true,
+      },
+      at,
+    )
+    if (heavy) this.camera.shake({ magnitude: 12, durationMs: 420 })
+  }
+
+  /**
+   * Magma's Floor is Lava: molten ground wells out of the Magma castle and
+   * creeps across the whole battlefield.
+   *
+   * `durationMs` is the ability's own duration, taken straight off the server's
+   * `lavaFloorLit` event, so the sheet cools exactly when the field does — no
+   * client-side timer to drift, and no chance of the visual outliving the
+   * mechanic. `stopLavaFloor` is there for an early end.
+   */
+  startLavaFloor(key: string, at: Vec2, config: LavaFloorConfig, durationMs?: number): void {
+    this.lavaFloors.start(key, at, config, durationMs)
+  }
+
+  /** Ends a lava floor: it cools and fades where it lies rather than retracting
+   *  — the lava did not go anywhere, it went out. */
+  stopLavaFloor(key: string): void {
+    this.lavaFloors.stop(key)
+  }
+
+  /** True while molten ground is spreading (or cooling) under `key`. */
+  hasLavaFloor(key: string): boolean {
+    return this.lavaFloors.has(key)
+  }
+
+  /**
+   * The volcano goes off. Magma's "The End of the World", failed.
+   *
+   * This is the single most destructive thing in the game — every kingdom but
+   * Magma takes a shared five-thousand-point bill at once — and it has to feel
+   * like it. A whiting-out core, three expanding shockwaves, a full-field spray
+   * of molten rock and ash, and a screen kick that keeps going long after the
+   * flash is gone. Nothing else in the framework shakes this hard.
+   */
+  playVolcanoEruption(at: Vec2, cfg: EruptionConfig): void {
+    // The half-second of silence before it goes: the mountain draws everything
+    // inward. Makes the blast land harder than opening on the blast itself.
+    this.camera.shake({ magnitude: cfg.shake * 0.9, durationMs: 460 })
+    this.particles.emit(
+      {
+        count: 40,
+        speed: [-620, -240], // negative = inward, sucked toward the crater
+        spread: Math.PI,
+        lifetimeMs: 460,
+        size: 7,
+        color: cfg.emberColor,
+        fade: true,
+      },
+      at,
+    )
+
+    this.schedule(VOLCANO_WINDUP_MS, () => {
+      // The flash. Deliberately enormous — this covers the battlefield.
+      this.impacts.spawn(
+        { durationMs: 620, size: 900, color: 0xffffff, easing: 'easeOut', startScale: 0.05 },
+        at,
+      )
+      this.impacts.spawn(
+        { durationMs: 760, size: 620, color: cfg.coreColor, easing: 'easeOut', startScale: 0.1 },
+        at,
+      )
+      // …and a shake big enough that the whole screen is unusable for a beat.
+      this.camera.shake({ magnitude: 46, durationMs: 1500, frequency: 26 })
+
+      // Three shockwaves rolling outward, each wider and later than the last.
+      for (let i = 0; i < 3; i++) {
+        this.schedule(i * 150, () => {
+          this.impacts.spawn(
+            {
+              durationMs: 900,
+              size: 620 + i * 320,
+              color: i === 0 ? cfg.coreColor : cfg.lavaColor,
+              easing: 'easeOut',
+              startScale: 0.12,
+            },
+            at,
+          )
+        })
+      }
+
+      // Molten rock thrown across the entire field, in waves.
+      for (let i = 0; i < 4; i++) {
+        this.schedule(i * 110, () => {
+          this.particles.emit(
+            {
+              count: 46,
+              speed: [420, 1500],
+              spread: Math.PI,
+              lifetimeMs: 1500,
+              size: 9,
+              color: i % 2 === 0 ? cfg.lavaColor : cfg.coreColor,
+              gravity: 260,
+              fade: true,
+            },
+            at,
+          )
+        })
+      }
+
+      // Ash, rising and hanging over the ruin afterwards.
+      this.schedule(300, () => {
+        this.particles.emit(
+          {
+            count: 60,
+            speed: [120, 620],
+            spread: Math.PI,
+            lifetimeMs: 2600,
+            size: 14,
+            color: cfg.smokeColor,
+            gravity: -70,
+            fade: true,
+          },
+          at,
+        )
+      })
+
+      // Aftershocks: the ground keeps moving well after the light is gone.
+      for (let i = 1; i <= 4; i++) {
+        this.schedule(600 + i * 320, () => {
+          this.camera.shake({ magnitude: 24 - i * 4, durationMs: 420 })
+        })
+      }
+    })
+  }
+
+  /**
+   * The volcano is brought down in time. A hard jolt as it gives way, then it
+   * is left to die: cooling embers and settling dust while the mountain itself
+   * slumps and fades (that part is the SVG layer's collapse animation).
+   *
+   * Deliberately quiet next to the eruption. The table just cooperated to stop
+   * the biggest thing in the game — the reward is the absence of catastrophe,
+   * and drowning that in another explosion would say the opposite.
+   */
+  playVolcanoBroken(at: Vec2, cfg: EruptionConfig): void {
+    this.camera.shake({ magnitude: 20, durationMs: 700 })
+    this.impacts.spawn(
+      { durationMs: 620, size: 300, color: cfg.lavaColor, easing: 'easeOut', startScale: 0.2 },
+      at,
+    )
+    // Rock breaking loose and falling.
+    this.particles.emit(
+      {
+        count: 40,
+        speed: [140, 520],
+        spread: Math.PI,
+        lifetimeMs: 1400,
+        size: 8,
+        color: cfg.lavaColor,
+        gravity: 520,
+        fade: true,
+      },
+      at,
+    )
+    // Dying embers, drifting up and going out over the next few seconds — the
+    // fire leaving the mountain rather than a second detonation.
+    for (let i = 0; i < 4; i++) {
+      this.schedule(i * 420, () => {
+        this.particles.emit(
+          {
+            count: 18 - i * 3,
+            speed: [40, 200],
+            spread: Math.PI,
+            lifetimeMs: 1800,
+            size: 6,
+            color: i < 2 ? cfg.emberColor : cfg.smokeColor,
+            gravity: -60,
+            fade: true,
+          },
+          at,
+        )
+      })
+    }
+  }
+
   /** Stop a persistent aura (its particles finish naturally). */
   stopAura(key: string): void {
     this.auras.stop(key)
@@ -2063,6 +2585,26 @@ export class AnimationFramework {
   private burst(def: EffectDefinition, at: Vec2, color: number | undefined): void {
     const impact = withColor(def.impact, color)
     if (impact) this.impacts.spawn(impact, at)
+    if (def.flameBurst) this.flames.burst(at, withColor(def.flameBurst, color)!)
+    const rings = withColor(def.impactRings, color)
+    if (rings) {
+      for (let i = 0; i < rings.count; i++) {
+        // Each ring is wider and later than the last, so the set reads as one
+        // front spreading outward rather than several separate pops.
+        this.schedule(i * rings.staggerMs, () => {
+          this.impacts.spawn(
+            {
+              durationMs: rings.durationMs,
+              size: rings.size + i * rings.sizeStep,
+              color: rings.color,
+              easing: rings.easing ?? 'easeOut',
+              startScale: rings.startScale ?? 0.25,
+            },
+            at,
+          )
+        })
+      }
+    }
     const particles = withColor(def.particles, color)
     if (particles) this.particles.emit(particles, at)
     if (def.shake) this.camera.shake(def.shake)
@@ -2082,6 +2624,9 @@ export class AnimationFramework {
     this.acidRains.clear()
     this.frostAuras.clear()
     this.fireflies.clear()
+    this.foxOrbits.clear()
+    this.flames.clear()
+    this.lavaFloors.clear()
     this.auras.clear()
     this.timeline.clear()
     this.camera.clear()

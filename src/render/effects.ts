@@ -7,6 +7,9 @@ import type {
   EarthquakeConfig,
   EffectDefinition,
   FirefliesConfig,
+  FoxOrbitConfig,
+  EruptionConfig,
+  LavaFloorConfig,
   FrostAuraConfig,
   OrionsBeltConfig,
   ProjectileShape,
@@ -948,6 +951,339 @@ export const EARTHQUAKE_CONFIG: EarthquakeConfig = {
 }
 
 /** All registered ability effects, keyed by ability id. */
+// ---------------------------------------------------------------------------
+// Kitsune — foxfire. Everything Kitsune throws burns COLD: a white-blue core
+// over deep sapphire, and every landing spreads outward in rings rather than
+// popping in place, like fire running across the ground.
+// ---------------------------------------------------------------------------
+
+/** Kitsune's foxfire hues, shared by both attacks so the kit reads as one kingdom. */
+const FOXFIRE = {
+  /** White-hot blue centre. */
+  core: 0xdff0ff,
+  /** Deep sapphire body (the kingdom colour). */
+  deep: 0x0f52ba,
+  /** Bright cyan-blue flame. */
+  flame: 0x4aa8ff,
+  /** Pale ember sparks. */
+  ember: 0x9fd4ff,
+}
+
+/**
+ * Fox Swipe: the standard basic bolt, but instead of one flat shockwave the
+ * landing throws a RING OF BLUE FIRE that spreads outward — three rings
+ * chasing each other out from the point of impact.
+ */
+const FOX_SWIPE: EffectDefinition = {
+  ...basicBolt({
+    core: FOXFIRE.core,
+    trail: FOXFIRE.deep,
+    impact: FOXFIRE.flame,
+    ember: FOXFIRE.ember,
+  }),
+  // Tight core flash; the spread is the rings below, not this.
+  impact: { durationMs: 260, size: 46, color: FOXFIRE.core, easing: 'easeOut', startScale: 0.4 },
+  impactRings: {
+    count: 3,
+    durationMs: 420,
+    size: 78,
+    sizeStep: 40,
+    staggerMs: 70,
+    color: FOXFIRE.flame,
+    startScale: 0.2,
+  },
+  particles: {
+    count: 26,
+    speed: [200, 500],
+    spread: Math.PI,
+    lifetimeMs: 600,
+    size: 5,
+    color: FOXFIRE.ember,
+    gravity: -40, // foxfire drifts up rather than falling
+    fade: true,
+  },
+  shake: { magnitude: 6, durationMs: 200 },
+}
+
+/**
+ * Fox Fire: a wisp that does NOT fly straight. It corkscrews the whole way to
+ * the target, tightening as it closes, and then blows out into a conflagration.
+ *
+ * Where Fox Swipe lands as RINGS, this lands as FIRE — a spray of tapered
+ * tongues hurled outward at uneven angles and reaches, over a white-hot core
+ * flash. Rings are legible but they are unmistakably circles, and this is the
+ * ability that sets its victim alight; it has to look like it.
+ *
+ * And it does not end when the explosion does. Pockets of blue fire are left
+ * scattered around the kingdom, catching on a stagger and guttering out one by
+ * one over the next few seconds — the ground is still burning long after the
+ * hit, which is exactly what Fox Fire's lingering stack is.
+ */
+const FOX_FIRE: EffectDefinition = {
+  projectile: {
+    durationMs: 720, // slower than a basic: the spiral needs room to be seen
+    size: 15,
+    color: FOXFIRE.core,
+    easing: 'linear',
+    faceDirection: true,
+    spiral: { turns: 3, radius: 86, envelope: 'taper' },
+  },
+  // Emitted often enough that the corkscrew is drawn out as a visible helix of
+  // flame behind the wisp.
+  trail: {
+    emitEveryMs: 12,
+    particles: {
+      count: 5,
+      speed: [10, 60],
+      spread: Math.PI,
+      lifetimeMs: 420,
+      size: 7,
+      color: FOXFIRE.deep,
+      gravity: -70,
+      fade: true,
+    },
+  },
+  // The white-hot heart of the blast. Everything outward from here is flame.
+  impact: { durationMs: 300, size: 78, color: FOXFIRE.core, easing: 'easeOut', startScale: 0.3 },
+  flameBurst: {
+    tongues: 18,
+    reach: 132,
+    tongueSize: 46,
+    durationMs: 620,
+    color: FOXFIRE.flame,
+    coreColor: FOXFIRE.core,
+    // Left burning around the castle after the blast.
+    pockets: 11,
+    pocketRadius: 168,
+    pocketMs: 3400,
+    pocketSize: 30,
+  },
+  particles: {
+    count: 46,
+    speed: [260, 700],
+    spread: Math.PI,
+    lifetimeMs: 820,
+    size: 7,
+    color: FOXFIRE.ember,
+    gravity: -60,
+    fade: true,
+  },
+  shake: { magnitude: 11, durationMs: 380 },
+}
+
+/**
+ * Old Friends: four foxes break from the Kitsune castle and RUN the field
+ * together, bounding, weaving, and shedding foxfire from their paws. They cross
+ * as a pack rather than a volley - staggered starts, their own lanes, their own
+ * strides - and pile onto the castle in one burst when the last one gets there.
+ *
+ * Deliberately slower than anything else Kitsune throws: these are animals
+ * covering ground, and the approach is the point. It is also the ability that
+ * settles in and stays, so the table should have time to watch it coming.
+ */
+const OLD_FRIENDS: EffectDefinition = {
+  foxPack: {
+    count: 4,
+    durationMs: 1150, // a run across the field, not a shot
+    size: 17,
+    color: FOXFIRE.core,
+    trailColor: FOXFIRE.deep,
+    spread: 34, // formation half-width
+    staggerMs: 90,
+    durationJitter: 0.14,
+    bounce: 10,
+    gaitRate: 5.5,
+    weave: 26,
+  },
+  // The pack landing: a low scatter of foxfire rather than a detonation - they
+  // are arriving to stay, not exploding.
+  impact: { durationMs: 340, size: 70, color: FOXFIRE.flame, easing: 'easeOut', startScale: 0.35 },
+  impactRings: {
+    count: 2,
+    durationMs: 460,
+    size: 96,
+    sizeStep: 46,
+    staggerMs: 90,
+    color: FOXFIRE.deep,
+    startScale: 0.25,
+  },
+  particles: {
+    count: 30,
+    speed: [140, 380],
+    spread: Math.PI,
+    lifetimeMs: 700,
+    size: 5,
+    color: FOXFIRE.ember,
+    gravity: -40,
+    fade: true,
+  },
+  shake: { magnitude: 7, durationMs: 260 },
+}
+
+/**
+ * Kitsune Rush: the ring of foxes that laps the caster's own castle for the
+ * fifteen seconds the Rush runs. Fast and tight - the ability is "everything
+ * happens at double speed", so the ring has to look like it is sprinting.
+ */
+export const KITSUNE_RUSH_ORBIT: FoxOrbitConfig = {
+  count: 5,
+  radius: 88,
+  lapsPerSecond: 0.55,
+  size: 15,
+  color: FOXFIRE.core,
+  moteColor: FOXFIRE.flame,
+  flatten: 0.5, // squashed, so they read as running AROUND the castle
+  bounce: 7,
+  gaitRate: 7, // a faster stride than the pack's - these are at a sprint
+}
+
+// ---------------------------------------------------------------------------
+// Magma — molten rock. Where Fire is bright and fast, Magma is heavy and hot:
+// everything it throws has weight, falls, and leaves the ground burning.
+// ---------------------------------------------------------------------------
+
+/** Magma's hues, shared across the kit so it reads as one kingdom. */
+const MOLTEN = {
+  /** White-hot centre — hotter than anything in Fire's palette. */
+  core: 0xfff1c4,
+  /** Running lava. */
+  lava: 0xff5a1a,
+  /** Cooling crust / deep body. */
+  crust: 0x8f1d05,
+  /** Airborne embers. */
+  ember: 0xffa733,
+  /** Volcanic smoke and ash. */
+  smoke: 0x4a3a34,
+}
+
+/**
+ * Lava Punch: the standard bolt, but it burns hotter than Fire's does.
+ *
+ * Fireball trails a comet tail of embers that rise and thin out. This does the
+ * opposite — a heavy, slower core dragging a thick trail of molten spatter that
+ * FALLS, plus a second layer of lifting embers over the top. The falling
+ * particles are what separate the two: Fire floats, magma drips.
+ */
+const LAVA_PUNCH: EffectDefinition = {
+  ...basicBolt({
+    core: MOLTEN.core,
+    trail: MOLTEN.lava,
+    impact: MOLTEN.lava,
+    ember: MOLTEN.ember,
+  }),
+  projectile: {
+    durationMs: 470, // heavier than a Fireball, so it travels slower
+    size: 15,
+    color: MOLTEN.core,
+    easing: 'linear',
+    faceDirection: true,
+  },
+  // Twice Fireball's emission rate and much denser: a thick, continuous smear
+  // of molten rock rather than a few puffs.
+  trail: {
+    emitEveryMs: 9,
+    particles: {
+      count: 6,
+      speed: [15, 90],
+      spread: Math.PI,
+      lifetimeMs: 520,
+      size: 7,
+      color: MOLTEN.lava,
+      // Positive gravity: the trail DRIPS. Fireball's rises (-70), which is the
+      // single clearest difference between the two in flight.
+      gravity: 240,
+      fade: true,
+    },
+  },
+  impact: { durationMs: 340, size: 74, color: MOLTEN.core, easing: 'easeOut', startScale: 0.35 },
+  impactRings: {
+    count: 2,
+    durationMs: 420,
+    size: 82,
+    sizeStep: 40,
+    staggerMs: 70,
+    color: MOLTEN.lava,
+    startScale: 0.25,
+  },
+  particles: {
+    count: 28,
+    speed: [180, 500],
+    spread: Math.PI,
+    lifetimeMs: 720,
+    size: 6,
+    color: MOLTEN.ember,
+    gravity: 380, // molten spatter falls back to the ground
+    fade: true,
+  },
+  shake: { magnitude: 7, durationMs: 240 },
+}
+
+/**
+ * Eruption: the ground shakes for two full seconds, the mountain opens, and
+ * lava is thrown over the field in an arc onto the victim.
+ *
+ * The long buildup is the ability. A heavy hit that simply appears is a basic
+ * attack with bigger numbers; the rumble tells the table what is coming and
+ * where from, and the arc says who it is coming for, well before it lands.
+ */
+const ERUPTION_FX: EffectDefinition = {
+  eruption: {
+    buildupMs: 2000, // "a few seconds" of shaking before anything is thrown
+    shake: 18,
+    gobs: 5,
+    gobStaggerMs: 130,
+    travelMs: 900, // slow, so the arc is legible the whole way over
+    arc: 190, // thrown well up over the field
+    gobSize: 17,
+    ventY: -46, // the mouth of the mountain, above the castle
+    coreColor: MOLTEN.core,
+    lavaColor: MOLTEN.lava,
+    emberColor: MOLTEN.ember,
+    smokeColor: MOLTEN.smoke,
+  },
+}
+
+/**
+ * Floor is Lava: molten ground wells out of the Magma castle and creeps
+ * outward until it has swallowed every kingdom on the field, then cools and
+ * fades where it lies.
+ *
+ * The radius covers the arena from any seat: the castles sit on a circle of
+ * radius 340 about the centre, so a flood starting on one of them needs ~680 to
+ * reach the far side, and 780 to be past it with the ragged edge to spare.
+ */
+/**
+ * The volcano's two endings (Magma's "The End of the World"). Reuses Eruption's
+ * palette and shake scale as its base, so the ultimate reads as the same
+ * mountain the medium attack throws from — just on a scale that ends matches.
+ */
+export const VOLCANO_BLAST: EruptionConfig = {
+  buildupMs: 0, // the server's clock WAS the buildup; this is the moment itself
+  shake: 30,
+  gobs: 0,
+  gobStaggerMs: 0,
+  travelMs: 0,
+  arc: 0,
+  gobSize: 0,
+  ventY: 0,
+  coreColor: MOLTEN.core,
+  lavaColor: MOLTEN.lava,
+  emberColor: MOLTEN.ember,
+  smokeColor: MOLTEN.smoke,
+}
+
+export const LAVA_FLOOR_CONFIG: LavaFloorConfig = {
+  spreadMs: 3600, // "a few seconds" to cover the battlefield
+  fadeMs: 2600, // and a slow cool-down at the end
+  radius: 780,
+  samples: 26,
+  roughness: 0.3, // ±30% per direction — lobes and inlets, never a circle
+  fillColor: MOLTEN.crust,
+  rimColor: MOLTEN.lava,
+  emberColor: MOLTEN.ember,
+  opacity: 0.72,
+}
+
 export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   // Basic attacks — one shared bolt, kingdom-coloured.
   fireball: FIREBALL,
@@ -961,6 +1297,21 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   zap: ZAP,
   icicle: ICICLE,
   sludge: SLUDGE,
+  foxSwipe: FOX_SWIPE,
+  // Magma.
+  lavaPunch: LAVA_PUNCH,
+  eruption: ERUPTION_FX,
+  // Floor is Lava is a FIELD, driven by its own duration (see BattlefieldFx),
+  // and Smoke Screen / the volcano are handled elsewhere — empty entries keep
+  // the generic fallback bolt from being flung at everyone.
+  floorIsLava: {},
+  // Kitsune specials.
+  foxFire: FOX_FIRE,
+  oldFriends: OLD_FRIENDS,
+  // A self-buff: the ring of foxes is driven by the `kitsuneRush` STATUS (see
+  // BattlefieldFx), so the cast itself must throw nothing at anybody.
+  kitsuneRush: {},
+  azureGuidance: {},
   // Fire specials.
   scorchingSun: SCORCHING_SUN,
   firenado: FIRENADO,
@@ -1144,6 +1495,55 @@ const BLAZING_DETERMINATION_AURA: AuraDefinition = {
  * server status (Burn is shared) — it's started on the TARGET on Scorching Sun's
  * cast for the Burn window (see BattlefieldFx), so it self-stops on a timer.
  */
+/**
+ * Fire's Ignited (Scorching Sun). A castle SMOULDERING — not burning.
+ *
+ * Deliberately not the solar flames Scorching Sun's detonation throws. Two
+ * reasons, and they point the same way:
+ *
+ *  • Meaning. Ignited is a threat, not a fire. If a marked castle looked the
+ *    same as a burning one, the whole ability collapses — the tension is
+ *    "something might catch", and you cannot feel that while watching flames.
+ *  • Cost. This holds for a full MINUTE on potentially every enemy at once.
+ *    Solar Burn emits 110 particles/second for a five-second window; running
+ *    that for sixty seconds on four castles would be thousands in flight.
+ *
+ * So: a thin curl of smoke and the odd rising ember, at roughly a tenth the
+ * rate. Unmistakable if you look, and quiet enough to live with.
+ */
+const IGNITED_AURA: AuraDefinition = {
+  emitters: [
+    {
+      // A thin, dark curl coming off the walls.
+      rate: 7,
+      color: 0x6b5a4a,
+      size: [10, 18],
+      lifetimeMs: 1500,
+      riseSpeed: [40, 80],
+      drift: 16,
+      originY: 12,
+      spawnWidth: 96,
+      growth: 1.7,
+      sway: 10,
+      fade: true,
+    },
+    {
+      // The occasional ember — the reminder that this could still go up.
+      rate: 4,
+      color: 0xff9a3c,
+      size: [2, 4],
+      lifetimeMs: 1200,
+      riseSpeed: [90, 170],
+      drift: 22,
+      originY: 6,
+      spawnWidth: 80,
+      glow: true,
+      growth: 0.4,
+      fade: true,
+    },
+  ],
+}
+
 const SOLAR_BURN_AURA: AuraDefinition = {
   emitters: [
     {
@@ -1293,6 +1693,12 @@ export const AURA_EFFECTS: Record<string, AuraDefinition> = {
   heatWave: HEAT_WAVE_AURA,
   blazingDetermination: BLAZING_DETERMINATION_AURA,
   burn: BURN_AURA,
+  // Fire's Ignited (Scorching Sun): a castle smouldering for the whole minute
+  // the mark holds. The victim has to be able to SEE they are lit — the entire
+  // ability is not knowing when it will catch — but it must not look like an
+  // actual fire, or that tension is gone. Driven by the status, so it starts
+  // and stops exactly with the mark.
+  ignited: IGNITED_AURA,
   misting: MISTING_AURA,
   // Cast-driven (not a status): Scorching Sun's bright solar-flame Burn.
   solarBurn: SOLAR_BURN_AURA,

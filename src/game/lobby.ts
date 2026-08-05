@@ -36,6 +36,8 @@ export interface MatchConfig {
   startingCastleHp: number
   /** Damage Dark must absorb to fill the Unlimited Rage meter (server-owned). */
   rageFull?: number
+  /** What a full Ancient Memory meter is worth (Kitsune, server-owned). */
+  memoryFull?: number
 }
 
 export interface LobbyMatch {

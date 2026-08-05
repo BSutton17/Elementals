@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
 import { ABILITY_EFFECTS } from '../render/effects'
+import { ERUPTION_LAUNCH_LEAD_MS, VOLCANO_WINDUP_MS } from '../render/types'
+
+/** The server's `cause` on damage dealt by a volcano eruption. */
+const VOLCANO_CAUSE = 'volcano'
 import type {
   AttackMissedEvent,
   DamageEvent,
@@ -303,12 +307,25 @@ function impactDelay(cause: string | undefined): number {
   return abilityImpactDelay(i >= 0 ? cause.slice(i + 1) : cause)
 }
 
-/** Time-to-impact for a bare ability id (a beam's charge-up, else a
- *  projectile's travel time) — 0 for instant/unregistered abilities. */
+/** Time-to-impact for a bare ability id — 0 for instant/unregistered ones. */
 function abilityImpactDelay(abilityId: string): number {
+  // The volcano's eruption is not an ability cast, so it has no entry in the
+  // table; its damage is dealt the instant the timer runs out, while the blast
+  // spends its wind-up drawing inward.
+  if (abilityId === VOLCANO_CAUSE) return VOLCANO_WINDUP_MS
+
   const effect = ABILITY_EFFECTS[abilityId]
   if (!effect) return 0
   if (effect.beam) return effect.beam.chargeMs
+  // Magma's Eruption: the ground shakes for two full seconds before anything is
+  // thrown, and the lava then arcs across the field. Without this the damage
+  // number appears while the mountain is still rumbling — three seconds before
+  // anything touches the target.
+  if (effect.eruption) {
+    return (
+      effect.eruption.buildupMs + ERUPTION_LAUNCH_LEAD_MS + effect.eruption.travelMs
+    )
+  }
   return effect.projectile?.durationMs ?? 0
 }
 

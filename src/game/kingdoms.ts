@@ -15,6 +15,12 @@ export const KINGDOMS = [
   { id: 'joker', label: 'Joker', color: '#e02434' }, // circus red
   { id: 'light', label: 'Light', color: '#f7f7f2' }, // pure white
   { id: 'dark', label: 'Dark', color: '#12121a' }, // near-black
+  // Deep sapphire — a rich blue kept clear of Water's bright azure (#4aa3ff)
+  // and Ice's pale cyan (#8fe3ff), and of Space's violet.
+  { id: 'kitsune', label: 'Kitsune', color: '#0f52ba' },
+  // Molten rock — a deep burnt orange, well below Fire's bright coral
+  // (#ff6b4a) and a different hue from Joker's red (#e02434).
+  { id: 'magma', label: 'Magma', color: '#a8320a' },
 ] as const
 
 export type KingdomId = (typeof KINGDOMS)[number]['id']

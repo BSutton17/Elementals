@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js'
-import type { BoltLayer, BoltNode, DisplayNode } from './types'
+import type { BlobNode, BoltLayer, BoltNode, DisplayNode, Vec2 } from './types'
 import { UNIT_RADIUS } from './nodeUtil'
 
 // Pixi node factories (Epic 9, ticket #210). The systems drive appearance
@@ -256,4 +256,109 @@ export function makeGlowBeamNode(parent: Container): DisplayNode {
   g.visible = false
   parent.addChild(g)
   return g as unknown as DisplayNode
+}
+
+/**
+ * A unit FOX in profile, mid-bound, nose along +x (Kitsune's Old Friends), so a
+ * `faceDirection` projectile runs head-first toward the target. Drawn as a
+ * silhouette — snout, pricked ears, a stretched running body, four legs
+ * extended fore and aft, and an oversized brush tail sweeping up behind.
+ *
+ * The pose is fixed; the RUN comes from the gait bob in ProjectileSystem, which
+ * bounces and pitches the whole sprite. A static sprite in a neutral standing
+ * pose would read as a fox being dragged, so it is drawn already extended.
+ * White + tinted; scales like the circle. Satisfies DisplayNode.
+ */
+export function makeFoxNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+
+  // Brush tail: a wide sweep up and back, drawn first so the body sits over it.
+  g.moveTo(-R * 0.55, R * 0.05)
+  g.bezierCurveTo(-R * 1.5, -R * 0.15, -R * 2.0, -R * 0.95, -R * 1.35, -R * 1.15)
+  g.bezierCurveTo(-R * 1.35, -R * 0.35, -R * 0.9, R * 0.3, -R * 0.5, R * 0.4)
+  g.fill(0xffffff)
+
+  // Legs, front pair reaching forward and rear pair driving back — a full
+  // extension, the frame of a bound where all four feet are off the ground.
+  g.poly([R * 0.45, R * 0.1, R * 1.15, R * 0.72, R * 0.88, R * 0.86, R * 0.3, R * 0.36]).fill(0xffffff)
+  g.poly([R * 0.2, R * 0.12, R * 0.72, R * 0.86, R * 0.46, R * 0.96, R * 0.05, R * 0.4]).fill(0xffffff)
+  g.poly([-R * 0.45, R * 0.1, -R * 1.05, R * 0.78, -R * 0.78, R * 0.9, -R * 0.28, R * 0.36]).fill(0xffffff)
+  g.poly([-R * 0.7, R * 0.08, -R * 1.32, R * 0.62, -R * 1.08, R * 0.78, -R * 0.5, R * 0.34]).fill(0xffffff)
+
+  // Body: a long, low ellipse — the leaning-forward line of a running animal.
+  g.ellipse(-R * 0.1, 0, R * 0.95, R * 0.42).fill(0xffffff)
+
+  // Neck into the head, thrust forward and slightly down.
+  g.poly([R * 0.35, -R * 0.34, R * 1.05, -R * 0.18, R * 1.0, R * 0.24, R * 0.3, R * 0.3]).fill(0xffffff)
+  g.ellipse(R * 1.0, -R * 0.02, R * 0.38, R * 0.3).fill(0xffffff)
+  // Snout — the point that leads.
+  g.poly([R * 1.85, R * 0.02, R * 1.05, -R * 0.22, R * 1.05, R * 0.24]).fill(0xffffff)
+  // Pricked ears.
+  g.poly([R * 0.86, -R * 0.24, R * 0.76, -R * 0.92, R * 1.06, -R * 0.36]).fill(0xffffff)
+  g.poly([R * 0.66, -R * 0.26, R * 0.5, -R * 0.86, R * 0.86, -R * 0.34]).fill(0xffffff)
+
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A unit FLAME - a tapered tongue with its tip along +x and a broad, uneven
+ * base, so a rotated flame licks in the direction it was thrown. The two sides
+ * are deliberately NOT mirror images: a symmetric teardrop reads as a leaf, and
+ * the asymmetry is most of what makes this look like fire.
+ *
+ * White + tinted; scales like the circle, and is stretched along its own axis
+ * by the FlameSystem so one sprite serves both a hurled tongue and a pocket of
+ * fire guttering on the ground. Satisfies DisplayNode.
+ */
+export function makeFlameNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  g.moveTo(R * 1.6, 0) // the tip
+  // Upper edge: a long, lean curve running back to the base.
+  g.bezierCurveTo(R * 0.5, -R * 0.5, -R * 0.2, -R * 0.55, -R * 0.85, -R * 0.3)
+  // The base, kicked out to one side the way a flame roots unevenly.
+  g.bezierCurveTo(-R * 1.15, -R * 0.05, -R * 1.0, R * 0.42, -R * 0.6, R * 0.5)
+  // Lower edge, fuller and shorter than the upper one.
+  g.bezierCurveTo(R * 0.1, R * 0.66, R * 0.7, R * 0.42, R * 1.6, 0)
+  g.fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A filled blob redrawn every frame (Magma's Floor is Lava): a closed shape in
+ * world coordinates with a brighter crust around its edge.
+ *
+ * NOT additive, unlike the bolt node — molten ground should read as opaque
+ * material lying over the battlefield, and additive blending would turn it into
+ * a glow that the castles show through.
+ */
+export function makeBlobNode(parent: Container): BlobNode {
+  const g = new Graphics()
+  parent.addChild(g)
+  return {
+    draw(points: Vec2[], fill: number, rim: number, alpha: number): void {
+      g.clear()
+      if (points.length >= 3) {
+        g.moveTo(points[0]!.x, points[0]!.y)
+        for (let i = 1; i < points.length; i++) g.lineTo(points[i]!.x, points[i]!.y)
+        g.closePath()
+        g.fill({ color: fill, alpha })
+        // The crust: brighter and hotter right at the advancing front.
+        g.stroke({ width: 7, color: rim, alpha: Math.min(1, alpha * 1.5), join: 'round' })
+      }
+      g.visible = true
+    },
+    clear(): void {
+      g.clear()
+      g.visible = false
+    },
+    destroy(): void {
+      g.destroy()
+    },
+  }
 }

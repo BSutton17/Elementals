@@ -9,6 +9,7 @@ import { BackToTheFutureOverlay } from '../components/backToTheFuture/BackToTheF
 import { DarkenedOverlay } from '../components/DarkenedOverlay'
 import { FlashBangOverlay } from '../components/FlashBangOverlay'
 import { YinYangOverlay } from '../components/YinYangOverlay'
+import { KitsuneRushOverlay } from '../components/kitsuneRush/KitsuneRushOverlay'
 import { CasinoStage } from '../components/casino/CasinoStage'
 import { RouletteMirror, type MirrorSpin } from '../components/roulette/RouletteMirror'
 import { useLobby } from '../game/useLobby'
@@ -30,7 +31,14 @@ export function BattlefieldScreen() {
   const spectator = match.players.find((p) => p.id === youId)?.spectator === true
   if (spectator) {
     return (
-      <BattlefieldView match={match} youId={youId} players={game.players} tick={game.tick} spectator />
+      <BattlefieldView
+        match={match}
+        youId={youId}
+        players={game.players}
+        tick={game.tick}
+        volcano={game.volcano}
+        spectator
+      />
     )
   }
   // Thick Fog blinds only its victim: the local player carries the `vision:fog`
@@ -39,6 +47,10 @@ export function BattlefieldScreen() {
   const you = game.players.find((p) => p.id === youId)
   const fogged = you?.statuses?.some((s) => s.id === 'vision:fog') ?? false
   const gassed = you?.statuses?.some((s) => s.id === 'toxicGas') ?? false
+  // Magma's Smoke Screen (`smokeScreen`) blinds everyone who was aiming at
+  // Magma. Deliberately the same wall as Thick Fog — same blindness, same
+  // treatment — just in volcanic grey.
+  const smoked = you?.statuses?.some((s) => s.id === 'smokeScreen') ?? false
   // Time's Half Past 12 scrambles ONLY its victim's interface (status
   // `scrambled`) for its duration — a local, cosmetic temporal-instability layer.
   const scrambled = you?.statuses?.some((s) => s.id === 'scrambled') ?? false
@@ -54,6 +66,10 @@ export function BattlefieldScreen() {
   // Dark's "Night terrors" passive (`darkened`): attacking Dark can plunge the
   // ATTACKER's own screen into darkness for a few seconds.
   const darkened = you?.statuses?.some((s) => s.id === 'darkened') ?? false
+  // Kitsune Rush (`kitsuneRush`): foxfire tears across the CASTER's own screen
+  // while the Rush runs. Their buff, their screen - everyone else just sees the
+  // ring of foxes lapping the Kitsune castle.
+  const rushing = you?.statuses?.some((s) => s.id === 'kitsuneRush') ?? false
   // Dark's Yin and Yang (`yinYang`): the taijitu turns on the victim's screen
   // for the wager's duration. Deliberately says nothing — not knowing which
   // side was called is the entire ability.
@@ -104,13 +120,20 @@ export function BattlefieldScreen() {
       : []
   return (
     <>
-      <BattlefieldView match={match} youId={youId} players={game.players} tick={game.tick} />
+      <BattlefieldView
+        match={match}
+        youId={youId}
+        players={game.players}
+        tick={game.tick}
+        volcano={game.volcano}
+      />
       {/* Full-screen "you've been hacked" flash for the local victim. */}
       <HackOverlay youId={youId} />
       {/* Full-screen haze while the local player is blinded by Thick Fog (grey)
           or choking in Nature's Toxic Gas (green) — independent, own durations. */}
       <FogOverlay active={fogged} />
       <FogOverlay active={gassed} variant="toxic" />
+      <FogOverlay active={smoked} variant="smoke" />
       {/* Global arctic storm — every screen, whenever a Blizzard is raging. */}
       <BlizzardOverlay active={blizzard} />
       {/* Victim-only temporal scramble while Half Past 12's `scrambled` holds. */}
@@ -127,6 +150,7 @@ export function BattlefieldScreen() {
       <FlashBangOverlay youId={youId} />
       {/* Yin and Yang: a slowly turning taijitu while the wager is live. */}
       <YinYangOverlay active={wagered} />
+      <KitsuneRushOverlay active={rushing} />
       {/* Joker's casino: one game at a time, the next waiting its turn. */}
       <CasinoStage debt={casinoDebt} />
       {/* Joker only: a side-screen mirror of every wheel it has spinning. */}

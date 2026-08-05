@@ -1,13 +1,31 @@
 /* Dark's Unlimited Rage charge bar, above the ability buttons. All-or-nothing:
-   it only matters when it hits full, so that is the only state that shouts. */
+   it only matters when it hits full, so that is the only state that shouts.
+
+   Positioned OUT of the ability-bar-wrapper's flex flow (already
+   `position: relative` — the same anchor the Supernova meter and the Repairs &
+   Shields panel float against) so the bar appearing never resizes the wrapper
+   and never shrinks the arena above it. Kitsune's Ancient Memory meter is this
+   same element recoloured, so it inherits the positioning too. */
 .rage-meter {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.5rem);
+  transform: translateX(-50%);
+  /* Deliberately BELOW the bar rather than above it. `.ability-bar` carries a
+     `backdrop-filter`, which makes it a stacking context — so the ability
+     tooltip's own `z-index: 200` is trapped inside the bar and cannot climb
+     over a meter stacked above it. Sitting at 0 puts the meter in the same
+     painting layer as the bar, where DOM order decides: the meter is rendered
+     first, so the bar (and the tooltip inside it) wins. They do not overlap
+     otherwise — the meter floats clear above the bar's top edge — so nothing
+     is lost by yielding. Still under `.shop-overlay`, which covers it. */
+  z-index: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.25rem 0.6rem;
-  margin: 0 auto 0.35rem;
   width: fit-content;
-  max-width: 100%;
+  max-width: calc(100vw - 1.5rem);
   background: rgba(5, 5, 10, 0.55);
   border: 1px solid rgba(247, 247, 242, 0.16);
   border-radius: 999px;

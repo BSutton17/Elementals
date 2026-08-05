@@ -1,0 +1,20 @@
+/* Magma's "Hot ash" warning, hung over every kingdom aiming at Magma. Drawn
+   inside the arena SVG, so lengths are arena units and scale with the field. */
+.hot-ash {
+  pointer-events: none;
+}
+
+.hot-ash__mark {
+  filter: drop-shadow(0 0 10px rgba(255, 117, 24, 0.9));
+  animation: hot-ash-throb 1s ease-in-out infinite;
+}
+
+/* A warning, not decoration — it pulses rather than sitting still. */
+@keyframes hot-ash-throb {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hot-ash__mark { animation: none; opacity: 1; }
+}

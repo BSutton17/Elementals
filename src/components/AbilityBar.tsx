@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { GiReceiveMoney, GiPoisonGas } from 'react-icons/gi'
 import { IoMdPeople } from 'react-icons/io'
-import { FaHeart, FaShieldAlt, FaTools } from 'react-icons/fa'
+import { FaAngleDoubleUp, FaHeart, FaShieldAlt, FaTools } from 'react-icons/fa'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { type KingdomTheme } from '../game/kingdomThemes'
 import { AbilityButton } from './AbilityButton'
@@ -11,6 +11,7 @@ import { PerkChips } from './PerkChips'
 import { FrostCoat } from './FrostCoat'
 import { SupernovaMeter } from './SupernovaMeter'
 import { RageMeter } from './RageMeter'
+import { MemoryMeter } from './MemoryMeter'
 import type { ScrambleDisplay } from './scramble/useScrambleValues'
 import type { AbilityPrices } from '../game/gameState'
 import './AbilityBar.css'
@@ -61,6 +62,13 @@ interface AbilityBarProps {
   /** Damage Dark must absorb to fill Unlimited Rage (server-owned, from the
    *  match config — never a constant on this side). */
   rageFull?: number
+  /** Two or more kingdoms are targeting you, so the besieged bonus is live —
+   *  your gold production is running above its normal rate. */
+  besieged?: boolean
+  /** Kitsune only: the Ancient Memory meter, or null for every other kingdom. */
+  memoryMeter?: number | null
+  /** What a full Ancient Memory meter is worth (server-owned). */
+  memoryFull?: number
   /** The two perks this player locked in at the lobby, shown on the bar so
    *  their always-on bonuses aren't invisible for the whole match. */
   perks?: readonly string[]
@@ -113,6 +121,9 @@ export function AbilityBar({
   frozen = false,
   nightmared = false,
   rageFull,
+  besieged = false,
+  memoryMeter = null,
+  memoryFull,
   perks,
   scrambled = false,
   scramble = null,
@@ -241,10 +252,16 @@ export function AbilityBar({
         onBuy={() => onBuyItem('dispel')}
       />
 
-      {/* Space's Supernova charge meter, above the buttons — shown only once
-          Supernova is unlocked (the parent passes a number then). */}
+      {/* Kingdom charge meters, floating above the buttons. A player runs at
+          most one of these, and every one is absolutely positioned against this
+          wrapper, so a meter appearing mid-match never reflows the bar or
+          shrinks the battlefield above it. Supernova shows only once Supernova
+          is unlocked (the parent passes a number then). */}
       {supernovaMeter != null && <SupernovaMeter meter={displaySupernovaMeter!} />}
       {rageMeter != null && <RageMeter meter={rageMeter} full={rageFull} />}
+      {memoryMeter != null && (
+        <MemoryMeter meter={memoryMeter} full={memoryFull} />
+      )}
 
       {/* Main Bottom HUD Bar */}
       <div className="ability-bar">
@@ -264,6 +281,15 @@ export function AbilityBar({
                 className={`ability-bar__stat-label ${citizensPoisoned ? 'ability-bar__stat-label--poisoned' : ''}`}
               >
                 +{formattedIncome}/s
+                {besieged && (
+                  <span
+                    className="ability-bar__besieged"
+                    title="Besieged — every kingdom attacking you past the first is raising your gold production."
+                    data-testid="besieged-boost"
+                  >
+                    <FaAngleDoubleUp />
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -317,6 +343,14 @@ export function AbilityBar({
               enabled={enabled}
               frozen={frozen}
               barred={barred}
+              // Kitsune Rush is paid for in Ancient Memory, not gold, so the
+              // card stays inert until the meter is full. Clicking early is
+              // refused server-side either way; this says so before the click.
+              isUltimateCharged={
+                metadata.id === 'kitsuneRush'
+                  ? (memoryMeter ?? 0) >= (memoryFull ?? Infinity)
+                  : true
+              }
               chilled={cooldownChilled}
               cost={cost}
               rechargeTicks={rechargeTicks}

@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { ThroneStep } from './steps/ThroneStep'
 import { KingdomsStep } from './steps/KingdomsStep'
-import { KINGDOM_ICONS } from './kingdomIcons'
+import { KINGDOM_ICONS } from '../../game/kingdomIcons'
 import { KINGDOMS, SELECTABLE_KINGDOMS } from '../../game/kingdoms'
 import { ORBIT_TIMING, PULSE_FRACTION } from './steps/ThroneStep'
 
@@ -27,9 +27,13 @@ describe('the tutorial keeps up with the roster', () => {
 
   it('states the real number of kingdoms in the headline', () => {
     const { container } = render(<ThroneStep />)
-    // Thirteen today; derived, so this follows the roster rather than pinning it.
-    expect(container.textContent).toContain('Thirteen Kingdoms')
-    expect(KINGDOMS.length).toBe(13)
+    // Derived from the roster, so adding a kingdom updates the headline rather
+    // than breaking this test — pinning the number here defeats the point.
+    const words = [
+      'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
+      'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen',
+    ]
+    expect(container.textContent).toContain(`${words[KINGDOMS.length]} Kingdoms`)
   })
 
   it('gives the near-black kingdom a readable icon colour', () => {

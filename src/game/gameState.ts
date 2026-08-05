@@ -51,6 +51,9 @@ export interface GamePlayer {
   kingdomId: string | null
   /** Lobby-chosen perk ids (see game/perks.ts); fixed for the whole match. */
   perks?: string[]
+  /** Kitsune's "Ancient Memory" ("Swift Tails") — charges on its own and from
+   *  damage dealt. Present for everyone; only Kitsune's HUD shows it. */
+  ancientMemory?: number
   castle: GameCastle
   economy: GameEconomy
   /** The player this kingdom is currently targeting, or null. */
@@ -132,13 +135,31 @@ export interface GamePlayer {
   } | null
 }
 
+/**
+ * Magma's "The End of the World", as everyone sees it. Synced to the whole
+ * table rather than to Magma alone: breaking it in time is a job none of them
+ * can do by themselves, so all of them need to see it, click it, and watch its
+ * health fall.
+ */
+export interface VolcanoSnapshot {
+  /** The Magma that called it down — the one kingdom the eruption spares. */
+  ownerId: string
+  hp: number
+  maxHp: number
+  /** Ticks left before it erupts. */
+  ticksRemaining: number
+}
+
 export interface GameState {
   tick: number
   serverTime: number | null
   players: GamePlayer[]
+  /** The volcano standing in the middle of the field, or null when there
+   *  isn't one. */
+  volcano: VolcanoSnapshot | null
 }
 
-let state: GameState = { tick: 0, serverTime: null, players: [] }
+let state: GameState = { tick: 0, serverTime: null, players: [], volcano: null }
 
 const listeners = new Set<() => void>()
 
@@ -159,18 +180,20 @@ export function applyStateSync(payload: {
   tick: number
   serverTime: number
   players: GamePlayer[]
+  volcano?: VolcanoSnapshot | null
 }): void {
   state = {
     tick: payload.tick,
     serverTime: payload.serverTime,
     players: payload.players,
+    volcano: payload.volcano ?? null,
   }
   listeners.forEach((l) => l())
 }
 
 /** Clears gameplay state (e.g. after leaving a match). */
 export function clearGameState(): void {
-  state = { tick: 0, serverTime: null, players: [] }
+  state = { tick: 0, serverTime: null, players: [], volcano: null }
   listeners.forEach((l) => l())
 }
 

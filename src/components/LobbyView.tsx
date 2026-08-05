@@ -3,12 +3,14 @@ import { RoomCode } from './RoomCode'
 import { HowToPlay } from '../pages/HowToPlay'
 import { KINGDOMS, SELECTABLE_KINGDOMS, type KingdomId } from '../game/kingdoms'
 import { KINGDOM_PASSIVES_INFO } from '../game/kingdomInfo'
-import { outlineFor } from '../game/contrast'
+import { accentFor, outlineFor } from '../game/contrast'
 import { getAbilitiesForKingdom } from '../game/abilities'
+import { KINGDOM_ICONS } from '../game/kingdomIcons'
 import { MIN_PLAYERS_TO_START, type LobbyMatch } from '../game/lobby'
 import {
   PERKS,
   PERKS_PER_PLAYER,
+  perksAllowedFor,
   hasFullPerkSelection,
   resolvePerks,
   togglePerk,
@@ -117,23 +119,29 @@ export function LobbyView({
   const isSpectator = me?.spectator === true
   const isHost = youId != null && youId === match.hostId
   const myPerks = me?.perks ?? []
-  const perksFull = myPerks.length >= PERKS_PER_PLAYER
+  // Kitsune's "Three tailed fox" picks one more than everyone else.
+  const perkAllowance = perksAllowedFor(me?.kingdomId)
+  const perksFull = myPerks.length >= perkAllowance
   // Spectators don't gate the start and aren't counted as players.
   const connected = match.players.filter((p) => p.connected && !p.spectator)
   const enoughPlayers = connected.length >= MIN_PLAYERS_TO_START
   const allHaveKingdom = connected.every((p) => p.kingdomId !== null)
-  const allHavePerks = connected.every((p) => hasFullPerkSelection(p.perks))
+  // Each player's allowance depends on THEIR kingdom, not the local one.
+  const allHavePerks = connected.every((p) =>
+    hasFullPerkSelection(p.perks, p.kingdomId),
+  )
   const allReady = connected.every((p) => p.ready)
   const canStart = enoughPlayers && allHaveKingdom && allHavePerks && allReady
   // The same gate the server enforces on `lobby:ready`: a kingdom and a full
   // perk set. Spectators bring neither and may ready up freely.
   const canReady =
-    isSpectator || (me?.kingdomId != null && hasFullPerkSelection(me?.perks))
+    isSpectator ||
+    (me?.kingdomId != null && hasFullPerkSelection(me?.perks, me.kingdomId))
   const readyBlocker =
     me?.kingdomId == null
       ? 'Pick a kingdom first'
-      : `Pick ${PERKS_PER_PLAYER - myPerks.length} more perk${
-          PERKS_PER_PLAYER - myPerks.length === 1 ? '' : 's'
+      : `Pick ${perkAllowance - myPerks.length} more perk${
+          perkAllowance - myPerks.length === 1 ? '' : 's'
         }`
   // The kingdom-playing seats are capped; once full, only spectating is left.
   const maxActive = match.maxActivePlayers ?? 7
@@ -149,7 +157,7 @@ export function LobbyView({
       : !allHaveKingdom
         ? 'Everyone must pick a kingdom'
         : !allHavePerks
-          ? `Everyone must pick ${PERKS_PER_PLAYER} perks`
+          ? 'Everyone must pick a full set of perks'
           : 'Everyone must ready up'
   const kingdomLabel = (id: string | null) =>
     KINGDOMS.find((k) => k.id === id)?.label ?? null
@@ -207,12 +215,19 @@ export function LobbyView({
 
       <section className="lobby__kingdoms" aria-label="Choose your kingdom">
         <h2 className="lobby__heading">Kingdom</h2>
+        {/* Picker on one side, the selected kingdom's dossier on the other.
+            Stacked on narrow screens, side by side once there is room: with
+            fifteen kingdoms a single column left the description squeezed into
+            a few scrolling lines under a wall of buttons. */}
+        <div className="lobby__kingdoms-split">
+        <div className="lobby__kingdom-picker">
         <div className="lobby__kingdom-grid">
           {SELECTABLE_KINGDOMS.map((k) => {
             const takenByOther = match.players.some(
               (p) => p.id !== youId && p.kingdomId === k.id,
             )
             const selected = me?.kingdomId === k.id
+            const Icon = KINGDOM_ICONS[k.id]
             return (
               <button
                 key={k.id}
@@ -224,12 +239,18 @@ export function LobbyView({
                     // Dark's colour is near-black; without this ring its card
                     // is invisible against the lobby's dark panel.
                     '--k-outline': outlineFor(k.color),
+                    // The icon is drawn in the kingdom's own colour, swapped for
+                    // white on one too dark to see against the panel.
+                    '--k-ink': accentFor(k.color),
                   } as CSSProperties
                 }
                 disabled={takenByOther || (playersFull && !selected)}
                 onClick={() => onSelectKingdom(k.id)}
               >
-                {k.label}
+                {/* The same signature mark that is stamped on this kingdom's
+                    castle, so the lobby teaches the battlefield's shorthand. */}
+                <Icon className="lobby__kingdom-icon" aria-hidden="true" />
+                <span className="lobby__kingdom-name">{k.label}</span>
                 {takenByOther && <span className="lobby__kingdom-taken">Taken</span>}
               </button>
             )
@@ -275,24 +296,29 @@ export function LobbyView({
           </span>
         </div>
 
-        {isSpectator ? (
-          <p className="lobby__kingdom-hint">
-            You're spectating — you'll see the full battlefield with no controls.
-          </p>
-        ) : me?.kingdomId ? (
-          <KingdomDetails kingdomId={me.kingdomId} />
-        ) : (
-          <p className="lobby__kingdom-hint">
-            Select a kingdom to view its passives and abilities.
-          </p>
-        )}
+        </div>
+
+        <div className="lobby__kingdom-detail">
+          {isSpectator ? (
+            <p className="lobby__kingdom-hint">
+              You're spectating — you'll see the full battlefield with no controls.
+            </p>
+          ) : me?.kingdomId ? (
+            <KingdomDetails kingdomId={me.kingdomId} />
+          ) : (
+            <p className="lobby__kingdom-hint">
+              Select a kingdom to view its passives and abilities.
+            </p>
+          )}
+        </div>
+        </div>
       </section>
 
       <section className="lobby__perks" aria-label="Choose your perks">
         <h2 className="lobby__heading">
           Perks{' '}
           <span className="lobby__count">
-            {myPerks.length}/{PERKS_PER_PLAYER}
+            {myPerks.length}/{perkAllowance}
           </span>
         </h2>
         {isSpectator ? (
@@ -314,7 +340,9 @@ export function LobbyView({
                     aria-pressed={selected}
                     // Once two are picked, the rest lock until one is dropped.
                     disabled={perksFull && !selected}
-                    onClick={() => onSelectPerks(togglePerk(myPerks, perk.id))}
+                    onClick={() =>
+                      onSelectPerks(togglePerk(myPerks, perk.id, me?.kingdomId))
+                    }
                   >
                     <Icon className="lobby__perk-icon" aria-hidden />
                     <span className="lobby__perk-text">

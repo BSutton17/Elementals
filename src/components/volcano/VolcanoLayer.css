@@ -1,0 +1,266 @@
+/* Magma's "The End of the World" — the mountain in the middle of the arena.
+
+   It is the biggest thing on the board on purpose: for twenty seconds it is
+   the only thing that matters, and the health bar and clock are public because
+   the ability is a forced truce that nobody can honour alone. */
+
+.volcano {
+  pointer-events: none; /* only the hit rect takes clicks */
+}
+
+.volcano__body {
+  transform-origin: 500px 500px;
+  /* A permanent low rumble — the mountain is never at rest. */
+  animation: volcano-rumble 0.5s ease-in-out infinite;
+}
+
+@keyframes volcano-rumble {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(1.5px, -1px); }
+  50% { transform: translate(-1px, 1.5px); }
+  75% { transform: translate(-1.5px, -0.5px); }
+}
+
+/* The ground it stands on. Without this the mountain floats. */
+.volcano__shadow {
+  fill: rgba(8, 4, 3, 0.45);
+  filter: blur(9px);
+}
+
+/* The mass. Dark, so the lava on it carries all the colour. */
+.volcano__rock {
+  fill: #35211c;
+  stroke: #150b09;
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+/* The lit flank. A lighter wedge is all it takes to turn a flat cut-out into
+   a cone with a near side and a far side. */
+.volcano__face {
+  fill: #4a2f26;
+}
+
+/* Ridges catching the light on the way down — texture, so the flanks are not
+   two flat fills. */
+.volcano__ridge {
+  fill: none;
+  stroke: #241511;
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+/* Molten rock glowing through cracks in the mountain. */
+.volcano__vein {
+  fill: none;
+  stroke: #b8380c;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(255, 90, 26, 0.7));
+  animation: volcano-vein 3.1s ease-in-out infinite;
+}
+
+@keyframes volcano-vein {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.95; }
+}
+
+/* Lava spilling over the rim and running down the flanks. */
+.volcano__flow {
+  fill: none;
+  stroke: #ff5a1a;
+  stroke-width: 9;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 9px rgba(255, 90, 26, 0.85));
+  animation: volcano-flow 2.4s ease-in-out infinite;
+}
+
+/* Secondary trickles, so the flows are not three identical stripes. */
+.volcano__flow--thin {
+  stroke-width: 5;
+  opacity: 0.85;
+  animation-duration: 3.3s;
+}
+
+@keyframes volcano-flow {
+  0%, 100% { opacity: 0.75; stroke-width: 8; }
+  50% { opacity: 1; stroke-width: 11; }
+}
+
+/* The molten pool sitting in the crater notch. */
+.volcano__crater {
+  fill: #ff7a1e;
+  filter: drop-shadow(0 0 26px rgba(255, 130, 40, 0.95));
+  animation: volcano-crater 1.6s ease-in-out infinite;
+}
+
+/* White-hot at the centre of the pool. */
+.volcano__core {
+  fill: #ffe9b0;
+  filter: drop-shadow(0 0 18px rgba(255, 220, 150, 0.95));
+  animation: volcano-crater 1.6s ease-in-out infinite;
+}
+
+@keyframes volcano-crater {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* The last five seconds: the crater goes white-hot and starts flashing. */
+.volcano__crater--urgent {
+  fill: #ffbe5c;
+  animation: volcano-crater-urgent 0.42s ease-in-out infinite;
+}
+
+.volcano__core--urgent {
+  fill: #fffaf0;
+  animation: volcano-crater-urgent 0.42s ease-in-out infinite;
+}
+
+@keyframes volcano-crater-urgent {
+  0%, 100% { opacity: 0.65; filter: drop-shadow(0 0 20px rgba(255, 160, 60, 0.9)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 46px rgba(255, 210, 120, 1)); }
+}
+
+/* Smoke venting from the mouth. Each puff drifts up and thins out on its own
+   rhythm, so the plume never pulses as one block. */
+.volcano__smoke ellipse {
+  fill: rgba(74, 58, 52, 0.55);
+  filter: blur(7px);
+  /* Without these, the `scale()` below is applied about the SVG's origin
+     (0,0) rather than each puff's own centre — so instead of swelling in
+     place they would be flung off toward the top-left corner. */
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: volcano-smoke 4.2s ease-in-out infinite;
+}
+
+.volcano__smoke ellipse:nth-child(2) {
+  animation-duration: 5.1s;
+  animation-delay: -1.4s;
+}
+
+.volcano__smoke ellipse:nth-child(3) {
+  animation-duration: 6s;
+  animation-delay: -2.8s;
+}
+
+@keyframes volcano-smoke {
+  0% { opacity: 0.15; transform: translate(0, 10px) scale(0.7); }
+  45% { opacity: 0.55; }
+  100% { opacity: 0; transform: translate(-14px, -48px) scale(1.5); }
+}
+
+/* The click target — invisible, but the one thing on this layer that takes
+   input. Generous on purpose: everyone has to be able to hit it in a hurry. */
+.volcano__hit {
+  fill: transparent;
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.volcano__reticle {
+  fill: none;
+  stroke: #ff8a3a;
+  stroke-width: 3;
+  stroke-dasharray: 14 10;
+  opacity: 0.9;
+  animation: volcano-reticle 1.2s linear infinite;
+}
+
+@keyframes volcano-reticle {
+  to { stroke-dashoffset: -48; }
+}
+
+/* ---- Health + clock, public to the whole table ---- */
+
+.volcano__bar-bg {
+  fill: rgba(10, 6, 5, 0.85);
+  stroke: rgba(255, 200, 150, 0.35);
+  stroke-width: 2;
+}
+
+.volcano__bar-fill {
+  fill: #ff5a1a;
+  transition: width 0.25s ease-out;
+}
+
+.volcano__hp {
+  font-size: 13px;
+  font-weight: 800;
+  fill: #fff1c4;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.75);
+  stroke-width: 3;
+  letter-spacing: 0.04em;
+}
+
+.volcano__clock {
+  font-size: 30px;
+  font-weight: 900;
+  fill: #ffd27a;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.8);
+  stroke-width: 4;
+  font-variant-numeric: tabular-nums;
+}
+
+.volcano__clock--urgent {
+  fill: #ff6b4a;
+  animation: volcano-clock-urgent 0.42s ease-in-out infinite;
+}
+
+@keyframes volcano-clock-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ---- Killed in time: it slumps, cools, and crumbles away ---- */
+
+.volcano--dying .volcano__body {
+  animation: volcano-collapse 2.6s ease-in forwards;
+}
+
+@keyframes volcano-collapse {
+  0% { transform: translate(0, 0) scaleY(1); opacity: 1; }
+  /* A last shudder before it goes. */
+  12% { transform: translate(4px, 0) scaleY(1.02); opacity: 1; }
+  24% { transform: translate(-4px, 0) scaleY(0.98); opacity: 1; }
+  /* Then it settles, sinks, and fades — a mountain going out, not a sprite
+     being switched off. */
+  100% { transform: translate(0, 26px) scaleY(0.28); opacity: 0; }
+}
+
+/* The fire dies before the rock does — all of it, or a broken mountain is
+   left glowing through its own cracks while it sinks. */
+.volcano--dying .volcano__flow,
+.volcano--dying .volcano__vein,
+.volcano--dying .volcano__core,
+.volcano--dying .volcano__smoke,
+.volcano--dying .volcano__crater {
+  animation: volcano-cool 1.5s ease-out forwards;
+}
+
+@keyframes volcano-cool {
+  0% { opacity: 1; }
+  100% { opacity: 0; filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .volcano__body,
+  .volcano__flow,
+  .volcano__vein,
+  .volcano__crater,
+  .volcano__core,
+  .volcano__crater--urgent,
+  .volcano__core--urgent,
+  .volcano__smoke ellipse,
+  .volcano__clock--urgent,
+  .volcano__reticle {
+    animation: none;
+  }
+  .volcano--dying .volcano__body {
+    animation: volcano-cool 1.5s ease-out forwards;
+  }
+}

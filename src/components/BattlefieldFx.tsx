@@ -4,6 +4,9 @@ import {
   ABILITY_EFFECTS,
   ACID_RAIN_CONFIG,
   FIREFLIES_CONFIG,
+  KITSUNE_RUSH_ORBIT,
+  LAVA_FLOOR_CONFIG,
+  VOLCANO_BLAST,
   AURA_EFFECTS,
   BFFS_CONFIG,
   BLACK_HOLE_CONFIG,
@@ -19,6 +22,9 @@ import {
 } from '../render/effects'
 import { hexToNumber } from '../render/colors'
 import { placeKingdoms } from '../game/placement'
+
+/** Middle of the 1000×1000 arena — where the volcano stands. */
+const ARENA_CENTRE = { x: 500, y: 500 }
 import { onGameEvents } from '../game/gameEvents'
 import { ABILITY_METADATA } from '../game/abilities'
 import type {
@@ -27,6 +33,8 @@ import type {
   BlackHoleCollapsedEvent,
   BlackHoleOpenedEvent,
   DamageEvent,
+  LavaFloorLitEvent,
+  VolcanoEruptedEvent,
   RawGameEvent,
   ResourceTransferEvent,
   ShieldDestroyedEvent,
@@ -312,11 +320,6 @@ function dispatch(
         if (cast.abilityId === 'illumination') {
           front.framework.agitateFireflies(auraKey('fireflies', targetId))
         }
-        // Scorching Sun's guaranteed Burn shows as bright solar flames coating
-        // the target for the Burn window (5s). Self-stops on its own timer.
-        if (cast.abilityId === 'scorchingSun') {
-          front.framework.startAura('solarBurn', auraKey('solarBurn', targetId), to, 5000)
-        }
         const viaId = interceptedBy.get(targetId)
         const via = viaId ? positionOf(viaId) : undefined
         if (via) {
@@ -346,6 +349,42 @@ function dispatch(
       }
       return
     }
+    case 'volcanoErupted': {
+      // The field failed. The single most destructive thing in the game goes
+      // off in the middle of the board — centre of the arena, not on anyone's
+      // castle, because it hits everyone at once.
+      const erupted = event as unknown as VolcanoEruptedEvent
+      // Nobody was actually billed: the table covered the yield between them,
+      // so the mountain goes quiet rather than levelling the board.
+      if (erupted.amount <= 0) {
+        front.framework.playVolcanoBroken(ARENA_CENTRE, VOLCANO_BLAST)
+        return
+      }
+      front.framework.playVolcanoEruption(ARENA_CENTRE, VOLCANO_BLAST)
+      return
+    }
+    case 'volcanoBroken': {
+      // Brought down in time. A hard jolt, then it is left to die — the SVG
+      // layer handles the mountain slumping and fading.
+      front.framework.playVolcanoBroken(ARENA_CENTRE, VOLCANO_BLAST)
+      return
+    }
+    case 'lavaFloorLit': {
+      // Magma's Floor is Lava: molten ground wells out of the Magma castle and
+      // creeps over the whole field. Rendered on the BACK stage so it lies
+      // UNDER the castles — it is ground, and everything stands on it.
+      const lit = event as unknown as LavaFloorLitEvent
+      const at = positionOf(lit.ownerId)
+      if (!at) return
+      const stage = back ?? front
+      stage.framework.startLavaFloor(
+        auraKey('lavaFloor', lit.ownerId),
+        at,
+        LAVA_FLOOR_CONFIG,
+        (lit.durationTicks / Math.max(1, tickRate)) * 1000,
+      )
+      return
+    }
     case 'statusApplied': {
       const applied = event as unknown as StatusAppliedEvent
       const at = positionOf(applied.targetId)
@@ -369,6 +408,17 @@ function dispatch(
       // Fireflies (Light): a swarm of little lights settles over the kingdom and
       // dances there. It has NO duration — it stays until the victim pays the
       // ransom, so nothing here ever expires it on a timer.
+      // Kitsune Rush: a ring of foxes laps the caster's OWN castle for as long
+      // as the buff holds. Driven by the status rather than by the cast so the
+      // ring can never outlive the buff it is advertising.
+      if (applied.statusId === 'kitsuneRush') {
+        front.framework.startFoxOrbit(
+          auraKey('kitsuneRush', applied.targetId),
+          at,
+          KITSUNE_RUSH_ORBIT,
+        )
+        return
+      }
       if (applied.statusId === 'fireflies') {
         front.framework.startFireflies(auraKey('fireflies', applied.targetId), at, FIREFLIES_CONFIG)
         return
@@ -434,6 +484,10 @@ function dispatch(
       }
       // The ransom was paid (or the swarm was otherwise removed) — the lights
       // scatter outward and wink out rather than all vanishing at once.
+      if (expired.statusId === 'kitsuneRush') {
+        front.framework.stopFoxOrbit(auraKey('kitsuneRush', expired.playerId))
+        return
+      }
       if (expired.statusId === 'fireflies') {
         front.framework.stopFireflies(auraKey('fireflies', expired.playerId))
         return

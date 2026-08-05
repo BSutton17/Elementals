@@ -110,8 +110,10 @@ describe('LobbyView', () => {
       })),
     }
     renderLobby({ match: kingdomsOnly, youId: 'a' })
+    // The reason no longer names a number: the allowance is per kingdom now
+    // (Kitsune picks three), so a fixed count would be wrong for some tables.
     const start = screen.getByRole('button', {
-      name: /everyone must pick 2 perks/i,
+      name: /must pick a full set of perks/i,
     }) as HTMLButtonElement
     expect(start.disabled).toBe(true)
   })
@@ -198,5 +200,71 @@ describe('LobbyView perks', () => {
     // Alice's two perks are labelled in the roster.
     expect(screen.getAllByLabelText('Sharper Swords').length).toBeGreaterThan(0)
     expect(screen.getAllByLabelText('Extra Guards').length).toBeGreaterThan(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Layout: the kingdom picker has to keep working as the roster grows. Fifteen
+// kingdoms in one text column pushed the description down to a scrolling
+// sliver, so these pin the structure that fixed it.
+// ---------------------------------------------------------------------------
+
+describe('the kingdom picker layout', () => {
+  it('gives every kingdom a tile with its signature mark', () => {
+    const { container } = renderLobby()
+    const tiles = container.querySelectorAll('.lobby__kingdom-btn')
+    expect(tiles.length).toBeGreaterThanOrEqual(15)
+    for (const tile of tiles) {
+      // The same mark that is stamped on that kingdom's castle — the lobby is
+      // where a player learns the battlefield's shorthand.
+      expect(tile.querySelector('.lobby__kingdom-icon')).not.toBeNull()
+      expect(tile.querySelector('.lobby__kingdom-name')?.textContent).toBeTruthy()
+    }
+  })
+
+  it('tints each mark so a near-black kingdom is still visible', () => {
+    const { container } = renderLobby()
+    const inks = [...container.querySelectorAll<HTMLElement>('.lobby__kingdom-btn')].map((t) =>
+      t.style.getPropertyValue('--k-ink'),
+    )
+    for (const ink of inks) expect(ink).toBeTruthy()
+    // Dark's own colour would vanish against the panel, so its mark is swapped
+    // for white — meaning not every tile can be carrying its raw kingdom hue.
+    expect(new Set(inks).size).toBeGreaterThan(1)
+    expect(inks).toContain('#f7f7f2')
+  })
+
+  it('separates the picker from the description so both get room', () => {
+    const { container } = renderLobby()
+    const split = container.querySelector('.lobby__kingdoms-split')
+    expect(split).not.toBeNull()
+    const picker = split!.querySelector('.lobby__kingdom-picker')
+    const detail = split!.querySelector('.lobby__kingdom-detail')
+    expect(picker).not.toBeNull()
+    expect(detail).not.toBeNull()
+    // The tiles belong to the picker and the dossier to the detail column; if
+    // they share a parent the description is back under the wall of buttons.
+    expect(picker!.querySelector('.lobby__kingdom-grid')).not.toBeNull()
+    expect(detail!.querySelector('.lobby__kingdom-grid')).toBeNull()
+  })
+
+  it('puts the selected kingdom’s dossier in the description column', () => {
+    const { container } = renderLobby({
+      match: {
+        ...match,
+        players: [
+          match.players[0]!,
+          { ...match.players[1]!, kingdomId: 'kitsune' },
+        ],
+      },
+    })
+    const detail = container.querySelector('.lobby__kingdom-detail')!
+    const dossier = detail.querySelector('[data-testid="kingdom-details"]')
+    expect(dossier).not.toBeNull()
+    // Scoped to the dossier: "Kitsune" is also the label on its picker tile.
+    expect(dossier!.querySelector('.lobby__details-title')?.textContent).toBe('Kitsune')
+    // The dossier is the thing that needed room — it must actually carry the
+    // passives and abilities text, not just a title.
+    expect(dossier!.querySelectorAll('.lobby__details-desc').length).toBeGreaterThan(4)
   })
 })

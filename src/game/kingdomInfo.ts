@@ -142,4 +142,27 @@ export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
       description: 'Both of your chosen perks work noticeably harder than they would for anyone else.',
     },
   ],
+  kitsune: [
+    {
+      name: 'Swift Tails',
+      description:
+        'Your Ancient Memory meter fills on its own, whatever you are doing — and faster with every point of damage you deal.',
+    },
+    {
+      name: 'Three tailed fox',
+      description: 'You choose three perks instead of two.',
+    },
+  ],
+  magma: [
+    {
+      name: 'Hotter fire',
+      description:
+        'Your burns go straight through shields. A shield softens each tick but never blocks it, so raising one against you is worth doing and is never a full answer.',
+    },
+    {
+      name: 'Hot ash',
+      description:
+        'You deal extra damage to any kingdom currently targeting you — and every 45 seconds each of them is marked on YOUR screen, so you always know who is committed against you.',
+    },
+  ],
 }

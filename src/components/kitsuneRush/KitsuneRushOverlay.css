@@ -1,0 +1,163 @@
+/* Kitsune Rush, caster's own screen. Blue foxfire streaming PAST the camera —
+   streaks, swirls and loops crossing the screen and tumbling as they go, over a
+   breathing sapphire wash.
+
+   Flight is the point. The ability is "everything happens at double speed", and
+   a mark that only flashes on and off says nothing about speed — it reads as a
+   status light. A mark that crosses the screen and leaves says you are moving.
+
+   Nothing here takes input: the Rush is a tempo buff, so it must never cost the
+   player the ability to read their own castle, gold or ability bar. */
+
+.kitsune-rush {
+  position: fixed;
+  inset: 0;
+  /* Full-screen overlays at this mount site all live in the thousands: the
+     ability bar alone is z-index 100, so anything lower is painted UNDER the
+     HUD and the battlefield chrome and is simply never seen. This sits above
+     all of that but below the overlays that are meant to overrule it — Fog
+     (5000), Darkened (5200), Scramble/Flash Bang (9000) and Hack (9999) — so
+     being blinded still beats being fast. */
+  z-index: 4000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* A sapphire vignette that pulses with the Rush. Transparent through the
+   centre, so the battlefield underneath stays clean. */
+.kitsune-rush__wash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(15, 82, 186, 0) 34%,
+    rgba(15, 82, 186, 0.16) 62%,
+    rgba(74, 168, 255, 0.3) 100%
+  );
+  animation: kitsune-rush-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes kitsune-rush-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* One mark in flight. The wrapper carries it ACROSS the screen; the inner
+   `__spin` element tumbles independently, so a loop can rotate while it travels
+   without fighting the translation for the same transform. */
+.kitsune-rush__mark {
+  position: absolute;
+  opacity: 0;
+  transform: rotate(var(--rot, 0deg));
+  transform-origin: 50% 50%;
+  animation-name: kitsune-rush-fly;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+/* The crossing. Travels the full `--fly-x/--fly-y` vector, fading in as it
+   arrives and out as it leaves, so nothing is ever seen popping into or out of
+   existence mid-air. */
+@keyframes kitsune-rush-fly {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--rot, 0deg)) scale(var(--scale-in, 0.8));
+  }
+  12% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--fly-x, 0), var(--fly-y, 0)) rotate(var(--rot, 0deg))
+      scale(var(--scale-out, 1.2));
+  }
+}
+
+/* The tumble, on its own element so it composes with the flight above.
+   Streaks get `--spin: 0deg` — they point along their own path and holding
+   that heading is what makes them read as speed rather than as debris. */
+.kitsune-rush__spin {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  animation-name: kitsune-rush-tumble;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* Inherits the mark's own flight time, so a shape completes exactly one
+     tumble per crossing however long its flight happens to be. */
+  animation-duration: inherit;
+}
+
+@keyframes kitsune-rush-tumble {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(var(--spin, 0deg));
+  }
+}
+
+.kitsune-rush__mark svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.kitsune-rush__glow,
+.kitsune-rush__core {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The wide soft bloom under the stroke. */
+.kitsune-rush__glow {
+  stroke: rgba(15, 82, 186, 0.85);
+  stroke-width: 7;
+  filter: blur(6px);
+}
+
+/* The bright thin core over it. */
+.kitsune-rush__core {
+  stroke: #dff0ff;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 6px rgba(74, 168, 255, 0.95));
+}
+
+/* Streaks are the speed lines: thinner and harder-edged than the shapes, so a
+   screenful of them reads as motion rather than as clutter. */
+.kitsune-rush__mark--streak .kitsune-rush__core {
+  stroke-width: 1.8;
+}
+
+.kitsune-rush__mark--streak .kitsune-rush__glow {
+  stroke-width: 5.5;
+}
+
+/* Loops and swirls are shapes, not strokes of speed — drawn a touch heavier so
+   the curl stays legible while it tumbles past. */
+.kitsune-rush__mark--loop .kitsune-rush__core,
+.kitsune-rush__mark--swirl .kitsune-rush__core {
+  stroke-width: 3;
+}
+
+/* Anyone who has asked not to be flashed gets the wash alone: the colour and
+   the fact of the buff, with none of the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .kitsune-rush__mark {
+    display: none;
+  }
+  .kitsune-rush__wash {
+    animation: none;
+    opacity: 0.8;
+  }
+}

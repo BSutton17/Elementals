@@ -12,7 +12,9 @@ import { RiEarthquakeFill, RiSnowflakeFill, RiRewindStartFill } from 'react-icon
 import { CiClock2 } from 'react-icons/ci'
 import { CgSandClock } from 'react-icons/cg'
 import { LiaUserTimesSolid } from 'react-icons/lia'
-import { GiFlashGrenade, GiLighthouse, GiCardAceSpades, GiCardExchange, GiCardRandom, GiRollingDices, GiEvilLove, GiDreamCatcher, GiDelighted } from 'react-icons/gi'
+import { LuReceiptJapaneseYen } from 'react-icons/lu'
+import { FaSmog } from 'react-icons/fa'
+import { GiEruption, GiPunchBlast, GiLava, GiSmokingVolcano, GiFire, GiFox, GiFoxHead, GiFoxTail, GiFlashGrenade, GiLighthouse, GiCardAceSpades, GiCardExchange, GiCardRandom, GiRollingDices, GiEvilLove, GiDreamCatcher, GiDelighted } from 'react-icons/gi'
 import { IoFlashlight } from 'react-icons/io5'
 import { PiBugDroid } from 'react-icons/pi'
 import { BsShadows } from 'react-icons/bs'
@@ -115,7 +117,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   scorchingSun: {
     id: 'scorchingSun',
     name: 'Scorching Sun',
-    description: 'Powerful Fire attack that guarantees Burn on the target.',
+    description: 'Powerful Fire attack that leaves the target IGNITED for a minute. Ignited does no damage on its own — every 15 seconds it rolls a 25% chance to set a real Burn, so they never know when the fire is coming.',
     hotkey: 'W',
     kind: 'attack',
     element: 'fire',
@@ -126,7 +128,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   firenado: {
     id: 'firenado',
     name: 'Firenado',
-    description: 'Very powerful Fire attack with a chance to apply Burn. Burning targets take damage over time and suffer extra from your Fire attacks.',
+    description: 'Very powerful Fire attack that ALWAYS burns. Hits significantly harder against a target that is Ignited but not yet burning — set them alight with Scorching Sun first, then cash it in.',
     hotkey: 'E',
     kind: 'attack',
     element: 'fire',
@@ -788,6 +790,120 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
     color: '#12121a',
     gradient: 'linear-gradient(135deg, #050508, #12121a, #f7f7f2)',
     icon: GiDelighted,
+  },
+
+  // PLACEHOLDER kit — names, copy and icons land with the real design.
+  foxSwipe: {
+    id: 'foxSwipe',
+    name: 'Fox Swipe',
+    description: 'The reliable opener — a clean hit that also adds a flat 10 to your Ancient Memory, on top of the share every point of damage already feeds it.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'kitsune',
+    color: '#0f52ba',
+    gradient: 'linear-gradient(135deg, #08183f, #0f52ba, #1b2f7a)',
+    icon: GiFoxTail,
+  },
+  foxFire: {
+    id: 'foxFire',
+    name: 'Fox Fire',
+    description: 'An enchanting volley that leaves a burn behind. Every attack the victim makes fans the flames hotter, so it taxes exactly the kingdom that refuses to sit still — and it stacks. Feeds your Ancient Memory.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'kitsune',
+    color: '#0f52ba',
+    gradient: 'linear-gradient(135deg, #08183f, #0f52ba, #1b2f7a)',
+    icon: GiFire,
+  },
+  oldFriends: {
+    id: 'oldFriends',
+    name: 'Old Friends',
+    description: 'An army of foxes. Against a shield they deal heavy damage to it and leave — none of it carries over. Against a kingdom with no shield up they move IN and stay, gnawing away and feeding your Ancient Memory the whole time. Buying a shield is the only way to drive them off.',
+    hotkey: 'F',
+    kind: 'attack',
+    element: 'kitsune',
+    color: '#0f52ba',
+    gradient: 'linear-gradient(135deg, #08183f, #0f52ba, #1b2f7a)',
+    icon: GiFoxHead,
+  },
+  azureGuidance: {
+    id: 'azureGuidance',
+    name: 'Azure Guidance',
+    description: 'Ancient Memory fills twice as fast for a short window — every source of it, not just the passive trickle. It does nothing on its own; it brings Kitsune Rush forward.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'kitsune',
+    color: '#0f52ba',
+    gradient: 'linear-gradient(135deg, #08183f, #0f52ba, #1b2f7a)',
+    icon: LuReceiptJapaneseYen,
+  },
+  kitsuneRush: {
+    id: 'kitsuneRush',
+    name: 'Kitsune Rush',
+    description: 'Fifteen seconds at double speed: every cooldown runs twice as fast — including ones already counting down — and your gold production doubles. It cannot be bought. It becomes available the moment your Ancient Memory is completely full, and empties it.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'kitsune',
+    color: '#0f52ba',
+    gradient: 'linear-gradient(135deg, #08183f, #0f52ba, #1b2f7a)',
+    icon: GiFox,
+  },
+
+  // Magma Abilities
+  lavaPunch: {
+    id: 'lavaPunch',
+    name: 'Lava Punch',
+    description: 'The reliable opener, with a 35% chance of leaving a burn behind. Your burns go straight through shields — a shield softens them, but never stops them.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'magma',
+    color: '#a8320a',
+    gradient: 'linear-gradient(135deg, #3d0f04, #a8320a, #ff7518)',
+    icon: GiPunchBlast,
+  },
+  eruption: {
+    id: 'eruption',
+    name: 'Eruption',
+    description: 'A volley of lava that hits hard, with a 20% chance of leaving a burn. Your burns go through shields, though a shield softens them.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'magma',
+    color: '#a8320a',
+    gradient: 'linear-gradient(135deg, #3d0f04, #a8320a, #ff7518)',
+    icon: GiEruption,
+  },
+  floorIsLava: {
+    id: 'floorIsLava',
+    name: 'Floor is Lava',
+    description: 'Set the whole battlefield alight: every burn on it hits 50% harder for 20 seconds — yours, Fire’s, Kitsune’s foxfire, all of them. Burns on YOU are unaffected; you walk on your own lava. It fans other kingdoms’ fires too, so light it when the field is already smouldering. While it burns you also deal 10% more damage with every attack.',
+    hotkey: 'F',
+    kind: 'utility',
+    element: 'magma',
+    color: '#a8320a',
+    gradient: 'linear-gradient(135deg, #3d0f04, #a8320a, #ff7518)',
+    icon: GiLava,
+  },
+  smokeScreen: {
+    id: 'smokeScreen',
+    name: 'Smoke Screen',
+    description: 'Thick smoke rolls over every kingdom currently targeting you — blinding them and singeing them for a little damage. Untargeted: they picked themselves by pointing at you.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'magma',
+    color: '#a8320a',
+    gradient: 'linear-gradient(135deg, #3d0f04, #a8320a, #ff7518)',
+    icon: FaSmog,
+  },
+  theEndOfTheWorld: {
+    id: 'theEndOfTheWorld',
+    name: 'The End of the World',
+    description: 'A volcano erupts in the middle of the battlefield with 1000 health per living kingdom and 20 seconds on the clock. Every kingdom but you must click it to target it and attack it. When the timer runs out they ALL take 5000 damage minus whatever the field dealt between them — one shared bill, so they either cooperate or go down together. Break it in time and nobody is hurt.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'magma',
+    color: '#a8320a',
+    gradient: 'linear-gradient(135deg, #3d0f04, #a8320a, #ff7518)',
+    icon: GiSmokingVolcano,
   },
 }
 

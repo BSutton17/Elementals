@@ -51,6 +51,7 @@ export type ProjectileShape =
   | 'heart'
   | 'arrow'
   | 'spade'
+  | 'fox'
   | 'shadow'
   | 'yinYang'
 
@@ -73,6 +74,61 @@ export interface ProjectileConfig {
   /** Sprite silhouette (default 'circle'). 'triangle' draws a sharp spike whose
    *  tip leads along the travel direction — Ice's Icicle. */
   shape?: ProjectileShape
+  /**
+   * Corkscrew the projectile around its own flight path instead of flying
+   * straight (Kitsune's Fox Fire). The bolt still ARRIVES on time and on
+   * target — this only displaces it perpendicular to the line as it travels,
+   * so nothing downstream has to know the path was curved.
+   */
+  spiral?: SpiralConfig
+  /** A running bob — bounce and body pitch, for projectiles that are supposed
+   *  to be ANIMALS rather than ordnance (Kitsune's Old Friends). */
+  gait?: GaitConfig
+  /**
+   * Lob the projectile: peak height, in world units, of an arc thrown UP and
+   * over on its way to the target (Magma's Eruption).
+   *
+   * Unlike `spiral`, which displaces perpendicular to the flight path, this is
+   * always toward the top of the screen — so a shot fired left and a shot fired
+   * right both arc the same way up, which is the only way it reads as gravity.
+   */
+  arc?: number
+}
+
+/**
+ * A four-legged run, applied on top of whatever path the projectile is already
+ * following. The sprite is a fixed mid-bound pose; this is what makes it look
+ * like it is covering ground under its own power.
+ */
+export interface GaitConfig {
+  /** Peak rise of each bound, in world units. */
+  bounce: number
+  /** Bounds per second. */
+  rate: number
+  /** Peak body pitch through a bound, in radians (default 0). */
+  tilt?: number
+  /** Offset into the bound cycle, 0–1. Pack members each take their own so
+   *  they are not all airborne on the same frame. */
+  phase?: number
+}
+
+/** A corkscrew around the straight line from A to B. */
+export interface SpiralConfig {
+  /** Full revolutions completed over the flight. */
+  turns: number
+  /** Peak displacement from the straight line, in world units. */
+  radius: number
+  /** Offset into the coil, in turns (0–1). Lets several projectiles share one
+   *  spiral shape while weaving out of step with each other. */
+  phase?: number
+  /**
+   * How the coil width changes over the flight:
+   *  - 'taper'  — wide at the caster, tightening to nothing on arrival, so it
+   *    converges on the target rather than swinging past it.
+   *  - 'even'   — the same width the whole way.
+   *  - 'bloom'  — tight at the caster and widening as it goes.
+   */
+  envelope?: 'taper' | 'even' | 'bloom'
 }
 
 /** A one-shot burst at a point: grows from small to `size` while fading out. */
@@ -783,8 +839,232 @@ export interface EffectDefinition {
   supernova?: SupernovaConfig
   /** A weaving enchanted-arrow cast (Love's Cupid's Arrow). */
   cupidsArrow?: CupidsArrowConfig
+  /** A pack of animals that RUNS to the target (Kitsune's Old Friends). */
+  foxPack?: FoxPackConfig
+  /** A rumble-then-throw volcanic eruption (Magma's Eruption). */
+  eruption?: EruptionConfig
   impact?: ImpactConfig
+  /** Concentric rings thrown outward from the landing point, on top of
+   *  `impact` (Kitsune's spreading blue fire). */
+  impactRings?: ImpactRingsConfig
+  /** A detonation made of flame rather than of rings, optionally leaving
+   *  pockets of fire burning around the target (Kitsune's Fox Fire). */
+  flameBurst?: FlameBurstConfig
   particles?: ParticleBurstConfig
   shake?: CameraShakeConfig
   tintFrom?: ThemeToken
+}
+
+/**
+ * A set of expanding rings fired outward from one point, each a little wider
+ * and a little later than the last — fire spreading across the ground rather
+ * than a single flat pop. Purely additive: it layers over whatever `impact`
+ * already does.
+ */
+export interface ImpactRingsConfig {
+  /** How many rings. */
+  count: number
+  /** Lifetime of each ring. */
+  durationMs: number
+  /** Diameter of the innermost ring. */
+  size: number
+  /** How much wider each successive ring is than the one before it. */
+  sizeStep: number
+  /** Delay between one ring launching and the next. */
+  staggerMs: number
+  color: number
+  /** Fraction of full size each ring starts at (default 0.25 — rings should
+   *  visibly grow, so they start small). */
+  startScale?: number
+  easing?: EasingName
+}
+
+/**
+ * A pack of foxes running to the target (Kitsune's Old Friends).
+ *
+ * They travel as a GROUP - one loose formation crossing the field together -
+ * but no two run the same line: each takes its own lane within the pack, its
+ * own head start, its own stride phase, and its own slight weave. That spread
+ * is the whole point; identical paths read as a single object smeared
+ * sideways, not as animals.
+ */
+export interface FoxPackConfig {
+  /** How many foxes (3-4 reads as a pack without becoming a crowd). */
+  count: number
+  /** Roughly how long the crossing takes; each fox varies around this. */
+  durationMs: number
+  /** Sprite size of one fox. */
+  size: number
+  /** Fox silhouette colour. */
+  color: number
+  /** Foxfire motes shed as they run. */
+  trailColor: number
+  /** Half-width of the formation: lanes are spread across this distance either
+   *  side of the run, so the pack has depth instead of running single file. */
+  spread: number
+  /** Gap between one fox setting off and the next. */
+  staggerMs: number
+  /** How much each fox's travel time may differ from `durationMs` (fraction,
+   *  e.g. 0.12 for 12%). Keeps them from arriving in lockstep. */
+  durationJitter?: number
+  /** Peak rise of each bound. */
+  bounce?: number
+  /** Bounds per second. */
+  gaitRate?: number
+  /** Amplitude of the lazy side-to-side weave each fox runs, in world units. */
+  weave?: number
+}
+
+/**
+ * A ring of foxes circling a castle (Kitsune's Kitsune Rush) for as long as the
+ * Rush holds. Unlike the fox PACK, which crosses the field once, this one stays
+ * and laps - the visual for a kingdom running at double speed.
+ */
+export interface FoxOrbitConfig {
+  /** How many foxes make up the ring. */
+  count: number
+  /** Base orbit radius in world units; each fox varies around it. */
+  radius: number
+  /** Base laps per second; each fox varies around it. */
+  lapsPerSecond: number
+  /** Size of one fox in world units. */
+  size: number
+  /** Fox silhouette colour. */
+  color: number
+  /** Foxfire motes shed off their paws. */
+  moteColor: number
+  /** Vertical squash of the orbit, 0-1 (default 0.52). Below 1 the ring reads
+   *  as ground the foxes are running on rather than a circle on the screen. */
+  flatten?: number
+  /** Peak rise of each bound. */
+  bounce?: number
+  /** Bounds per second. */
+  gaitRate?: number
+}
+
+/**
+ * A detonation of FIRE (Kitsune's Fox Fire).
+ *
+ * The impact ring is a circle that grows - clean, readable, and wrong for
+ * something that is meant to be burning. This throws tapered tongues of flame
+ * outward instead, at jittered angles and uneven reaches, and can leave pockets
+ * of fire guttering around the target for seconds afterwards.
+ */
+export interface FlameBurstConfig {
+  /** Tongues of flame hurled outward from the impact. */
+  tongues: number
+  /** How far they reach, in world units (each varies around it). */
+  reach: number
+  /** Length of one tongue, in world units (each varies around it). */
+  tongueSize: number
+  /** How long the burst itself lasts. */
+  durationMs: number
+  /** The body colour of the fire. */
+  color: number
+  /** The hotter core colour, mixed in on a minority of flames so the fire has
+   *  depth rather than being one flat hue. */
+  coreColor: number
+  /** Pockets of fire left burning around the target (default none). */
+  pockets?: number
+  /** How far they scatter (defaults to `reach`). */
+  pocketRadius?: number
+  /** How long one pocket burns (default 3000ms; each varies around it). */
+  pocketMs?: number
+  /** Size of a pocket flame (defaults to a fraction of `tongueSize`). */
+  pocketSize?: number
+}
+
+/**
+ * A filled, redrawn-every-frame blob (Magma's Floor is Lava). Like BoltNode,
+ * this is NOT a positioned sprite — the geometry itself changes every frame, so
+ * it is drawn in world coordinates rather than moved around.
+ */
+export interface BlobNode {
+  /** Clear and redraw a closed filled shape with a brighter rim. */
+  draw(points: Vec2[], fill: number, rim: number, alpha: number): void
+  /** Hide and clear the geometry (for pooled reuse). */
+  clear(): void
+  destroy(): void
+}
+
+/**
+ * The gap between the mountain opening and the first gob actually leaving it.
+ * Exported because the floating damage numbers have to be held for the SAME
+ * total — buildup + this + travel — or the damage lands seconds before the
+ * lava does.
+ */
+/**
+ * Magma's Eruption: the ground shakes, the mountain opens, and lava is thrown
+ * in an arc onto the target.
+ *
+ * The buildup is the point. A heavy hit that simply appears is indistinguishable
+ * from a basic attack with bigger numbers; several seconds of rumble before
+ * anything is thrown tells the whole table what is coming and who it is coming
+ * for, which is what makes the ability feel like an eruption instead of a shot.
+ */
+export const ERUPTION_LAUNCH_LEAD_MS = 120
+
+/**
+ * How long the volcano draws inward before it detonates (see
+ * `playVolcanoEruption`). Lives here rather than as a literal in the framework
+ * so the damage numbers can be held for exactly as long as the wind-up.
+ */
+export const VOLCANO_WINDUP_MS = 460
+
+export interface EruptionConfig {
+  /** How long the ground shakes before the mountain opens. */
+  buildupMs: number
+  /** Peak shake magnitude, reached at the end of the buildup. */
+  shake: number
+  /** How many gobs of lava are thrown. */
+  gobs: number
+  /** Gap between one gob launching and the next. */
+  gobStaggerMs: number
+  /** Flight time of one gob. */
+  travelMs: number
+  /** Peak height of the throwing arc, in world units. */
+  arc: number
+  /** Size of one gob. */
+  gobSize: number
+  /** How far above the castle's centre the vent sits (negative = up). */
+  ventY: number
+  /** Bright molten core. */
+  coreColor: number
+  /** Darker cooling lava. */
+  lavaColor: number
+  /** Flying embers. */
+  emberColor: number
+  /** Smoke rising from the vent. */
+  smokeColor: number
+}
+
+/**
+ * Magma's Floor is Lava: molten ground that wells up out of the Magma castle
+ * and creeps outward until it has swallowed the whole battlefield, then cools
+ * and fades when the ability ends.
+ *
+ * Deliberately NOT a growing circle. The edge is sampled at irregular radii
+ * that drift over time, so the front advances in lobes and inlets the way a
+ * spreading liquid does — a clean circle reads as a targeting indicator, which
+ * is the opposite of what this is.
+ */
+export interface LavaFloorConfig {
+  /** How long the flood takes to cover the field. */
+  spreadMs: number
+  /** How long it takes to cool away once stopped. */
+  fadeMs: number
+  /** Radius the front reaches at full spread, in world units. */
+  radius: number
+  /** Points around the edge. More = smoother; fewer = coarser lobes. */
+  samples: number
+  /** How far the edge deviates from a circle, as a fraction of the radius. */
+  roughness: number
+  /** Molten fill. */
+  fillColor: number
+  /** Brighter crust at the leading edge. */
+  rimColor: number
+  /** Bubbles and embers popping across the surface. */
+  emberColor: number
+  /** Opacity of the flood at full strength. */
+  opacity: number
 }

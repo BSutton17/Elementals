@@ -3,6 +3,7 @@ import { render, cleanup, act } from '@testing-library/react'
 import { buildNumber, FloatingNumbers } from './FloatingNumbers'
 import { applyEventBatch } from '../game/gameEvents'
 import { ABILITY_EFFECTS } from '../render/effects'
+import { ERUPTION_LAUNCH_LEAD_MS, VOLCANO_WINDUP_MS } from '../render/types'
 import type { RawGameEvent } from '../game/events'
 
 afterEach(cleanup)
@@ -209,4 +210,36 @@ test('a damage <text> appears only after the projectile lands, then clears at 2.
   } finally {
     vi.useRealTimers()
   }
+})
+
+test('Eruption holds its number for the whole rumble AND the flight', () => {
+  // The server deals Eruption's damage the instant it is cast, but the visual
+  // spends two seconds shaking the ground before it throws anything and then
+  // arcs the lava across the field. Without an explicit delay the number pops
+  // up while the mountain is still rumbling — seconds before the lava lands.
+  const hit = buildNumber(
+    raw({ type: 'damage', tick: 1, sourceId: 'a', targetId: 'b', amount: 450, crit: false, cause: 'eruption' }),
+    positionOf,
+    kingdomOf,
+    colorOf,
+    () => 0,
+  )
+  const cfg = ABILITY_EFFECTS.eruption!.eruption!
+  expect(hit!.delayMs).toBe(cfg.buildupMs + ERUPTION_LAUNCH_LEAD_MS + cfg.travelMs)
+  // Sanity: that is a long hold, and specifically longer than the buildup
+  // alone — the flight has to be counted too, not just the rumble.
+  expect(hit!.delayMs).toBeGreaterThan(cfg.buildupMs)
+})
+
+test('the volcano eruption waits out its wind-up', () => {
+  // Not an ability cast, so it has no entry in the effects table — but its
+  // blast still draws inward for a beat before it goes off.
+  const hit = buildNumber(
+    raw({ type: 'damage', tick: 1, sourceId: 'a', targetId: 'b', amount: 5000, crit: false, cause: 'volcano' }),
+    positionOf,
+    kingdomOf,
+    colorOf,
+    () => 0,
+  )
+  expect(hit!.delayMs).toBe(VOLCANO_WINDUP_MS)
 })

@@ -1,7 +1,7 @@
 import type { DisplayNode, ProjectileConfig, ProjectileShape, Vec2 } from '../types'
 import { ObjectPool, type PoolOptions } from '../pool'
 import { ease } from '../easing'
-import { angleBetween, lerpPoint } from '../trajectory'
+import { angleBetween, applySpiral, lerpPoint } from '../trajectory'
 import { UNIT_RADIUS, resetDisplayNode } from '../nodeUtil'
 
 /**
@@ -27,6 +27,33 @@ export interface GravityWell {
 // the framework uses to trigger the impact/particles at B). Nodes are pooled,
 // with a separate pool per SHAPE (circle blobs vs. Icicle spikes) so each keeps
 // its own silhouette; an unknown/missing shape falls back to the circle pool.
+
+/**
+ * A running bob for four-legged projectiles (Kitsune's foxes). Lifts the sprite
+ * through each bound and pitches its body with the stride. Applied AFTER the
+ * path, so it is pure animation — it never changes where the projectile is
+ * heading or when it gets there.
+ */
+export function applyGait(
+  node: DisplayNode,
+  from: Vec2,
+  to: Vec2,
+  elapsedMs: number,
+  config: ProjectileConfig,
+): void {
+  const gait = config.gait
+  if (!gait) return
+  const beat = (elapsedMs / 1000) * gait.rate + (gait.phase ?? 0)
+  // |sin| so every bound arcs UPWARD: a plain sine would drive the fox into
+  // the ground on alternate strides.
+  node.y -= Math.abs(Math.sin(beat * Math.PI)) * gait.bounce
+  if (gait.tilt) {
+    // Pitch about the direction of travel — nose up on the rise, down on the
+    // landing — rather than about world zero, or the fox would run sideways.
+    const base = config.faceDirection ? angleBetween(from, to) : node.rotation
+    node.rotation = base + Math.cos(beat * Math.PI * 2) * gait.tilt
+  }
+}
 
 interface ActiveProjectile {
   node: DisplayNode
@@ -205,9 +232,17 @@ export class ProjectileSystem {
       p.elapsed += dtMs
       const raw = p.config.durationMs <= 0 ? 1 : Math.min(1, p.elapsed / p.config.durationMs)
       const pos = lerpPoint(p.from, p.to, ease(p.config.easing, raw))
+      // A spiral is applied as a perpendicular offset to the straight path, so
+      // the projectile still departs and arrives exactly where it should — the
+      // curve is presentation, never a change of destination.
+      if (p.config.spiral) applySpiral(pos, p.from, p.to, raw, p.config.spiral)
       this.bendTowardWells(pos, raw)
       p.node.x = pos.x
       p.node.y = pos.y
+      // A lob, applied AFTER the path and always toward the top of the screen,
+      // so a shot fired left and one fired right arc the same way (see `arc`).
+      if (p.config.arc) p.node.y -= Math.sin(raw * Math.PI) * p.config.arc
+      if (p.config.gait) applyGait(p.node, p.from, p.to, p.elapsed, p.config)
       if (!p.config.faceDirection && p.config.spin) {
         p.node.rotation += p.config.spin * (dtMs / 1000)
       }

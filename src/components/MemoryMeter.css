@@ -1,0 +1,11 @@
+/* Kitsune's Ancient Memory. Structurally the Rage meter — same bar, same
+   states — recoloured to Kitsune's sapphire so the two read as the same KIND
+   of thing without being mistaken for each other. */
+.memory-meter .rage-meter__fill {
+  background: linear-gradient(90deg, #1b2f7a, #0f52ba, #4f9cf9);
+}
+
+.memory-meter .rage-meter__label,
+.memory-meter .rage-meter__value {
+  color: #9dc4ff;
+}

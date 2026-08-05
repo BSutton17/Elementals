@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
-import { RageMeter } from './RageMeter'
+import { RageMeter, RAGE_FULL_FALLBACK } from './RageMeter'
 
 // The cap belongs to the SERVER (`DARK.RAGE_FULL`, shipped as
 // `config.rageFull`). This component used to keep its own copy and went on
-// advertising "0 / 6000" for a whole retune after the engine moved to 2500 —
-// the meter looked authoritative and was simply wrong.
+// advertising a stale cap for a whole retune after the engine moved on — the
+// meter looked authoritative and was simply wrong.
 
 describe('RageMeter', () => {
   it('reads its cap from the server, not from a constant of its own', () => {
@@ -31,9 +31,18 @@ describe('RageMeter', () => {
     expect((container.querySelector('.rage-meter__fill') as HTMLElement).style.width).toBe('100%')
   })
 
-  it('falls back to the current tuning before the config arrives', () => {
-    // Not a licence to hardcode: this is only the pre-config frame.
+  it('falls back to its own constant before the config arrives', () => {
+    // Asserted against the constant rather than against a literal: pinning a
+    // number here is how this drifted in the first place, and a retune should
+    // move the fallback, not break the test.
     const { getByTestId } = render(<RageMeter meter={0} />)
-    expect(getByTestId('rage-meter').textContent).toContain('0 / 2500')
+    expect(getByTestId('rage-meter').textContent).toContain(`0 / ${RAGE_FULL_FALLBACK}`)
+  })
+
+  it('lets the server override the fallback, whatever the fallback says', () => {
+    // The actual guarantee: once a cap arrives, the local constant is ignored.
+    const other = RAGE_FULL_FALLBACK + 1234
+    const { getByTestId } = render(<RageMeter meter={0} full={other} />)
+    expect(getByTestId('rage-meter').textContent).toContain(`0 / ${other}`)
   })
 })

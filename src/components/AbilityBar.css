@@ -1676,3 +1676,25 @@
 @media (prefers-reduced-motion: reduce) {
   .ability-button__barred-sign { animation: none; }
 }
+
+/* "Besieged": two or more kingdoms are on you, so your gold production is
+   running above its normal rate. Sits against the income figure it explains —
+   the number moves on its own otherwise, with nothing saying why. */
+.ability-bar__besieged {
+  display: inline-flex;
+  margin-left: 0.25rem;
+  color: #6bd88a;
+  font-size: 0.9em;
+  vertical-align: -0.05em;
+  animation: besieged-lift 1.6s ease-in-out infinite;
+  cursor: help;
+}
+
+@keyframes besieged-lift {
+  0%, 100% { transform: translateY(0); opacity: 0.75; }
+  50% { transform: translateY(-2px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ability-bar__besieged { animation: none; opacity: 1; }
+}

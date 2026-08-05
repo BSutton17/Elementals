@@ -224,5 +224,58 @@ export interface StatusRepelledEvent {
   cause: string
 }
 
+/**
+ * Magma's "The End of the World" went off: the field failed to break the
+ * volcano in time, and every kingdom but Magma is taking the shared shortfall.
+ */
+export interface VolcanoEruptedEvent {
+  type: 'volcanoErupted'
+  tick: number
+  ownerId: string
+  /** How much the field managed to chip off between them. */
+  absorbed: number
+  /** The bill each of them takes. Zero means they covered it in time. */
+  amount: number
+  contributions: Record<string, number>
+}
+
+/** The field broke the volcano before the clock ran out. Nobody is hurt. */
+export interface VolcanoBrokenEvent {
+  type: 'volcanoBroken'
+  tick: number
+  ownerId: string
+}
+
+/**
+ * Magma's "Floor is Lava": the whole battlefield goes molten for `durationTicks`
+ * — every burn on it hits harder, and Magma's own attacks hit harder too. The
+ * duration comes off the event so the visual sheet cools exactly when the
+ * mechanic does, with no client-side timer to drift.
+ */
+export interface LavaFloorLitEvent {
+  type: 'lavaFloorLit'
+  tick: number
+  /** The Magma that lit it — the sheet wells up out of their castle. */
+  ownerId: string
+  durationTicks: number
+  multiplier: number
+}
+
+/**
+ * Magma's "Hot ash": a periodic public readout of who is currently aiming at
+ * Magma — and therefore taking extra damage from it. Nothing changes when it
+ * fires; it only shows what is already true, so the marked kingdoms are
+ * flagged for `durationTicks` and then cleared.
+ */
+export interface HotAshMarkedEvent {
+  type: 'hotAshMarked'
+  tick: number
+  /** The Magma kingdom being aimed at. */
+  ownerId: string
+  /** Every kingdom currently targeting it. */
+  targeterIds: string[]
+  durationTicks: number
+}
+
 /** Any event as it arrives on the wire; decoded to a typed shape per handler. */
 export type RawGameEvent = { type: string; tick: number } & Record<string, unknown>
