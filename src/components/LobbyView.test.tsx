@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { LobbyView } from './LobbyView'
 import { SELECTABLE_KINGDOMS } from '../game/kingdoms'
+import { KINGDOM_DIFFICULTY, MAX_DIFFICULTY } from '../game/kingdomInfo'
 import type { LobbyMatch } from '../game/lobby'
 
 /** A full perk selection, so a fixture player can ready up. */
@@ -269,6 +270,67 @@ describe('the kingdom picker layout', () => {
     // The dossier is the thing that needed room — it must actually carry the
     // passives and abilities text, not just a title.
     expect(dossier!.querySelectorAll('.lobby__details-desc').length).toBeGreaterThan(4)
+  })
+
+  it('rates how hard the kingdom is, above the passives', () => {
+    const { container } = renderLobby({
+      match: {
+        ...match,
+        players: [match.players[0]!, { ...match.players[1]!, kingdomId: 'kitsune' }],
+      },
+    })
+    const dossier = container.querySelector('[data-testid="kingdom-details"]')!
+    const rating = dossier.querySelector('[data-testid="kingdom-difficulty"]')
+    expect(rating).not.toBeNull()
+    // Kitsune is a 2: two earned stars and one left empty. Both halves matter —
+    // showing only the earned stars reads as "2" rather than "2 of 3".
+    expect(dossier.querySelectorAll('.lobby__difficulty-star')).toHaveLength(MAX_DIFFICULTY)
+    expect(dossier.querySelectorAll('.lobby__difficulty-star--empty')).toHaveLength(
+      MAX_DIFFICULTY - KINGDOM_DIFFICULTY.kitsune!,
+    )
+    // Announced as one thing, not as a row of anonymous stars.
+    expect(rating!.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(
+      `Difficulty 2 out of ${MAX_DIFFICULTY}`,
+    )
+    // Above the passives, which is where it was asked for: the difficulty node
+    // must come before the first heading in document order.
+    const heading = dossier.querySelector('.lobby__details-heading')!
+    expect(
+      rating!.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('is labelled, so the stars are not read as a quality score', () => {
+    const { container } = renderLobby({
+      match: {
+        ...match,
+        players: [match.players[0]!, { ...match.players[1]!, kingdomId: 'water' }],
+      },
+    })
+    const rating = container.querySelector('[data-testid="kingdom-difficulty"]')!
+    expect(rating.textContent).toContain('Difficulty')
+  })
+})
+
+describe('every kingdom is rated', () => {
+  it('has a difficulty for each selectable kingdom', () => {
+    // A missing entry renders NO stars at all, which reads as a broken panel
+    // rather than as an omission — so a new kingdom must not be able to slip
+    // in without one.
+    for (const k of SELECTABLE_KINGDOMS) {
+      const rating = KINGDOM_DIFFICULTY[k.id]
+      expect(rating, `${k.id} has no difficulty rating`).toBeDefined()
+      expect(Number.isInteger(rating), `${k.id}'s rating is not a whole number`).toBe(true)
+      expect(rating).toBeGreaterThanOrEqual(1)
+      expect(rating).toBeLessThanOrEqual(MAX_DIFFICULTY)
+    }
+  })
+
+  it('rates nothing that is not a kingdom', () => {
+    const ids = new Set(SELECTABLE_KINGDOMS.map((k) => k.id))
+    for (const id of Object.keys(KINGDOM_DIFFICULTY)) {
+      expect(ids.has(id as (typeof SELECTABLE_KINGDOMS)[number]['id']), `${id} is not a kingdom`).toBe(true)
+    }
   })
 })
 

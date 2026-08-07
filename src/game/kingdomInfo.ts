@@ -9,6 +9,39 @@ export interface KingdomPassiveInfo {
   weakness?: boolean
 }
 
+/** How many stars a difficulty rating is out of. */
+export const MAX_DIFFICULTY = 3
+
+/**
+ * How hard each kingdom is to play WELL, from 1 (pick this up and fight) to 3.
+ *
+ * This rates demand on the player, not strength. A 3 is not better than a 1 —
+ * it wants more attention, more setup, or a combination held together across
+ * several casts. Electricity, Space, Light, Dark and Love all ask you to build
+ * toward something; Water, Fire, Ice and Magma reward playing straight.
+ *
+ * Every kingdom in `KINGDOM_PASSIVES_INFO` needs an entry — a missing one shows
+ * no stars at all, which reads as a rendering fault rather than as an omission.
+ */
+export const KINGDOM_DIFFICULTY: Record<string, number> = {
+  water: 1,
+  fire: 1,
+  air: 2,
+  earth: 2,
+  ice: 1,
+  electricity: 3,
+  nature: 2,
+  time: 2,
+  space: 3,
+  light: 3,
+  dark: 3,
+  love: 3,
+  joker: 2,
+  kitsune: 2,
+  magma: 1,
+  insects: 2,
+}
+
 export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
   water: [
     {

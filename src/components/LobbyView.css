@@ -624,6 +624,43 @@
   padding-bottom: 0.6rem;
 }
 
+/* How demanding the kingdom is to play, above the passives. Sits tight under
+   the title so it reads as part of the heading block rather than as the first
+   item in a list. */
+.lobby__difficulty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -0.25rem 0 0;
+}
+
+/* Labelled, because a bare row of stars beside a kingdom reads as a rating of
+   how GOOD it is rather than how hard it is to play. */
+.lobby__difficulty-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.lobby__difficulty-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  /* White rather than the kingdom's own colour: the panel is dark, and a
+     dark-violet kingdom's stars would be unreadable against it. */
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* The unearned stars stay visible but recede, so the rating reads as "2 of 3"
+   at a glance instead of just "2". */
+.lobby__difficulty-star--empty {
+  color: rgba(255, 255, 255, 0.28);
+}
+
 .lobby__details-heading {
   margin: 1rem 0 0.5rem;
   font-size: 0.75rem;

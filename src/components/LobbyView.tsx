@@ -2,7 +2,8 @@ import { useState, type CSSProperties } from 'react'
 import { RoomCode } from './RoomCode'
 import { HowToPlay } from '../pages/HowToPlay'
 import { KINGDOMS, SELECTABLE_KINGDOMS, type KingdomId } from '../game/kingdoms'
-import { KINGDOM_PASSIVES_INFO } from '../game/kingdomInfo'
+import { KINGDOM_PASSIVES_INFO, KINGDOM_DIFFICULTY, MAX_DIFFICULTY } from '../game/kingdomInfo'
+import { IoIosStar, IoIosStarOutline } from 'react-icons/io'
 import { accentFor, outlineFor } from '../game/contrast'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { KINGDOM_ICONS } from '../game/kingdomIcons'
@@ -54,6 +55,39 @@ function PerkChips({ perks }: { perks: string[] | undefined }) {
   )
 }
 
+/**
+ * How demanding a kingdom is to play, as filled stars out of `MAX_DIFFICULTY`.
+ *
+ * Rated on the player, not on power: a three-star kingdom is not stronger, it
+ * just wants more attention and setup. The label says so, because a bare row of
+ * stars beside a kingdom reads as a quality score otherwise.
+ */
+function Difficulty({ kingdomId }: { kingdomId: string }) {
+  const rating = KINGDOM_DIFFICULTY[kingdomId]
+  if (rating === undefined) return null
+  const label = `Difficulty ${rating} out of ${MAX_DIFFICULTY}`
+  return (
+    <p className="lobby__difficulty" data-testid="kingdom-difficulty">
+      <span className="lobby__difficulty-label">Difficulty</span>
+      {/* One label for the row, and the stars themselves hidden from screen
+          readers — sixteen "star" announcements say nothing useful. */}
+      <span className="lobby__difficulty-stars" role="img" aria-label={label}>
+        {Array.from({ length: MAX_DIFFICULTY }, (_, i) =>
+          i < rating ? (
+            <IoIosStar key={i} className="lobby__difficulty-star" aria-hidden />
+          ) : (
+            <IoIosStarOutline
+              key={i}
+              className="lobby__difficulty-star lobby__difficulty-star--empty"
+              aria-hidden
+            />
+          ),
+        )}
+      </span>
+    </p>
+  )
+}
+
 /** The selected kingdom's passives and ability lineup (no prices). */
 function KingdomDetails({ kingdomId }: { kingdomId: string }) {
   const passives = KINGDOM_PASSIVES_INFO[kingdomId] ?? []
@@ -65,6 +99,7 @@ function KingdomDetails({ kingdomId }: { kingdomId: string }) {
   return (
     <div className="lobby__kingdom-details" data-testid="kingdom-details">
       <h3 className="lobby__details-title">{label}</h3>
+      <Difficulty kingdomId={kingdomId} />
 
       <h4 className="lobby__details-heading">Passives</h4>
       <ul className="lobby__details-list">

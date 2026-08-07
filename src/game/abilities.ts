@@ -957,7 +957,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   caprice: {
     id: 'caprice',
     name: 'Caprice',
-    description: 'A giant butterfly holds the middle of the battlefield for 25 seconds. While it is there everyone\'s target . You are exempt, you aim freely, and nobody can target YOU at all until it leaves. Only one thing may hold the middle of the field: you cannot send it out while another kingdom’s centrepiece still stands.',
+    description: 'A giant butterfly holds the middle of the battlefield for 25 seconds. While it is there everyone\'s target selection is scrambled. You are exempt and nobody can target YOU at all until it leaves. Only one thing may hold the middle of the field: you cannot send it out while another kingdom’s centrepiece still stands.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'insects',
