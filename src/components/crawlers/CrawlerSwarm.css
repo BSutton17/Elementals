@@ -1,0 +1,111 @@
+/* Insects' "Creepy Crawlers", on the victim's own screen.
+
+   The layer sits above EVERYTHING. What the ability really takes is attention,
+   not gold: the bugs are in the way, they eat the clicks meant for the buttons
+   underneath, and getting rid of them means stopping whatever else you were
+   doing. An overlay you could click through would just be scenery. */
+
+.crawlers {
+  position: fixed;
+  inset: 0;
+  /* Above every other overlay in the game — Hack (9999) included. Nothing
+     should ever be on top of the bugs, because being in the way IS the
+     ability. */
+  z-index: 10000;
+  /* The container itself lets clicks through; only the bugs take them, so the
+     rest of the screen stays usable while you hunt them down. */
+  pointer-events: none;
+}
+
+.crawlers__bug {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #cfe86a;
+  pointer-events: auto;
+  cursor: crosshair;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.75));
+  /* The wander is driven per frame in JS, not by keyframes — a keyframed path
+     can only run straight between fixed waypoints, and its rotation is
+     whatever was written down rather than wherever the bug is actually going.
+     See CrawlerSwarm.tsx. */
+  will-change: transform;
+}
+
+.crawlers__bug svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* The legs. There is no per-leg geometry in an icon font, so the scuttle is
+   sold by rocking and squashing the whole body on a short cycle — at this size
+   that reads as six legs working rather than a sprite being dragged. */
+.crawlers__body {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: crawler-step 0.28s steps(4, end) infinite;
+  transform-origin: 50% 70%;
+}
+
+/* Stopped: the legs stop too. A bug that pauses to look around but keeps
+   working its legs reads as broken rather than as alive. */
+.crawlers__bug[data-moving='false'] .crawlers__body {
+  animation-play-state: paused;
+}
+
+@keyframes crawler-step {
+  0% {
+    transform: rotate(-7deg) scale(1, 0.94);
+  }
+  25% {
+    transform: rotate(0deg) scale(0.97, 1.03);
+  }
+  50% {
+    transform: rotate(7deg) scale(1, 0.94);
+  }
+  75% {
+    transform: rotate(0deg) scale(1.03, 1.01);
+  }
+  100% {
+    transform: rotate(-7deg) scale(1, 0.94);
+  }
+}
+
+/* Hit but not killed: it flinches and flashes, so the first of the two clicks
+   visibly registers instead of appearing to have done nothing. */
+.crawlers__bug--struck .crawlers__body {
+  animation: crawler-flinch 0.26s ease-out;
+  color: #fff3a0;
+}
+
+@keyframes crawler-flinch {
+  0% {
+    transform: scale(1.35) rotate(-24deg);
+    filter: brightness(2.4);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+}
+
+.crawlers__bug:hover {
+  color: #eaffa0;
+}
+
+/* Reduced motion: the legs stop working. The bugs still wander — that is the
+   ability, not decoration, and freezing them would make the swarm trivial —
+   but nothing strobes. */
+@media (prefers-reduced-motion: reduce) {
+  .crawlers__body {
+    animation: none;
+  }
+  .crawlers__bug--struck .crawlers__body {
+    animation: none;
+  }
+}

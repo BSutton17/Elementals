@@ -14,10 +14,11 @@ import { CgSandClock } from 'react-icons/cg'
 import { LiaUserTimesSolid } from 'react-icons/lia'
 import { LuReceiptJapaneseYen } from 'react-icons/lu'
 import { FaSmog } from 'react-icons/fa'
-import { GiEruption, GiPunchBlast, GiLava, GiSmokingVolcano, GiFire, GiFox, GiFoxHead, GiFoxTail, GiFlashGrenade, GiLighthouse, GiCardAceSpades, GiCardExchange, GiCardRandom, GiRollingDices, GiEvilLove, GiDreamCatcher, GiDelighted } from 'react-icons/gi'
+import { GiInsectJaws, GiHangingSpider, GiButterflyFlower, GiEruption, GiPunchBlast, GiLava, GiSmokingVolcano, GiFire, GiFox, GiFoxHead, GiFoxTail, GiFlashGrenade, GiLighthouse, GiCardAceSpades, GiCardExchange, GiCardRandom, GiRollingDices, GiEvilLove, GiDreamCatcher, GiDelighted } from 'react-icons/gi'
 import { IoFlashlight } from 'react-icons/io5'
-import { PiBugDroid } from 'react-icons/pi'
+import { PiBugDroid, PiButterflyFill } from 'react-icons/pi'
 import { BsShadows } from 'react-icons/bs'
+import { BiBug } from 'react-icons/bi'
 
 export interface ClientAbilityMetadata {
   id: string
@@ -796,7 +797,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   foxSwipe: {
     id: 'foxSwipe',
     name: 'Fox Swipe',
-    description: 'The reliable opener — a clean hit that also adds a flat 10 to your Ancient Memory, on top of the share every point of damage already feeds it.',
+    description: 'A clean hit that also adds progress to your Ancient Memory.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'kitsune',
@@ -807,7 +808,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   foxFire: {
     id: 'foxFire',
     name: 'Fox Fire',
-    description: 'An enchanting volley that leaves a burn behind. Every attack the victim makes fans the flames hotter, so it taxes exactly the kingdom that refuses to sit still — and it stacks. Feeds your Ancient Memory.',
+    description: 'An enchanting volley that leaves a burn behind. Every attack the victim makes fans the flames hotter — and it stacks. Feeds your Ancient Memory.',
     hotkey: 'E',
     kind: 'attack',
     element: 'kitsune',
@@ -829,7 +830,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   azureGuidance: {
     id: 'azureGuidance',
     name: 'Azure Guidance',
-    description: 'Ancient Memory fills twice as fast for a short window — every source of it, not just the passive trickle. It does nothing on its own; it brings Kitsune Rush forward.',
+    description: 'Ancient Memory fills twice as fast for a short window — every source of it, not just the passive trickle.',
     hotkey: 'R',
     kind: 'utility',
     element: 'kitsune',
@@ -853,7 +854,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   lavaPunch: {
     id: 'lavaPunch',
     name: 'Lava Punch',
-    description: 'The reliable opener, with a 35% chance of leaving a burn behind. Your burns go straight through shields — a shield softens them, but never stops them.',
+    description: 'Basic Magma attack with a chance of burning the enemy.',
     hotkey: 'Q',
     kind: 'attack',
     element: 'magma',
@@ -864,7 +865,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   eruption: {
     id: 'eruption',
     name: 'Eruption',
-    description: 'A volley of lava that hits hard, with a 20% chance of leaving a burn. Your burns go through shields, though a shield softens them.',
+    description: 'A volley of lava that hits hard, with a chance of leaving a burn.',
     hotkey: 'E',
     kind: 'attack',
     element: 'magma',
@@ -875,7 +876,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   floorIsLava: {
     id: 'floorIsLava',
     name: 'Floor is Lava',
-    description: 'Set the whole battlefield alight: every burn on it hits 50% harder for 20 seconds — yours, Fire’s, Kitsune’s foxfire, all of them. Burns on YOU are unaffected; you walk on your own lava. It fans other kingdoms’ fires too, so light it when the field is already smouldering. While it burns you also deal 10% more damage with every attack.',
+    description: 'Set the whole battlefield alight: while active, all burn damage has increased damage for EVERY kingdom. While it burns you also deal 10% more damage with every attack.',
     hotkey: 'F',
     kind: 'utility',
     element: 'magma',
@@ -886,7 +887,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   smokeScreen: {
     id: 'smokeScreen',
     name: 'Smoke Screen',
-    description: 'Thick smoke rolls over every kingdom currently targeting you — blinding them and singeing them for a little damage. Untargeted: they picked themselves by pointing at you.',
+    description: 'Thick smoke rolls over every kingdom currently targeting you — blinding them and singeing them for a little damage.',
     hotkey: 'R',
     kind: 'utility',
     element: 'magma',
@@ -897,13 +898,72 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   theEndOfTheWorld: {
     id: 'theEndOfTheWorld',
     name: 'The End of the World',
-    description: 'A volcano erupts in the middle of the battlefield with 1000 health per living kingdom and 20 seconds on the clock. Every kingdom but you must click it to target it and attack it. When the timer runs out they ALL take 5000 damage minus whatever the field dealt between them — one shared bill, so they either cooperate or go down together. Break it in time and nobody is hurt.',
+    description: 'A volcano erupts in the middle of the battlefield with 1000 health per living kingdom and 20 seconds on the clock. Every kingdom but you must click on the volcano and attack it. If they fail, each kingdom takes heavy damage. Only one thing may hold the middle of the field: you cannot raise it while another kingdom’s centrepiece still stands.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'magma',
     color: '#a8320a',
     gradient: 'linear-gradient(135deg, #3d0f04, #a8320a, #ff7518)',
     icon: GiSmokingVolcano,
+  },
+
+  // Insects Abilities — PLACEHOLDER kit. Names, copy and icons all land with
+  // the real design; what matters today is that the kingdom is fully playable,
+  // so the ability bar has five real buttons rather than an empty rail.
+  venomShot: {
+    id: 'venomShot',
+    name: 'Venom Shot',
+    description: 'Basic Insect attack with a chance of leaving venom behind. Venom stacks, so a kingdom that keeps eating this bleeds progressively harder.',
+    hotkey: 'Q',
+    kind: 'attack',
+    element: 'insects',
+    color: '#a8c020',
+    gradient: 'linear-gradient(135deg, #3c4708, #a8c020, #d7e84a)',
+    icon: BiBug,
+  },
+  butterflies: {
+    id: 'butterflies',
+    name: 'Butterflies',
+    description: 'A heavy hit that leaves the target both softer and clumsier for 20 seconds: they take 10% more damage from everyone, and HALF of their own attacks now miss outright. Follow it with Infected and every one of those whiffs comes back at them.',
+    hotkey: 'E',
+    kind: 'attack',
+    element: 'insects',
+    color: '#a8c020',
+    gradient: 'linear-gradient(135deg, #3c4708, #a8c020, #d7e84a)',
+    icon: PiButterflyFill,
+  },
+  infected: {
+    id: 'infected',
+    name: 'Infected',
+    description: 'Heavy damage, and for 15 seconds any attack the target MISSES is deflected straight back into their own castle. Worthless on its own — nothing makes them miss but Butterflies, and against a target already carrying it, half of everything they throw rebounds.',
+    hotkey: 'F',
+    kind: 'attack',
+    element: 'insects',
+    color: '#a8c020',
+    gradient: 'linear-gradient(135deg, #3c4708, #a8c020, #d7e84a)',
+    icon: GiInsectJaws,
+  },
+  creepyCrawlers: {
+    id: 'creepyCrawlers',
+    name: 'Creepy Crawlers',
+    description: 'Send three bugs to crawl over an enemy’s screen, eating their gold the whole time. Each one takes two clicks to squash.',
+    hotkey: 'R',
+    kind: 'utility',
+    element: 'insects',
+    color: '#a8c020',
+    gradient: 'linear-gradient(135deg, #3c4708, #a8c020, #d7e84a)',
+    icon: GiHangingSpider,
+  },
+  caprice: {
+    id: 'caprice',
+    name: 'Caprice',
+    description: 'A giant butterfly holds the middle of the battlefield for 25 seconds. While it is there everyone\'s target . You are exempt, you aim freely, and nobody can target YOU at all until it leaves. Only one thing may hold the middle of the field: you cannot send it out while another kingdom’s centrepiece still stands.',
+    hotkey: 'Space',
+    kind: 'ultimate',
+    element: 'insects',
+    color: '#a8c020',
+    gradient: 'linear-gradient(135deg, #3c4708, #a8c020, #d7e84a)',
+    icon: GiButterflyFlower,
   },
 }
 

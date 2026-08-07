@@ -2,25 +2,35 @@
 // metadata for the lobby's kingdom selector.
 
 export const KINGDOMS = [
+  // Order matters: this is the order the lobby's select grid shows them in,
+  // laid out as a 4x4. Roughly elemental first, then the stranger kingdoms.
+  // --- row 1 ---
   { id: 'water', label: 'Water', color: '#4aa3ff' },
   { id: 'fire', label: 'Fire', color: '#ff6b4a' },
   { id: 'air', label: 'Air', color: '#b7c9ff' },
   { id: 'earth', label: 'Earth', color: '#c9a56b' },
-  { id: 'electricity', label: 'Electricity', color: '#a855f7' },
+  // --- row 2 ---
   { id: 'ice', label: 'Ice', color: '#8fe3ff' },
+  { id: 'electricity', label: 'Electricity', color: '#a855f7' },
   { id: 'nature', label: 'Nature', color: '#6bd88a' },
-  { id: 'time', label: 'Time', color: '#a9834e' }, // grandfather-clock brass
-  { id: 'space', label: 'Space', color: '#5b21b6' }, // deep void-violet
-  { id: 'love', label: 'Love', color: '#ff4d8d' }, // rose pink
-  { id: 'joker', label: 'Joker', color: '#e02434' }, // circus red
-  { id: 'light', label: 'Light', color: '#f7f7f2' }, // pure white
-  { id: 'dark', label: 'Dark', color: '#12121a' }, // near-black
+  { id: 'time', label: 'Time', color: '#a9834e' },
+  // --- row 3 ---
+  { id: 'space', label: 'Space', color: '#5b21b6' },
+  { id: 'light', label: 'Light', color: '#f7f7f2' },
+  { id: 'dark', label: 'Dark', color: '#12121a' },
+  { id: 'love', label: 'Love', color: '#ff4d8d' },
+  // --- row 4 ---
+  { id: 'joker', label: 'Joker', color: '#e02434' },
   // Deep sapphire — a rich blue kept clear of Water's bright azure (#4aa3ff)
   // and Ice's pale cyan (#8fe3ff), and of Space's violet.
   { id: 'kitsune', label: 'Kitsune', color: '#0f52ba' },
   // Molten rock — a deep burnt orange, well below Fire's bright coral
   // (#ff6b4a) and a different hue from Joker's red (#e02434).
   { id: 'magma', label: 'Magma', color: '#a8320a' },
+  // Acid chartreuse — chitin and venom. The one clearly unclaimed hue left:
+  // ~67 degrees off Nature's mint (#6bd88a), and away from Earth's sandstone
+  // (#c9a56b) and Time's brass (#a9834e).
+  { id: 'insects', label: 'Insects', color: '#a8c020' },
 ] as const
 
 export type KingdomId = (typeof KINGDOMS)[number]['id']

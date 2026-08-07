@@ -362,3 +362,67 @@ export function makeBlobNode(parent: Container): BlobNode {
     },
   }
 }
+
+/**
+ * A unit INSECT in profile, nose along +x (Insects' "Infected"), so a
+ * `faceDirection` projectile scuttles head-first at the target. Three body
+ * segments, six legs and a pair of antennae — enough to read as a bug at the
+ * size an army of them ends up on screen, and no more.
+ */
+export function makeInsectNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // Six legs, splayed fore and aft, drawn under the body.
+  for (const [x, dir] of [[-0.5, -1], [0.05, -1], [0.6, -1], [-0.5, 1], [0.05, 1], [0.6, 1]] as const) {
+    g.poly([
+      R * x, 0,
+      R * (x + 0.35), R * 0.85 * dir,
+      R * (x + 0.5), R * 0.78 * dir,
+      R * (x + 0.12), 0,
+    ]).fill(0xffffff)
+  }
+  // Abdomen, thorax, head — back to front.
+  g.ellipse(-R * 0.75, 0, R * 0.62, R * 0.42).fill(0xffffff)
+  g.ellipse(-R * 0.02, 0, R * 0.5, R * 0.38).fill(0xffffff)
+  g.ellipse(R * 0.66, 0, R * 0.33, R * 0.28).fill(0xffffff)
+  // Antennae, sweeping forward.
+  g.poly([R * 0.85, -R * 0.14, R * 1.6, -R * 0.62, R * 1.5, -R * 0.4]).fill(0xffffff)
+  g.poly([R * 0.85, R * 0.14, R * 1.6, R * 0.62, R * 1.5, R * 0.4]).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}
+
+/**
+ * A unit BUTTERFLY seen from above, wings spread across the y axis (Insects'
+ * "Butterflies"). Four wings — larger fore, smaller hind — around a slim body.
+ *
+ * Not direction-facing: a butterfly circling a castle reads best upright
+ * whichever way it happens to be drifting, so the orbit leaves its rotation to
+ * the sway rather than pointing it along its path.
+ */
+export function makeButterflyNode(parent: Container): DisplayNode {
+  const R = UNIT_RADIUS
+  const g = new Graphics()
+  // Forewings: broad and swept back from the shoulders.
+  g.moveTo(0, -R * 0.15)
+  g.bezierCurveTo(-R * 1.3, -R * 1.25, -R * 1.65, -R * 0.2, -R * 0.35, R * 0.05)
+  g.fill(0xffffff)
+  g.moveTo(0, -R * 0.15)
+  g.bezierCurveTo(R * 1.3, -R * 1.25, R * 1.65, -R * 0.2, R * 0.35, R * 0.05)
+  g.fill(0xffffff)
+  // Hindwings: smaller, rounder, tucked beneath.
+  g.moveTo(0, R * 0.05)
+  g.bezierCurveTo(-R * 1.0, R * 0.5, -R * 0.9, R * 1.15, -R * 0.2, R * 0.75)
+  g.fill(0xffffff)
+  g.moveTo(0, R * 0.05)
+  g.bezierCurveTo(R * 1.0, R * 0.5, R * 0.9, R * 1.15, R * 0.2, R * 0.75)
+  g.fill(0xffffff)
+  // Body and antennae.
+  g.ellipse(0, R * 0.1, R * 0.12, R * 0.68).fill(0xffffff)
+  g.poly([0, -R * 0.5, -R * 0.5, -R * 1.05, -R * 0.4, -R * 0.85]).fill(0xffffff)
+  g.poly([0, -R * 0.5, R * 0.5, -R * 1.05, R * 0.4, -R * 0.85]).fill(0xffffff)
+  g.visible = false
+  parent.addChild(g)
+  return g as unknown as DisplayNode
+}

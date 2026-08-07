@@ -71,6 +71,11 @@ export interface GamePlayer {
     stacks: number
     /** Two-phase status has revealed (Love's "Love Galore"): drives its aura. */
     revealed?: boolean
+    /** Insects' "Creepy Crawlers": clicks landed on each bug so far. One entry
+     *  per bug; a bug is gone once it reaches `hitsToKill`. */
+    bugHits?: number[]
+    /** Clicks needed to squash one bug. */
+    hitsToKill?: number
   }>
   /**
    * A status this player can buy their way out of and its current price
@@ -150,6 +155,17 @@ export interface VolcanoSnapshot {
   ticksRemaining: number
 }
 
+/**
+ * Insects' "Caprice", as everyone sees it. Synced to the whole table: the
+ * butterfly is everybody's problem, and the client needs to know when to stop
+ * offering a targeting UI the server is about to overrule anyway.
+ */
+export interface CapriceSnapshot {
+  /** The Insects kingdom holding the field — exempt, and untargetable. */
+  ownerId: string
+  ticksRemaining: number
+}
+
 export interface GameState {
   tick: number
   serverTime: number | null
@@ -157,9 +173,23 @@ export interface GameState {
   /** The volcano standing in the middle of the field, or null when there
    *  isn't one. */
   volcano: VolcanoSnapshot | null
+  /** The butterfly holding the field, or null when there is none. */
+  caprice: CapriceSnapshot | null
+  /** The NAME of whatever holds the middle of the battlefield, or null when it
+   *  is clear. Server-decided: only one thing may ever stand there, and two of
+   *  the four candidates (the black hole, the Light Show) never appear in this
+   *  payload, so this side must not try to work it out for itself. */
+  centrepiece: string | null
 }
 
-let state: GameState = { tick: 0, serverTime: null, players: [], volcano: null }
+let state: GameState = {
+  tick: 0,
+  serverTime: null,
+  players: [],
+  volcano: null,
+  caprice: null,
+  centrepiece: null,
+}
 
 const listeners = new Set<() => void>()
 
@@ -181,19 +211,30 @@ export function applyStateSync(payload: {
   serverTime: number
   players: GamePlayer[]
   volcano?: VolcanoSnapshot | null
+  caprice?: CapriceSnapshot | null
+  centrepiece?: string | null
 }): void {
   state = {
     tick: payload.tick,
     serverTime: payload.serverTime,
     players: payload.players,
     volcano: payload.volcano ?? null,
+    caprice: payload.caprice ?? null,
+    centrepiece: payload.centrepiece ?? null,
   }
   listeners.forEach((l) => l())
 }
 
 /** Clears gameplay state (e.g. after leaving a match). */
 export function clearGameState(): void {
-  state = { tick: 0, serverTime: null, players: [], volcano: null }
+  state = {
+    tick: 0,
+    serverTime: null,
+    players: [],
+    volcano: null,
+    caprice: null,
+    centrepiece: null,
+  }
   listeners.forEach((l) => l())
 }
 

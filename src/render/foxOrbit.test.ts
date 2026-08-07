@@ -35,10 +35,12 @@ const CFG: FoxOrbitConfig = {
 function harness(cfg: FoxOrbitConfig = CFG) {
   const foxes: DisplayNode[] = []
   const sys = new FoxOrbitSystem(
-    () => {
-      const n = fakeNode()
-      foxes.push(n)
-      return n
+    {
+      fox: () => {
+        const n = fakeNode()
+        foxes.push(n)
+        return n
+      },
     },
     fakeNode,
     16,

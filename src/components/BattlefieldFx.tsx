@@ -4,6 +4,7 @@ import {
   ABILITY_EFFECTS,
   ACID_RAIN_CONFIG,
   FIREFLIES_CONFIG,
+  BUTTERFLY_SWARM,
   KITSUNE_RUSH_ORBIT,
   LAVA_FLOOR_CONFIG,
   VOLCANO_BLAST,
@@ -411,6 +412,17 @@ function dispatch(
       // Kitsune Rush: a ring of foxes laps the caster's OWN castle for as long
       // as the buff holds. Driven by the status rather than by the cast so the
       // ring can never outlive the buff it is advertising.
+      // Insects' Butterflies: a swarm settles on the castle for as long as the
+      // debuff holds, so it starts and stops with the mechanic rather than on
+      // a timer of its own.
+      if (applied.statusId === 'butterflies') {
+        front.framework.startFoxOrbit(
+          auraKey('butterflies', applied.targetId),
+          at,
+          BUTTERFLY_SWARM,
+        )
+        return
+      }
       if (applied.statusId === 'kitsuneRush') {
         front.framework.startFoxOrbit(
           auraKey('kitsuneRush', applied.targetId),
@@ -484,6 +496,10 @@ function dispatch(
       }
       // The ransom was paid (or the swarm was otherwise removed) — the lights
       // scatter outward and wink out rather than all vanishing at once.
+      if (expired.statusId === 'butterflies') {
+        front.framework.stopFoxOrbit(auraKey('butterflies', expired.playerId))
+        return
+      }
       if (expired.statusId === 'kitsuneRush') {
         front.framework.stopFoxOrbit(auraKey('kitsuneRush', expired.playerId))
         return

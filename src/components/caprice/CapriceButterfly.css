@@ -1,0 +1,459 @@
+/* Insects' "Caprice" — the giant butterfly holding the middle of the field.
+
+   It is meant to stop the room. While it is there nobody chooses their own
+   fight, so it has to be the obvious reason: big, slow, and far too beautiful
+   to be mistaken for a status icon.
+
+   The look is carried by the GRADIENT — deep violet at the body running out to
+   luminous teal-green at the tips — so everything here is in service of that:
+   a translucent membrane that lets it glow, fine veins instead of heavy
+   markings, and nothing opaque enough to flatten it. */
+
+.caprice {
+  pointer-events: none;
+}
+
+/* The glow it sits in, breathing slowly. This is what pulls the eye to the
+   middle of the board before anyone has read anything. */
+.caprice__halo {
+  animation: caprice-halo 5s ease-in-out infinite;
+}
+
+@keyframes caprice-halo {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* The whole insect drifts and rises gently, so it hovers rather than hanging
+   pinned to the centre. */
+.caprice__body-group {
+  transform-origin: 500px 500px;
+  animation: caprice-hover 7s ease-in-out infinite;
+}
+
+@keyframes caprice-hover {
+  0%, 100% { transform: translate(0, 0) rotate(-1.5deg); }
+  50% { transform: translate(0, -22px) rotate(1.5deg); }
+}
+
+/* The wingbeat. Deliberately NOT constant: a permanent flap reads as a loading
+   spinner. It holds its wings open for five or six seconds and gives ONE slow
+   beat — which is what makes the movement worth looking at when it comes, and
+   what a settled butterfly actually does.
+
+   Each wing scales about the BODY (transform-origin at the centre line), so
+   they beat like wings rather than shrinking in place. */
+.caprice__wing {
+  transform-box: view-box;
+  transform-origin: 500px 500px;
+  animation: caprice-beat 6s ease-in-out infinite;
+}
+
+.caprice__wing--right {
+  /* A hair behind the left, so the beat is alive rather than mechanical. */
+  animation-delay: -0.06s;
+}
+
+@keyframes caprice-beat {
+  /* Open and still for the great majority of the cycle. */
+  0%, 78% { transform: scaleX(1) scaleY(1); }
+  /* One beat. The wings close to a fifth of their span — that depth is what
+     reads as a FLAP from across the board, where a shallow squeeze reads as
+     breathing — and open again, and that is the whole of it until the next. */
+  88% { transform: scaleX(0.18) scaleY(1.12); }
+  96% { transform: scaleX(1.03) scaleY(0.98); }
+  100% { transform: scaleX(1) scaleY(1); }
+}
+
+.caprice__fore,
+.caprice__hind {
+  /* Barely there: a heavy outline would cut the wing off from its own glow,
+     and the gradient is doing the drawing. */
+  stroke: rgba(233, 213, 255, 0.22);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  /* Translucent, so the wings layer over each other and over the halo — that
+     softness is most of what makes it read as mystical rather than as a
+     sticker on the board. */
+  opacity: 0.9;
+  filter: drop-shadow(0 0 34px rgba(124, 58, 237, 0.6))
+    drop-shadow(0 0 60px rgba(34, 211, 238, 0.28));
+}
+
+/* Vein tracery: fine lines fanning from the body toward the tips. Delicacy
+   rather than markings — heavy eyespots would fight the gradient. */
+.caprice__vein {
+  fill: none;
+  stroke: rgba(236, 254, 255, 0.4);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* Soft lights caught in the membrane. */
+.caprice__spot {
+  fill: rgba(224, 255, 250, 0.34);
+}
+
+.caprice__spot--small {
+  fill: rgba(233, 213, 255, 0.3);
+}
+
+.caprice__thorax,
+.caprice__head {
+  fill: #2a0a4a;
+  stroke: rgba(233, 213, 255, 0.3);
+  stroke-width: 2;
+}
+
+.caprice__abdomen {
+  fill: #2e1065;
+  stroke: rgba(74, 222, 128, 0.4);
+  stroke-width: 2;
+}
+
+/* The antennae. On a slower, separate rhythm from the wings — that mismatch is
+   what makes it read as CURIOUS rather than as one animated object. */
+.caprice__antennae {
+  transform-box: view-box;
+  transform-origin: 500px 432px;
+  animation: caprice-antennae 3.4s ease-in-out infinite;
+}
+
+@keyframes caprice-antennae {
+  0%, 100% { transform: rotate(-4deg); }
+  35% { transform: rotate(5deg); }
+  60% { transform: rotate(-2deg); }
+}
+
+.caprice__antenna {
+  fill: none;
+  stroke: #e9d5ff;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.caprice__club {
+  fill: #4ade80;
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.9));
+}
+
+/* Motes of light drifting through the scene — the enchanted-forest layer.
+   Each rises on its own long cycle and twinkles as it goes, so the field
+   shimmers rather than pulsing as one. */
+.caprice__pollen {
+  pointer-events: none;
+}
+
+.caprice__mote-light {
+  animation-name: caprice-pollen;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+/* Three lights from the same palette the wings run through, so the scatter
+   belongs to the butterfly rather than sitting on top of it. */
+.caprice__mote-light--a {
+  fill: #e9d5ff;
+  color: rgba(168, 85, 247, 0.9);
+}
+.caprice__mote-light--b {
+  fill: #bbf7d0;
+  color: rgba(74, 222, 128, 0.9);
+}
+.caprice__mote-light--c {
+  fill: #cffafe;
+  color: rgba(34, 211, 238, 0.9);
+}
+
+@keyframes caprice-pollen {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  20% {
+    opacity: 0.85;
+  }
+  65% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--pollen-x, 0), var(--pollen-y, 0));
+  }
+}
+
+/* The companion butterflies. Shinobu's are never alone: one insect however
+   large reads as a specimen, and the scatter is what makes it mystical. They
+   drift on their own long cycles, well out of step with each other. */
+.caprice__motes {
+  pointer-events: none;
+}
+
+/* The drift: a slow round trip away from where it was placed and back, each
+   on its own long cycle so the scatter never moves as one body. Outermost of
+   the three groups, because a CSS transform here would otherwise wipe out the
+   placement attribute on the child. */
+.caprice__mote {
+  transform-box: view-box;
+  animation-name: caprice-mote-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  opacity: 0.85;
+}
+
+@keyframes caprice-mote-drift {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(var(--drift-x, 0), var(--drift-y, 0));
+  }
+}
+
+/* The wingbeat: fast, and far quicker than the giant's. A small butterfly that
+   beats at the same rate as a big one reads as a scale model of it rather than
+   as its own creature. */
+.caprice__mote-wings {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: caprice-mote-flutter;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes caprice-mote-flutter {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.28); }
+}
+
+/* ---------------------------------------------------------------------------
+   THE ARRIVAL
+
+   Pink and green motes gather in a ring, hold, rush together, and blow back
+   out — and the butterfly is what the explosion leaves behind.
+
+   Everything below runs on ONE 1.9s clock so the phases cannot drift apart: the
+   sparks, the flash and the reveal are all the same duration, and each picks
+   its moment out of that shared timeline by percentage. Three separate
+   durations would need retuning together every time one changed.
+
+   Each spark sits at the arena centre and is moved by `transform`, so
+   `transform-origin` is the centre for all of them — the dot scales about
+   itself and is then translated, rather than being flung by its own scale. */
+.caprice__spawn {
+  pointer-events: none;
+}
+
+.caprice__spark {
+  transform-box: view-box;
+  transform-origin: 500px 500px;
+  animation: caprice-gather 1.9s linear both;
+}
+
+/* The colours the ability is cast in. Pale is the two mixed — a scatter of only
+   two hues reads as a pattern, three reads as light. */
+.caprice__spark--pink {
+  fill: #f9a8d4;
+  filter: drop-shadow(0 0 7px rgba(236, 72, 153, 0.9));
+}
+
+.caprice__spark--green {
+  fill: #86efac;
+  filter: drop-shadow(0 0 7px rgba(34, 197, 94, 0.85));
+}
+
+.caprice__spark--pale {
+  fill: #ecfdf5;
+  filter: drop-shadow(0 0 8px rgba(190, 242, 220, 0.9));
+}
+
+/* The one-shot journey. Per-keyframe easing, because the three phases move at
+   completely different speeds and a single timing function cannot express
+   "hold, then snap inward, then burst". */
+@keyframes caprice-gather {
+  /* Winking into being out on the ring. */
+  0% {
+    transform: translate(var(--ring-x), var(--ring-y)) scale(0);
+    opacity: 0;
+  }
+  10% {
+    transform: translate(var(--ring-x), var(--ring-y)) scale(1);
+    opacity: 1;
+  }
+  /* Formed up and waiting — the beat that makes the rush read as a decision. */
+  34% {
+    transform: translate(var(--ring-x), var(--ring-y)) scale(1);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.65, 0, 0.85, 0.25);
+  }
+  /* Rushing in, accelerating the whole way. */
+  55% {
+    transform: translate(0, 0) scale(0.8);
+    opacity: 1;
+  }
+  /* Compressed to a point. */
+  61% {
+    transform: translate(0, 0) scale(0.3);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(0.05, 0.85, 0.3, 1);
+  }
+  /* Thrown outward and gone, on a slightly different line from the way in so
+     the burst scatters instead of retracing itself. */
+  100% {
+    transform: translate(var(--burst-x), var(--burst-y)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* The shock of light where they meet. */
+.caprice__flash {
+  transform-box: view-box;
+  transform-origin: 500px 500px;
+  fill: #fdf4ff;
+  filter: blur(14px);
+  animation: caprice-flash 1.9s ease-out both;
+}
+
+@keyframes caprice-flash {
+  0%, 54% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  62% {
+    transform: scale(0.6);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* The butterfly itself, thrown out of the burst. Overshoots its full size and
+   settles back — arriving at exactly 100% and stopping looks placed, whereas
+   the overshoot reads as something that has just landed. */
+.caprice__reveal {
+  transform-box: view-box;
+  transform-origin: 500px 500px;
+  animation: caprice-reveal 1.9s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes caprice-reveal {
+  0%, 55% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  62% {
+    transform: scale(0.45);
+    opacity: 0.8;
+  }
+  78% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  90% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* The clearing arrives with its butterfly rather than being there first. Only
+   opacity, on the GROUPS — the children are already animating their own
+   transforms and would fight anything set here. */
+.caprice__motes,
+.caprice__pollen {
+  animation: caprice-settle 2.4s ease-out both;
+}
+
+@keyframes caprice-settle {
+  0%, 52% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Reduced motion: the butterfly stays ALIVE. Freezing it — which this used to
+   do — turns the centrepiece of an ultimate into a sticker, and a still image
+   is not what the preference is asking for.
+
+   What is kept is everything small, slow and in place: the wingbeat, the
+   antennae, the halo, the companions' flutter. What goes is TRAVEL — the body
+   drifting around the middle of the board and the companions wandering across
+   it — because movement through the field of view is the part that actually
+   causes trouble. */
+@media (prefers-reduced-motion: reduce) {
+  .caprice__body-group,
+  .caprice__mote {
+    animation: none;
+  }
+  /* The motes keep twinkling in place — small, local, and the thing that makes
+     the clearing feel alive — but they stop travelling. */
+  .caprice__mote-light {
+    animation-name: caprice-pollen-still;
+  }
+  /* Slowed rather than stopped, so nothing beats quickly. */
+  .caprice__wing {
+    animation-duration: 7s;
+  }
+  .caprice__mote-wings {
+    /* `!important` because each companion carries its own duration as an
+       INLINE style, which would otherwise beat a plain rule here and keep
+       fluttering at full speed. */
+    animation-duration: 1.6s !important;
+  }
+
+  /* The arrival still HAPPENS — a butterfly that simply exists one frame later
+     gives no sign an ultimate was spent. What goes is the flight: the sparks
+     glow up on the ring and fade where they stand instead of being flung across
+     the screen, and the butterfly grows in without the overshoot. */
+  .caprice__spark {
+    animation-name: caprice-gather-still;
+  }
+  .caprice__reveal {
+    animation-name: caprice-reveal-still;
+  }
+  .caprice__flash {
+    /* Kept, but as a soft bloom rather than a bang. */
+    animation-name: caprice-flash-still;
+  }
+}
+
+@keyframes caprice-gather-still {
+  0% {
+    transform: translate(var(--ring-x), var(--ring-y)) scale(0);
+    opacity: 0;
+  }
+  22%, 58% {
+    transform: translate(var(--ring-x), var(--ring-y)) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--ring-x), var(--ring-y)) scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes caprice-reveal-still {
+  0%, 50% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes caprice-flash-still {
+  0%, 52% { opacity: 0; transform: scale(0.8); }
+  70% { opacity: 0.5; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+
+/* The stationary stand-in for the drift: it twinkles where it is. */
+@keyframes caprice-pollen-still {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}

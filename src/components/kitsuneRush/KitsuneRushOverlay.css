@@ -1,10 +1,10 @@
-/* Kitsune Rush, caster's own screen. Blue foxfire streaming PAST the camera —
-   streaks, swirls and loops crossing the screen and tumbling as they go, over a
-   breathing sapphire wash.
+/* Kitsune Rush, caster's own screen. Blue foxfire DRAWN across the screen —
+   each streak, swirl and loop starting from a point and extending along its own
+   path as though traced by hand, holding a moment, then fading.
 
-   Flight is the point. The ability is "everything happens at double speed", and
-   a mark that only flashes on and off says nothing about speed — it reads as a
-   status light. A mark that crosses the screen and leaves says you are moving.
+   The stroke growing is the whole effect. A mark that merely flashes on says
+   nothing; one that is drawn says something is being written at speed, which is
+   what the ability is.
 
    Nothing here takes input: the Rush is a tempo buff, so it must never cost the
    player the ability to read their own castle, gold or ability bar. */
@@ -47,69 +47,58 @@
   }
 }
 
-/* One mark in flight. The wrapper carries it ACROSS the screen; the inner
-   `__spin` element tumbles independently, so a loop can rotate while it travels
-   without fighting the translation for the same transform. */
+/* One mark. It holds still — the animation is the STROKE growing, not the mark
+   moving — and it is repositioned between cycles by the component, so no two
+   draws land in the same place. */
 .kitsune-rush__mark {
   position: absolute;
-  opacity: 0;
-  transform: rotate(var(--rot, 0deg));
   transform-origin: 50% 50%;
-  animation-name: kitsune-rush-fly;
+  /* The wrapper carries the fade so `animationiteration` fires once per MARK
+     rather than once per path; the paths inherit its duration below. */
+  animation-name: kitsune-rush-cycle;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  will-change: transform, opacity;
-}
-
-/* The crossing. Travels the full `--fly-x/--fly-y` vector, fading in as it
-   arrives and out as it leaves, so nothing is ever seen popping into or out of
-   existence mid-air. */
-@keyframes kitsune-rush-fly {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) rotate(var(--rot, 0deg)) scale(var(--scale-in, 0.8));
-  }
-  12% {
-    opacity: 1;
-  }
-  78% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--fly-x, 0), var(--fly-y, 0)) rotate(var(--rot, 0deg))
-      scale(var(--scale-out, 1.2));
-  }
-}
-
-/* The tumble, on its own element so it composes with the flight above.
-   Streaks get `--spin: 0deg` — they point along their own path and holding
-   that heading is what makes them read as speed rather than as debris. */
-.kitsune-rush__spin {
-  width: 100%;
-  height: 100%;
-  transform-origin: 50% 50%;
-  animation-name: kitsune-rush-tumble;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  /* Inherits the mark's own flight time, so a shape completes exactly one
-     tumble per crossing however long its flight happens to be. */
-  animation-duration: inherit;
-}
-
-@keyframes kitsune-rush-tumble {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(var(--spin, 0deg));
-  }
+  will-change: opacity;
 }
 
 .kitsune-rush__mark svg {
   width: 100%;
   height: 100%;
   overflow: visible;
+  /* Carries the mark's clock down to the paths. `inherit` resolves against the
+     DIRECT parent, and the paths' parent is this svg — without this link they
+     inherit the svg's initial 0s, which renders every stroke permanently
+     complete and kills the drawing entirely.
+
+     The DELAY has to travel with the duration. Each mark carries its own
+     stagger inline; if only the duration were relayed, the stroke would begin
+     drawing at once while the mark holding it was still waiting out its delay,
+     leaving the two permanently out of phase — lines snapping on already
+     complete, and others fading away mid-stroke. That is what "glitching" looked
+     like. */
+  animation-duration: inherit;
+  animation-delay: inherit;
+}
+
+/* The wrapper's own cycle is the fade — it gives the paths a clock to inherit
+   and marks the boundary where the mark is moved.
+
+   The tail is REST. From 74% the mark is gone and stays gone for the last
+   quarter of its cycle, so a handful of marks read as a few strokes taking
+   turns rather than a screen that is permanently full. Without the gap every
+   mark is always mid-something and the whole thing churns. */
+@keyframes kitsune-rush-cycle {
+  0% {
+    opacity: 0;
+  }
+  14%,
+  62% {
+    opacity: 1;
+  }
+  74%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .kitsune-rush__glow,
@@ -117,13 +106,44 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+  /* `pathLength="100"` on every path means one dash pair traces any shape,
+     however long its real geometry — a tight loop and a long streak draw at
+     the same rate with no per-shape maths. */
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation-name: kitsune-rush-draw;
+  /* Eased at both ends: the stroke starts gently, runs, and settles rather than
+     stopping dead. `ease-out` alone begins at full speed, which is what made a
+     slow deliberate line look like a flicker. */
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  /* Inherits the mark's own clock, delay included, so the stroke draws in step
+     with the fade around it. */
+  animation-duration: inherit;
+  animation-delay: inherit;
 }
 
-/* The wide soft bloom under the stroke. */
+/* The hand: the line grows from nothing to its full length, then stands
+   complete and finished while the wrapper fades it away. Drawing ends well
+   before the fade begins (62% above), so a stroke is never caught still being
+   drawn as it disappears. */
+@keyframes kitsune-rush-draw {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  52%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* The wide soft bloom under the stroke. Eased differently from the core, so the
+   leading edge of the line is bright and the bloom catches up behind it. */
 .kitsune-rush__glow {
   stroke: rgba(15, 82, 186, 0.85);
   stroke-width: 7;
   filter: blur(6px);
+  animation-timing-function: ease-in-out;
 }
 
 /* The bright thin core over it. */
@@ -134,27 +154,33 @@
 }
 
 /* Streaks are the speed lines: thinner and harder-edged than the shapes, so a
-   screenful of them reads as motion rather than as clutter. */
-.kitsune-rush__mark--streak .kitsune-rush__core {
+   screenful of them reads as motion rather than as clutter. Keyed off a data
+   attribute because the kind changes when a mark is redrawn elsewhere. */
+.kitsune-rush__mark[data-kind='streak'] .kitsune-rush__core {
   stroke-width: 1.8;
 }
 
-.kitsune-rush__mark--streak .kitsune-rush__glow {
+.kitsune-rush__mark[data-kind='streak'] .kitsune-rush__glow {
   stroke-width: 5.5;
 }
 
 /* Loops and swirls are shapes, not strokes of speed — drawn a touch heavier so
-   the curl stays legible while it tumbles past. */
-.kitsune-rush__mark--loop .kitsune-rush__core,
-.kitsune-rush__mark--swirl .kitsune-rush__core {
+   the curl stays legible. */
+.kitsune-rush__mark[data-kind='loop'] .kitsune-rush__core,
+.kitsune-rush__mark[data-kind='swirl'] .kitsune-rush__core {
   stroke-width: 3;
 }
 
-/* Anyone who has asked not to be flashed gets the wash alone: the colour and
-   the fact of the buff, with none of the movement. */
+/* Reduced motion: the foxfire STAYS, and it is still drawn. A line extending
+   along its own path is not movement through the player's field of view — it
+   is the mark appearing — so the effect survives intact and only slows down.
+   Hiding it, which this used to do, leaves a player whose OS has animations
+   switched off with no feedback at all that their ultimate is running. */
 @media (prefers-reduced-motion: reduce) {
   .kitsune-rush__mark {
-    display: none;
+    /* `!important` because each mark carries its own draw time as an INLINE
+       style, which would otherwise win and trace far too fast. */
+    animation-duration: 3.4s !important;
   }
   .kitsune-rush__wash {
     animation: none;

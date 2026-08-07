@@ -1,6 +1,9 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { LobbyView } from './LobbyView'
+import { SELECTABLE_KINGDOMS } from '../game/kingdoms'
 import type { LobbyMatch } from '../game/lobby'
 
 /** A full perk selection, so a fixture player can ready up. */
@@ -266,5 +269,36 @@ describe('the kingdom picker layout', () => {
     // The dossier is the thing that needed room — it must actually carry the
     // passives and abilities text, not just a title.
     expect(dossier!.querySelectorAll('.lobby__details-desc').length).toBeGreaterThan(4)
+  })
+})
+
+describe('the kingdom grid holds its shape', () => {
+  it('lists every kingdom, in the roster order', () => {
+    const { container } = renderLobby()
+    const labels = [...container.querySelectorAll('.lobby__kingdom-name')].map(
+      (n) => n.textContent,
+    )
+    // Order is not incidental — it is the layout. A kingdom must be in the
+    // same square every time, or muscle memory is worthless.
+    expect(labels).toEqual(SELECTABLE_KINGDOMS.map((k) => k.label))
+  })
+
+  it('is a square grid — sixteen kingdoms, four across', () => {
+    // The grid is a fixed four columns at every breakpoint (see the CSS), so
+    // the roster has to stay a multiple of four or the last row goes ragged.
+    expect(SELECTABLE_KINGDOMS.length % 4).toBe(0)
+  })
+
+  it('holds four columns at every screen size', () => {
+    // jsdom applies no stylesheets, so the rule is read directly. A media
+    // query that reflows the grid would move every kingdom on rotation.
+    const css = readFileSync('src/components/LobbyView.css', 'utf8')
+    const rules = [...css.matchAll(/\.lobby__kingdom-grid\s*\{([^}]*)\}/g)].map((m) => m[1]!)
+    expect(rules.length).toBeGreaterThan(0)
+    for (const rule of rules) {
+      const cols = /grid-template-columns:\s*([^;]+);/.exec(rule)
+      if (!cols) continue
+      expect(cols[1]!.trim()).toBe('repeat(4, minmax(0, 1fr))')
+    }
   })
 })

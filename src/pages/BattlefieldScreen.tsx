@@ -8,8 +8,11 @@ import { BlipOverlay } from '../components/blip/BlipOverlay'
 import { BackToTheFutureOverlay } from '../components/backToTheFuture/BackToTheFutureOverlay'
 import { DarkenedOverlay } from '../components/DarkenedOverlay'
 import { FlashBangOverlay } from '../components/FlashBangOverlay'
+import { InfectedOverlay } from '../components/InfectedOverlay'
 import { YinYangOverlay } from '../components/YinYangOverlay'
 import { KitsuneRushOverlay } from '../components/kitsuneRush/KitsuneRushOverlay'
+import { CrawlerSwarm } from '../components/crawlers/CrawlerSwarm'
+import { squashCrawler } from '../game/matchStore'
 import { CasinoStage } from '../components/casino/CasinoStage'
 import { RouletteMirror, type MirrorSpin } from '../components/roulette/RouletteMirror'
 import { useLobby } from '../game/useLobby'
@@ -37,6 +40,8 @@ export function BattlefieldScreen() {
         players={game.players}
         tick={game.tick}
         volcano={game.volcano}
+        caprice={game.caprice}
+        centrepiece={game.centrepiece}
         spectator
       />
     )
@@ -70,6 +75,13 @@ export function BattlefieldScreen() {
   // while the Rush runs. Their buff, their screen - everyone else just sees the
   // ring of foxes lapping the Kitsune castle.
   const rushing = you?.statuses?.some((s) => s.id === 'kitsuneRush') ?? false
+  // Insects' Creepy Crawlers: the bugs and their hit counts are authoritative
+  // synced state, so the overlay draws exactly what the server says is left.
+  const crawlers = you?.statuses?.find((s) => s.id === 'creepyCrawlers')
+  // Insects' Infected (`infected`): the victim's screen goes soft and swims for
+  // the duration. Their own fumbled attacks are rebounding onto them, and this
+  // is what being the cause of that feels like.
+  const infected = you?.statuses?.some((s) => s.id === 'infected') ?? false
   // Dark's Yin and Yang (`yinYang`): the taijitu turns on the victim's screen
   // for the wager's duration. Deliberately says nothing — not knowing which
   // side was called is the entire ability.
@@ -126,6 +138,8 @@ export function BattlefieldScreen() {
         players={game.players}
         tick={game.tick}
         volcano={game.volcano}
+        caprice={game.caprice}
+        centrepiece={game.centrepiece}
       />
       {/* Full-screen "you've been hacked" flash for the local victim. */}
       <HackOverlay youId={youId} />
@@ -151,6 +165,16 @@ export function BattlefieldScreen() {
       {/* Yin and Yang: a slowly turning taijitu while the wager is live. */}
       <YinYangOverlay active={wagered} />
       <KitsuneRushOverlay active={rushing} />
+      {/* Insects' Infected: the victim's screen blurs and swims while every
+          attack they fumble is rebounding into their own castle. */}
+      <InfectedOverlay active={infected} />
+      {/* Insects' Creepy Crawlers, on the victim's own screen. Above every
+          other layer: being in the way is the ability. */}
+      <CrawlerSwarm
+        bugHits={crawlers?.bugHits ?? null}
+        hitsToKill={crawlers?.hitsToKill ?? 2}
+        onSquash={(i) => void squashCrawler(i)}
+      />
       {/* Joker's casino: one game at a time, the next waiting its turn. */}
       <CasinoStage debt={casinoDebt} />
       {/* Joker only: a side-screen mirror of every wheel it has spinning. */}

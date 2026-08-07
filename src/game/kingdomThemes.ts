@@ -129,6 +129,13 @@ export const KINGDOM_THEMES: Record<string, KingdomTheme> = {
     secondary: '#ff7518', // the glow running through it
     dark: '#3d0f04', // cooled basalt
   },
+  insects: {
+    id: 'insects',
+    name: 'Insects',
+    primary: '#a8c020', // acid chartreuse — chitin
+    secondary: '#d7e84a', // a paler wing-membrane yellow
+    dark: '#3c4708', // deep carapace
+  },
 }
 
 export function getKingdomTheme(kingdomId: string | null): KingdomTheme | null {

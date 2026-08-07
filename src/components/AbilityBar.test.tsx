@@ -428,3 +428,112 @@ describe('Never-ending Nightmare bars illegal moves', () => {
     expect(onCast).not.toHaveBeenCalled()
   })
 })
+
+describe('only one thing may hold the middle of the battlefield', () => {
+  // Magma's volcano and Insects' butterfly both claim the centre of the field
+  // and contradict each other, so while either stands the other cannot be cast.
+  // The server owns the rule; this bar only has to show it, so a player never
+  // spends a click discovering their ultimate is unavailable.
+
+  const magmaAbilities = [
+    { id: 'lavaPunch', level: 1, cooldownRemaining: 0, enabled: true, cost: 100, upgradeCost: 150 },
+    { id: 'eruption', level: 1, cooldownRemaining: 0, enabled: true, cost: 300, upgradeCost: 400 },
+    { id: 'floorIsLava', level: 1, cooldownRemaining: 0, enabled: true, cost: 400, upgradeCost: 500 },
+    { id: 'smokeScreen', level: 1, cooldownRemaining: 0, enabled: true, cost: 350, upgradeCost: 450 },
+    {
+      id: 'theEndOfTheWorld',
+      level: 1,
+      cooldownRemaining: 0,
+      enabled: true,
+      cost: 1000,
+      upgradeCost: 1200,
+    },
+  ]
+
+  const renderMagma = (fieldOccupiedBy: string | null) =>
+    render(
+      <AbilityBar
+        kingdomId="magma"
+        theme={null}
+        currency={50000}
+        citizens={12}
+        castleHp={10000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={24}
+        abilities={magmaAbilities}
+        tickRate={20}
+        fieldOccupiedBy={fieldOccupiedBy}
+        onCastAbility={() => {}}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />,
+    )
+
+  it('bars nothing while the centre is clear', () => {
+    const { container } = renderMagma(null)
+    expect(container.querySelectorAll('.ability-button--barred')).toHaveLength(0)
+  })
+
+  it('bars the ultimate while a butterfly holds the field', () => {
+    const { container } = renderMagma('Caprice')
+    const barred = [...container.querySelectorAll('.ability-button--barred')]
+    expect(barred).toHaveLength(1)
+    expect(barred[0]!.getAttribute('aria-label')).toBe('Cast The End of the World')
+  })
+
+  it('bars the ultimate against its OWN kind of centrepiece too', () => {
+    // A second volcano on top of the first is just as incoherent as a volcano
+    // on top of a butterfly. The slot is exclusive to everything.
+    const { container } = renderMagma('The End of the World')
+    expect(container.querySelectorAll('.ability-button--barred')).toHaveLength(1)
+  })
+
+  it('leaves the rest of the kit alone', () => {
+    // The volcano is a target the whole table has to swing at, so the match has
+    // to keep running normally underneath it.
+    const { container } = renderMagma('Caprice')
+    const cards = [...container.querySelectorAll('.ability-button')] as HTMLButtonElement[]
+    for (const card of cards.slice(0, 4)) {
+      expect(card.className).not.toContain('ability-button--barred')
+      expect(card.disabled).toBe(false)
+    }
+  })
+
+  it('cannot be clicked, and says why with a no-entry sign', () => {
+    const onCast = vi.fn()
+    const { container } = render(
+      <AbilityBar
+        kingdomId="magma"
+        theme={null}
+        currency={50000}
+        citizens={12}
+        castleHp={10000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={24}
+        abilities={magmaAbilities}
+        tickRate={20}
+        fieldOccupiedBy="Caprice"
+        onCastAbility={onCast}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />,
+    )
+    const barred = container.querySelector('.ability-button--barred') as HTMLButtonElement
+    expect(barred.disabled).toBe(true)
+    expect(barred.querySelector('[data-testid="barred-sign"]')).not.toBeNull()
+    fireEvent.click(barred)
+    expect(onCast).not.toHaveBeenCalled()
+  })
+})

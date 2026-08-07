@@ -1,4 +1,4 @@
-import { test, expect, afterEach, vi } from 'vitest'
+import { test, expect, afterEach, vi, describe, it } from 'vitest'
 import { render, cleanup, act } from '@testing-library/react'
 import { buildNumber, FloatingNumbers } from './FloatingNumbers'
 import { applyEventBatch } from '../game/gameEvents'
@@ -242,4 +242,56 @@ test('the volcano eruption waits out its wind-up', () => {
     () => 0,
   )
   expect(hit!.delayMs).toBe(VOLCANO_WINDUP_MS)
+})
+
+describe('damage never beats the animation onto the castle', () => {
+  const delayOf = (cause: string) =>
+    buildNumber(
+      raw({ type: 'damage', tick: 1, sourceId: 'a', targetId: 'b', amount: 100, crit: false, cause }),
+      positionOf,
+      kingdomOf,
+      colorOf,
+      () => 0,
+    )!.delayMs
+
+  it('waits out a pack that has to RUN to the target', () => {
+    // Old Friends and Infected both march across the field. Neither is a
+    // `projectile`, so both used to resolve to 0 and land instantly.
+    for (const id of ['oldFriends', 'infected']) {
+      const pack = ABILITY_EFFECTS[id]!.foxPack!
+      expect(delayOf(id)).toBe(pack.durationMs)
+      expect(delayOf(id)).toBeGreaterThan(0)
+    }
+  })
+
+  it('waits out a wave gathering before it travels', () => {
+    const wave = ABILITY_EFFECTS.waterfall!.wave!
+    expect(delayOf('waterfall')).toBe(wave.gatherMs + wave.travelMs)
+  })
+
+  it('waits out the earthquake tremor', () => {
+    expect(delayOf('earthquake')).toBeGreaterThan(0)
+  })
+
+  it('waits out meteors falling', () => {
+    expect(delayOf('meteorShower')).toBeGreaterThan(0)
+  })
+
+  it('still lands instantly for things that are instant', () => {
+    // A vortex parks on the target and a lightning bolt is already there —
+    // holding those back would make the number late instead of early.
+    expect(delayOf('firenado')).toBe(0)
+    expect(delayOf('zap')).toBe(0)
+  })
+
+  it('has a delay for every registered effect that has to travel', () => {
+    // The sweep that catches the next one: any effect carrying a lead time
+    // must be represented in `abilityImpactDelay`.
+    for (const [id, fx] of Object.entries(ABILITY_EFFECTS)) {
+      const travels =
+        fx.projectile || fx.beam || fx.wave || fx.foxPack || fx.eruption || fx.cupidsArrow
+      if (!travels) continue
+      expect(delayOf(id), `${id} lands its damage before its animation`).toBeGreaterThan(0)
+    }
+  })
 })

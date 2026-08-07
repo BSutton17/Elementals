@@ -140,12 +140,13 @@ describe('the fox pack', () => {
     fw.playFoxPack(FROM, TO, CFG, () => burst++)
 
     for (let i = 0; i < 400; i++) {
-      const before = fw.projectiles.active
       const burstsBefore = burst
       fw.update(16)
       if (burst > burstsBefore) {
-        // The frame the burst fires must be the frame the pack finishes.
-        expect(before).toBe(1)
+        // Fires on the frame the pack FINISHES — not when the leader gets in.
+        // Deliberately not asserting that exactly one fox was still running
+        // beforehand: with jittered arrivals the last two can land on the same
+        // 16ms frame, which is fine and is not what this test is about.
         expect(fw.projectiles.active).toBe(0)
       }
     }

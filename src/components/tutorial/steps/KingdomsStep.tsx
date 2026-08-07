@@ -27,6 +27,7 @@ const FLAVOR: Record<KingdomId, string> = {
   // Placeholder flavour — lands with the real kit.
   kitsune: 'Nine tails can be pretty hot...',
   magma: 'Fire\'s hot headed older brother.',
+  insects: 'Small, many, and everywhere at once.',
 }
 
 export function KingdomsStep() {

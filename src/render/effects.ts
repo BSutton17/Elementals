@@ -1284,6 +1284,101 @@ export const LAVA_FLOOR_CONFIG: LavaFloorConfig = {
   opacity: 0.72,
 }
 
+// ---------------------------------------------------------------------------
+// Insects — chitin and venom. Nothing here is a single big hit: the kingdom
+// works by putting THINGS on you and letting them work.
+// ---------------------------------------------------------------------------
+
+/** Insects' hues, shared across the kit so it reads as one kingdom. */
+const CHITIN = {
+  /** Pale wing-membrane highlight. */
+  core: 0xe8f59a,
+  /** Acid chartreuse — the kingdom colour. */
+  acid: 0xa8c020,
+  /** Deep carapace. */
+  shell: 0x3c4708,
+  /** Venom droplets. */
+  venom: 0xc8e83a,
+}
+
+/** Venom Shot: the standard bolt, in Insects' acid green. */
+const VENOM_SHOT_FX = basicBolt({
+  core: CHITIN.core,
+  trail: CHITIN.acid,
+  impact: CHITIN.venom,
+  ember: CHITIN.acid,
+})
+
+/**
+ * Butterflies: a swarm that settles around the target castle and stays there
+ * for the whole twenty seconds the debuff runs.
+ *
+ * Reuses the orbit system Kitsune Rush runs on, with three differences that
+ * matter: they are upright (a butterfly has no "forward" — pointing one along
+ * its path makes it look like a paper aeroplane), they drift rather than
+ * sprint, and there are a lot more of them.
+ */
+export const BUTTERFLY_SWARM: FoxOrbitConfig = {
+  count: 11,
+  radius: 104,
+  lapsPerSecond: 0.16, // a drift, not a lap
+  size: 17,
+  shape: 'butterfly',
+  upright: true,
+  color: CHITIN.acid,
+  moteColor: CHITIN.core, // pollen shed as they go
+  flatten: 0.62,
+  bounce: 14, // they bob rather than bound
+  gaitRate: 2.2,
+}
+
+/**
+ * Infected: an army of insects swarms the target, and the damage lands when
+ * they get there.
+ *
+ * The same pack primitive Old Friends uses — this is exactly "a group of
+ * things that runs to the target" — but a swarm rather than a pack: many more,
+ * smaller, faster, and much tighter together, so it reads as a wave of bodies
+ * rather than as individuals.
+ */
+const INFECTED_FX: EffectDefinition = {
+  foxPack: {
+    count: 14,
+    shape: 'insect',
+    durationMs: 780,
+    size: 13,
+    color: CHITIN.shell,
+    trailColor: CHITIN.acid,
+    spread: 68, // a broad front
+    staggerMs: 26, // almost together — a swarm, not a queue
+    durationJitter: 0.18,
+    bounce: 5, // a low scuttle
+    gaitRate: 11, // fast little legs
+    weave: 20,
+  },
+  impact: { durationMs: 320, size: 88, color: CHITIN.venom, easing: 'easeOut', startScale: 0.3 },
+  impactRings: {
+    count: 2,
+    durationMs: 420,
+    size: 96,
+    sizeStep: 44,
+    staggerMs: 80,
+    color: CHITIN.acid,
+    startScale: 0.25,
+  },
+  particles: {
+    count: 34,
+    speed: [160, 480],
+    spread: Math.PI,
+    lifetimeMs: 700,
+    size: 5,
+    color: CHITIN.acid,
+    gravity: 220,
+    fade: true,
+  },
+  shake: { magnitude: 9, durationMs: 300 },
+}
+
 export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   // Basic attacks — one shared bolt, kingdom-coloured.
   fireball: FIREBALL,
@@ -1298,6 +1393,29 @@ export const ABILITY_EFFECTS: Record<string, EffectDefinition> = {
   icicle: ICICLE,
   sludge: SLUDGE,
   foxSwipe: FOX_SWIPE,
+  // Insects.
+  venomShot: VENOM_SHOT_FX,
+  infected: INFECTED_FX,
+  // Butterflies' swarm is driven by the STATUS (see BattlefieldFx), so it
+  // lasts exactly as long as the debuff. The cast itself just lands the hit.
+  butterflies: {
+    impact: { durationMs: 320, size: 76, color: CHITIN.venom, easing: 'easeOut', startScale: 0.35 },
+    particles: {
+      count: 26,
+      speed: [140, 420],
+      spread: Math.PI,
+      lifetimeMs: 720,
+      size: 5,
+      color: CHITIN.core,
+      gravity: -50,
+      fade: true,
+    },
+    shake: { magnitude: 6, durationMs: 220 },
+  },
+  // Creepy Crawlers and Caprice are presented as DOM overlays on the victim's
+  // own screen, so no battlefield bolt should be thrown at anyone.
+  creepyCrawlers: {},
+  caprice: {},
   // Magma.
   lavaPunch: LAVA_PUNCH,
   eruption: ERUPTION_FX,

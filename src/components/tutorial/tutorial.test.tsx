@@ -32,6 +32,7 @@ describe('the tutorial keeps up with the roster', () => {
     const words = [
       'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
       'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen',
+      'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty',
     ]
     expect(container.textContent).toContain(`${words[KINGDOMS.length]} Kingdoms`)
   })

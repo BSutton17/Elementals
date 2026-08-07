@@ -106,6 +106,24 @@ export async function buyItem(
 }
 
 /** Sets the current targeting state of the player. */
+/**
+ * Swat one of the bugs crawling on your screen (Insects' "Creepy Crawlers").
+ * Two clicks kills one.
+ *
+ * Reports a HIT and nothing more — the server decides whether that finished it
+ * off. A client that could declare its own kills could clear the whole swarm
+ * the instant it landed.
+ */
+export async function squashCrawler(
+  index: number,
+): Promise<{ killed: boolean; remaining: number } | null> {
+  const res = (await socket.emitWithAck('match:squash', { index })) as Ack<{
+    killed: boolean
+    remaining: number
+  }>
+  return res.ok && res.data ? res.data : null
+}
+
 export async function changeTarget(targetId: string | null): Promise<Ack<TargetAck>> {
   return (await socket.emitWithAck('match:target', {
     targetId,

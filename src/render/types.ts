@@ -52,6 +52,8 @@ export type ProjectileShape =
   | 'arrow'
   | 'spade'
   | 'fox'
+  | 'insect'
+  | 'butterfly'
   | 'shadow'
   | 'yinYang'
 
@@ -889,8 +891,11 @@ export interface ImpactRingsConfig {
  * sideways, not as animals.
  */
 export interface FoxPackConfig {
-  /** How many foxes (3-4 reads as a pack without becoming a crowd). */
+  /** How many run (3-4 reads as a pack; a dozen reads as an army). */
   count: number
+  /** What is running. Defaults to the fox — Insects reuses the whole thing
+   *  with `'insect'` and a much larger count. */
+  shape?: ProjectileShape
   /** Roughly how long the crossing takes; each fox varies around this. */
   durationMs: number
   /** Sprite size of one fox. */
@@ -921,8 +926,15 @@ export interface FoxPackConfig {
  * and laps - the visual for a kingdom running at double speed.
  */
 export interface FoxOrbitConfig {
-  /** How many foxes make up the ring. */
+  /** How many circle the castle. */
   count: number
+  /** What is circling. Defaults to the fox — Insects reuses this for a swarm
+   *  of butterflies with `'butterfly'`. */
+  shape?: ProjectileShape
+  /** Leave each one upright instead of pointing it along its path. A running
+   *  animal faces where it is going; a butterfly drifting round a castle does
+   *  not, and forcing it to looks like a paper aeroplane. */
+  upright?: boolean
   /** Base orbit radius in world units; each fox varies around it. */
   radius: number
   /** Base laps per second; each fox varies around it. */

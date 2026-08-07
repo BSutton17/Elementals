@@ -24,6 +24,7 @@ import { LightShowLayer } from './lightShow/LightShowLayer'
 import { WagerResultLayer } from './wager/WagerResultLayer'
 import { HotAshLayer } from './hotAsh/HotAshLayer'
 import { VolcanoLayer } from './volcano/VolcanoLayer'
+import { CapriceButterfly } from './caprice/CapriceButterfly'
 import { BlackHoleAccumulator } from './BlackHoleAccumulator'
 import { FloatingNumbers } from './FloatingNumbers'
 import { EmpathyReaction } from './EmpathyReaction'
@@ -35,7 +36,7 @@ import { LuckyDrawOverlay } from './cards/LuckyDrawOverlay'
 import { useScrambleValues } from './scramble/useScrambleValues'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
-import type { GamePlayer, VolcanoSnapshot } from '../game/gameState'
+import type { CapriceSnapshot, GamePlayer, VolcanoSnapshot } from '../game/gameState'
 import type { LobbyMatch } from '../game/lobby'
 import './BattlefieldView.css'
 
@@ -88,6 +89,8 @@ export function BattlefieldView({
   tick = 0,
   spectator = false,
   volcano = null,
+  caprice = null,
+  centrepiece = null,
 }: {
   match: LobbyMatch
   youId: string | null
@@ -98,6 +101,12 @@ export function BattlefieldView({
   spectator?: boolean
   /** Magma's volcano, when one is standing. Shown to everyone. */
   volcano?: VolcanoSnapshot | null
+  /** Insects' butterfly, when one is out. Shown to everyone. */
+  caprice?: CapriceSnapshot | null
+  /** The NAME of whatever holds the middle of the field, or null when clear.
+   *  Server-decided — see `game/centrepiece.ts` for why this is not worked out
+   *  on this side. */
+  centrepiece?: string | null
 }) {
   const tickRate = match.config?.tickRate ?? DEFAULT_TICK_RATE
 
@@ -375,6 +384,11 @@ export function BattlefieldView({
           />
         </g>
 
+        {/* Layer: Insects' Caprice — the butterfly holding the middle of the
+            field. Over the arena furniture but under the kingdoms, so it never
+            hides a castle it is not supposed to be hiding. */}
+        <CapriceButterfly active={caprice !== null} />
+
         {/* Layer: Magma's volcano — the mountain in the middle of the field.
             Under the kingdoms so the castles are never hidden behind it, but
             over the arena furniture. Visible to EVERYONE, including spectators
@@ -596,6 +610,10 @@ export function BattlefieldView({
           // Never-ending Nightmare: every attack but your basic one, and your
           // ultimate, are illegal until it lifts.
           nightmared={you.statuses?.some((s) => s.id === 'neverEndingNightmare') ?? false}
+          // The centre of the field is a single slot: while a volcano or a
+          // butterfly holds it, the ultimates that would spawn another are
+          // barred until it clears.
+          fieldOccupiedBy={centrepiece}
           scrambled={scrambled}
           scramble={scramble}
           fatherTimeMarked={fatherTimeMarked}

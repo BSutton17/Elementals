@@ -3,6 +3,7 @@ import { PiDropFill, PiFireFill, PiWindFill, PiLightningFill, PiSunFill } from '
 import { RiSnowflakeFill } from 'react-icons/ri'
 import { CgSandClock } from 'react-icons/cg'
 import { GiBlackHoleBolas, GiCardRandom, GiFoxHead, GiMoon, GiVolcano } from 'react-icons/gi'
+import { BiBug } from 'react-icons/bi'
 import type { IconType } from 'react-icons'
 import type { KingdomId } from './kingdoms'
 
@@ -30,5 +31,6 @@ export const KINGDOM_ICONS: Record<KingdomId, IconType> = {
   dark: GiMoon,
   kitsune: GiFoxHead,
   magma: GiVolcano,
+  insects: BiBug,
 }
 

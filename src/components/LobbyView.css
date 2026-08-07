@@ -202,11 +202,8 @@
     padding: 1rem 0.75rem;
     gap: 1rem;
   }
-  /* Phones: the tiles are already small, so let them pack four across rather
-     than forcing the old two-column text layout. */
-  .lobby__kingdom-grid {
-    grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
-  }
+  /* The grid stays 4x4 here too (see the base rule); only the tiles inside it
+     get tighter. */
   .lobby__kingdom-details {
     padding: 0.85rem;
   }
@@ -412,12 +409,18 @@
   color: #8b93a7;
 }
 
-/* Compact icon tiles rather than a row of wide text buttons: fifteen labels
-   at 7.5rem apiece ran to a wall of rows, and the same fifteen marks fit in a
-   fraction of the height while being quicker to find by shape than by word. */
+/* Compact icon tiles rather than a row of wide text buttons: sixteen labels
+   at 7.5rem apiece ran to a wall of rows, and the same sixteen marks fit in a
+   fraction of the height while being quicker to find by shape than by word.
+
+   Exactly FOUR across, at every size — desktop, portrait and landscape alike.
+   Sixteen kingdoms make a 4x4 square, and holding that shape everywhere means
+   a kingdom is always in the same place: muscle memory survives rotating the
+   phone. `minmax(0, 1fr)` rather than a min width, so the tiles shrink to fit
+   a narrow column instead of overflowing it. */
 .lobby__kingdom-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.4rem;
 }
 

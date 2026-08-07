@@ -1,4 +1,4 @@
-import type { DisplayNode, FoxOrbitConfig, Vec2 } from '../types'
+import type { DisplayNode, FoxOrbitConfig, ProjectileShape, Vec2 } from '../types'
 import { ObjectPool, type PoolOptions } from '../pool'
 import { clamp01 } from '../easing'
 import { UNIT_RADIUS, resetDisplayNode } from '../nodeUtil'
@@ -71,7 +71,9 @@ interface Mote {
 }
 
 export class FoxOrbitSystem {
-  private readonly foxPool: ObjectPool<DisplayNode>
+  /** One pool per sprite shape; the ring can be foxes, butterflies, anything. */
+  private readonly pools = new Map<ProjectileShape, ObjectPool<DisplayNode>>()
+  private readonly fallbackPool: ObjectPool<DisplayNode>
   private readonly motePool: ObjectPool<DisplayNode>
   private readonly orbits = new Map<string, Orbit>()
   private readonly motes: Mote[] = []
@@ -79,15 +81,31 @@ export class FoxOrbitSystem {
   private readonly rng: () => number
 
   constructor(
-    createFox: () => DisplayNode,
+    /** Per-shape sprite factories. A shape with no factory falls back to the
+     *  mote sprite, so a headless/test construction still runs the whole
+     *  system without any of them. */
+    shapes: Partial<Record<ProjectileShape, (() => DisplayNode) | undefined>>,
     createMote: () => DisplayNode,
     baseRadius = UNIT_RADIUS,
     options: { rng?: () => number } & PoolOptions = {},
   ) {
     this.baseRadius = baseRadius
     this.rng = options.rng ?? Math.random
-    this.foxPool = new ObjectPool(createFox, resetDisplayNode, { prewarm: options.prewarm ?? 8 })
     this.motePool = new ObjectPool(createMote, resetDisplayNode, { prewarm: 32 })
+    this.fallbackPool = this.motePool
+    for (const [shape, factory] of Object.entries(shapes)) {
+      if (factory) {
+        this.pools.set(
+          shape as ProjectileShape,
+          new ObjectPool(factory, resetDisplayNode, { prewarm: options.prewarm ?? 8 }),
+        )
+      }
+    }
+  }
+
+  /** The pool for a config's shape, falling back when unregistered. */
+  private poolFor(shape: ProjectileShape | undefined): ObjectPool<DisplayNode> {
+    return (shape && this.pools.get(shape)) || this.fallbackPool
   }
 
   /** Sets a ring of foxes running around `at`, keyed by `key`. Re-starting an
@@ -110,7 +128,7 @@ export class FoxOrbitSystem {
       departMs: 0,
     }
     for (let i = 0; i < count; i++) {
-      const node = this.foxPool.acquire()
+      const node = this.poolFor(config.shape ?? 'fox').acquire()
       node.visible = true
       node.alpha = 0
       node.tint = config.color
@@ -195,7 +213,12 @@ export class FoxOrbitSystem {
         // The sprite is drawn in profile facing +x. A fox running leftward is
         // MIRRORED rather than rotated the long way round — rotating past
         // vertical would stand it on its head.
-        if (Math.cos(heading) < 0) {
+        if (cfg.upright) {
+          // A butterfly drifting round a castle has no "forward" — pointing it
+          // along its path makes it look like a paper aeroplane. It just sways.
+          fox.node.rotation = Math.sin(beat * Math.PI) * 0.25
+          fox.node.scale.set(scale, scale)
+        } else if (Math.cos(heading) < 0) {
           fox.node.rotation = heading + Math.PI
           fox.node.scale.set(-scale, scale)
         } else {
@@ -258,7 +281,8 @@ export class FoxOrbitSystem {
   }
 
   private release(orbit: Orbit): void {
-    for (const fox of orbit.foxes) this.foxPool.release(fox.node)
+    const pool = this.poolFor(orbit.config.shape ?? 'fox')
+    for (const fox of orbit.foxes) pool.release(fox.node)
     orbit.foxes.length = 0
   }
 

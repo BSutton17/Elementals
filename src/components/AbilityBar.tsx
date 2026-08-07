@@ -3,6 +3,7 @@ import { GiReceiveMoney, GiPoisonGas } from 'react-icons/gi'
 import { IoMdPeople } from 'react-icons/io'
 import { FaAngleDoubleUp, FaHeart, FaShieldAlt, FaTools } from 'react-icons/fa'
 import { getAbilitiesForKingdom } from '../game/abilities'
+import { spawnsCentrepiece } from '../game/centrepiece'
 import { type KingdomTheme } from '../game/kingdomThemes'
 import { AbilityButton } from './AbilityButton'
 import { ShopOverlay } from './ShopOverlay'
@@ -59,6 +60,11 @@ interface AbilityBarProps {
   /** Dark's Never-ending Nightmare: the caster may use ONLY their basic attack.
    *  Every other attack and their ultimate are barred until it lifts. */
   nightmared?: boolean
+  /** The name of whatever is standing in the middle of the battlefield (Magma's
+   *  volcano, Insects' butterfly), or null when the centre is clear. Only ONE
+   *  may hold it, so while something is there every ability that would spawn
+   *  another is barred — see `game/centrepiece.ts`. */
+  fieldOccupiedBy?: string | null
   /** Damage Dark must absorb to fill Unlimited Rage (server-owned, from the
    *  match config — never a constant on this side). */
   rageFull?: number
@@ -120,6 +126,7 @@ export function AbilityBar({
   citizensPoisoned = false,
   frozen = false,
   nightmared = false,
+  fieldOccupiedBy = null,
   rageFull,
   besieged = false,
   memoryMeter = null,
@@ -172,9 +179,14 @@ export function AbilityBar({
       // and the ultimate are refused unless it is the kingdom's slot-1 attack.
       // Utilities stay legal so the victim can still defend themselves.
       const barred =
-        nightmared &&
-        (metadata.kind === 'attack' || metadata.kind === 'ultimate') &&
-        metadata.id !== basicAttackId
+        (nightmared &&
+          (metadata.kind === 'attack' || metadata.kind === 'ultimate') &&
+          metadata.id !== basicAttackId) ||
+        // Only one thing may hold the middle of the battlefield. While something
+        // is standing there, the abilities that would spawn another are refused
+        // by the server — so bar the card rather than let a player spend a click
+        // on it. Mirrored from the server's rule, which is the authority.
+        (fieldOccupiedBy !== null && spawnsCentrepiece(metadata.id))
       return {
         metadata,
         barred,

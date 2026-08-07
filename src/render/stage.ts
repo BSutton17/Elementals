@@ -15,6 +15,8 @@ import {
   makeFoxNode,
   makeFlameNode,
   makeBlobNode,
+  makeInsectNode,
+  makeButterflyNode,
   makeYinYangNode,
   makeShadowNode,
 } from './nodes'
@@ -64,6 +66,8 @@ export class PixiStage {
       projectileArrow: () => makeArrowNode(this.layers.get('projectiles')),
       projectileSpade: () => makeSpadeNode(this.layers.get('projectiles')),
       projectileFox: () => makeFoxNode(this.layers.get('projectiles')),
+      projectileInsect: () => makeInsectNode(this.layers.get('projectiles')),
+      projectileButterfly: () => makeButterflyNode(this.layers.get('projectiles')),
       flame: () => makeFlameNode(this.layers.get('projectiles')),
       // The molten sheet lies UNDER everything else on the field, so it is
       // drawn on the particles layer rather than over the projectiles.

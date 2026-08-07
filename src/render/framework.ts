@@ -76,6 +76,10 @@ export interface NodeFactories {
   projectileSpade?: () => DisplayNode
   /** Running-fox silhouette (Kitsune's Old Friends). Falls back to the circle. */
   projectileFox?: () => DisplayNode
+  /** Scuttling-insect silhouette (Insects' Infected). Falls back to the circle. */
+  projectileInsect?: () => DisplayNode
+  /** Butterfly silhouette (Insects' Butterflies). Falls back to the circle. */
+  projectileButterfly?: () => DisplayNode
   /** Tapered flame tongue (Kitsune's Fox Fire). Falls back to the particle. */
   flame?: () => DisplayNode
   /** Filled molten sheet (Magma's Floor is Lava). Falls back to a no-op. */
@@ -202,6 +206,13 @@ function withColor<T extends { color: number }>(
   return color === undefined ? config : { ...config, color }
 }
 
+/**
+ * Shortest time a meteor takes to fall (Earth's Meteor Shower). Exported
+ * because the floating damage numbers have to wait out the first meteor's
+ * descent — otherwise the number beats the bombardment onto the castle.
+ */
+export const METEOR_FALL_MIN_MS = 300
+
 /** A BlobNode that draws nothing — used when no blob factory is injected, so
  *  the rest of a lava flood (bubbles, timing, lifecycle) still runs headless. */
 function makeNoopBlob(): BlobNode {
@@ -250,6 +261,8 @@ export class AnimationFramework {
         ...(nodes.projectileArrow ? { arrow: nodes.projectileArrow } : {}),
         ...(nodes.projectileSpade ? { spade: nodes.projectileSpade } : {}),
         ...(nodes.projectileFox ? { fox: nodes.projectileFox } : {}),
+        ...(nodes.projectileInsect ? { insect: nodes.projectileInsect } : {}),
+        ...(nodes.projectileButterfly ? { butterfly: nodes.projectileButterfly } : {}),
         ...(nodes.projectileShadow ? { shadow: nodes.projectileShadow } : {}),
         ...(nodes.projectileYinYang ? { yinYang: nodes.projectileYinYang } : {}),
       },
@@ -313,7 +326,7 @@ export class AnimationFramework {
       baseRadius,
     )
     this.foxOrbits = new FoxOrbitSystem(
-      nodes.projectileFox ?? nodes.projectile,
+      { fox: nodes.projectileFox, insect: nodes.projectileInsect, butterfly: nodes.projectileButterfly },
       nodes.particle,
       baseRadius,
     )
@@ -720,7 +733,7 @@ export class AnimationFramework {
       y: impact.y - cfg.fallHeight * (0.85 + Math.random() * 0.3),
     }
     const meteor: ProjectileConfig = {
-      durationMs: 300 + Math.random() * 240, // varied speed
+      durationMs: METEOR_FALL_MIN_MS + Math.random() * 240, // varied speed
       size: cfg.size * sizeMul,
       color: cfg.coreColor, // molten glowing core
       easing: 'easeIn', // accelerate under gravity
@@ -2173,7 +2186,7 @@ export class AnimationFramework {
         color: cfg.color,
         easing: 'linear',
         faceDirection: true,
-        shape: 'fox',
+        shape: cfg.shape ?? 'fox',
         gait: {
           bounce: cfg.bounce ?? 9,
           rate: cfg.gaitRate ?? 5.5,

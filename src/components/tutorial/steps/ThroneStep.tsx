@@ -46,6 +46,7 @@ export const ORBIT_TIMING = {
 const COUNT_WORDS = [
   'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight',
   'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen',
+  'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty',
 ]
 
 function countWord(n: number): string {

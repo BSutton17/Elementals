@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
-import { ABILITY_EFFECTS } from '../render/effects'
+import { ABILITY_EFFECTS, EARTHQUAKE_CONFIG } from '../render/effects'
+import { METEOR_FALL_MIN_MS } from '../render/framework'
 import { ERUPTION_LAUNCH_LEAD_MS, VOLCANO_WINDUP_MS } from '../render/types'
 
 /** The server's `cause` on damage dealt by a volcano eruption. */
@@ -307,25 +308,63 @@ function impactDelay(cause: string | undefined): number {
   return abilityImpactDelay(i >= 0 ? cause.slice(i + 1) : cause)
 }
 
-/** Time-to-impact for a bare ability id — 0 for instant/unregistered ones. */
+/**
+ * Time-to-impact for a bare ability id — how long the number is held back so it
+ * appears when the ability visibly CONNECTS rather than when the server
+ * resolved it.
+ *
+ * The server deals every point of damage the instant a cast is accepted. Almost
+ * every ability in this game then spends time getting there: charging, winding
+ * up, flying, arcing, or marching a pack across the field. Without a delay the
+ * number is simply wrong — it beats the effect, sometimes by seconds, and the
+ * hit reads as having come from nowhere.
+ *
+ * Every effect shape that has a lead time is listed here, most-specific first.
+ * A shape with no lead time (a vortex parked on the target, an instant
+ * lightning strike) correctly falls through to 0.
+ */
 function abilityImpactDelay(abilityId: string): number {
-  // The volcano's eruption is not an ability cast, so it has no entry in the
-  // table; its damage is dealt the instant the timer runs out, while the blast
-  // spends its wind-up drawing inward.
+  // Not an ability cast at all: the volcano's eruption is dealt the instant its
+  // timer runs out, while the blast spends its wind-up drawing inward.
   if (abilityId === VOLCANO_CAUSE) return VOLCANO_WINDUP_MS
 
   const effect = ABILITY_EFFECTS[abilityId]
   if (!effect) return 0
+
+  // A charge-then-fire beam lands when the beam fires, not when it starts.
   if (effect.beam) return effect.beam.chargeMs
-  // Magma's Eruption: the ground shakes for two full seconds before anything is
-  // thrown, and the lava then arcs across the field. Without this the damage
-  // number appears while the mountain is still rumbling — three seconds before
-  // anything touches the target.
+
+  // Magma's Eruption: seconds of rumble, then lava arcing across the field.
   if (effect.eruption) {
-    return (
-      effect.eruption.buildupMs + ERUPTION_LAUNCH_LEAD_MS + effect.eruption.travelMs
-    )
+    return effect.eruption.buildupMs + ERUPTION_LAUNCH_LEAD_MS + effect.eruption.travelMs
   }
+
+  // A pack that RUNS to the target (Kitsune's Old Friends, Insects' Infected).
+  // Timed to the first arrival, not the last: the target is being hit from the
+  // moment the front of the pack reaches them.
+  if (effect.foxPack) return effect.foxPack.durationMs
+
+  // A wave gathers at the caster before it travels.
+  if (effect.wave) return effect.wave.gatherMs + effect.wave.travelMs
+
+  // Cupid's Arrow draws the bow first, then the arrow weaves across.
+  if (effect.cupidsArrow) {
+    return effect.cupidsArrow.bowGatherMs + effect.cupidsArrow.arrowDurationMs
+  }
+
+  // Earth's Earthquake trembles before it breaks. Dispatched by ability id
+  // rather than off the definition (it needs the neighbours' positions, which
+  // only BattlefieldFx knows), so its timing is read from the config directly.
+  if (abilityId === 'earthquake') return EARTHQUAKE_CONFIG.buildupMs
+
+  // A charge-scaled barrage: the first bolt lands almost at once, so the number
+  // rides with it rather than waiting for the finishing strike.
+  if (effect.barrage) return 0
+
+  // Meteors fall from high above; the number rides the FIRST one down.
+  if (effect.meteorShower) return METEOR_FALL_MIN_MS
+
+  // Anything else that travels in a straight line.
   return effect.projectile?.durationMs ?? 0
 }
 

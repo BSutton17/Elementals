@@ -153,6 +153,18 @@ export const KINGDOM_PASSIVES_INFO: Record<string, KingdomPassiveInfo[]> = {
       description: 'You choose three perks instead of two.',
     },
   ],
+  insects: [
+    {
+      name: 'Cocoon',
+      description:
+        'Incoming attacks sometimes catch in a cocoon: part of the damage never lands, and you are paid gold for it instead.',
+    },
+    {
+      name: 'Fruit Fly',
+      description:
+        'Go long enough without being attacked and your castle starts healing itself. Any damage at all — even a burn — resets the clock.',
+    },
+  ],
   magma: [
     {
       name: 'Hotter fire',
