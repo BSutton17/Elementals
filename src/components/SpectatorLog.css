@@ -1,0 +1,148 @@
+/* Sits where a player's kingdom header would be — the top-left corner is free
+   for spectators, and putting the log anywhere else would crowd the arena. */
+.spectator-log {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  /* The arena underneath stays interactive; only the controls take input. */
+  pointer-events: none;
+  max-width: min(18rem, 42vw);
+}
+
+/* An eliminated player keeps their kingdom header, so the log starts under it
+   instead of on top of it. Matched to the header's own height at each size. */
+.spectator-log--below-header {
+  top: 4.5rem;
+}
+
+.spectator-log__toggle,
+.spectator-log__list {
+  pointer-events: auto;
+}
+
+.spectator-log__toggle {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #cdd4e2;
+  background: rgba(11, 14, 23, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.spectator-log__toggle:hover {
+  color: #fff;
+  border-color: rgba(110, 231, 255, 0.5);
+}
+
+.spectator-log__toggle:focus-visible {
+  outline: 2px solid #6ee7ff;
+  outline-offset: 2px;
+}
+
+.spectator-log--open .spectator-log__toggle {
+  color: #6ee7ff;
+  border-color: rgba(110, 231, 255, 0.45);
+}
+
+.spectator-log__list {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  list-style: none;
+  background: rgba(11, 14, 23, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  backdrop-filter: blur(6px);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  /* Capped so a long fight cannot grow the panel over the castles beneath it. */
+  max-height: 40vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.spectator-log__entry {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spectator-log__kingdom {
+  font-weight: 800;
+}
+
+.spectator-log__verb {
+  color: #8b93a7;
+}
+
+.spectator-log__ability {
+  color: #e8ecf5;
+  font-weight: 600;
+}
+
+.spectator-log__empty {
+  color: #8b93a7;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* Phone, portrait. Width is the scarce thing: the panel is allowed a bigger
+   share of a narrow screen, but the text shrinks so lines still fit on one row. */
+@media (max-width: 900px) and (orientation: portrait) {
+  .spectator-log {
+    top: 0.6rem;
+    left: 0.6rem;
+    max-width: 60vw;
+  }
+
+  .spectator-log--below-header {
+    top: 3rem;
+  }
+
+  .spectator-log__toggle {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .spectator-log__list {
+    font-size: 0.72rem;
+    max-height: 32vh;
+  }
+}
+
+/* Phone, sideways. Vertical space is the scarce thing here, so the panel gets
+   shorter rather than narrower. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .spectator-log {
+    top: 0.5rem;
+    left: 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .spectator-log--below-header {
+    top: 2.6rem;
+  }
+
+  .spectator-log__toggle {
+    font-size: 0.68rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .spectator-log__list {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.55rem;
+    line-height: 1.4;
+    max-height: 45vh;
+  }
+}

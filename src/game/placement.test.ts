@@ -44,3 +44,54 @@ describe('placeKingdoms (#193)', () => {
     expect(first!.y).toBeCloseTo(160, 6) // 500 − 340
   })
 })
+
+/**
+ * The arena and the effects layer must place seats from the SAME list.
+ *
+ * Placement is derived from a seat list's length and index, so two callers with
+ * different lists silently disagree about where every kingdom is. That is what
+ * happened: `BattlefieldView` seats `match.players.filter(p => !p.spectator)`
+ * while `BattlefieldFx` was handed `match.players` — so one watcher turned a
+ * 7-seat board into an 8-seat circle for effects only. Both endpoints of every
+ * animation were drawn at the wrong place, and it looked intermittent because a
+ * lobby with no spectator lines up perfectly.
+ */
+describe('spectators must not shift the battlefield layout', () => {
+  const seat = (id: string, spectator = false) => ({ id, spectator })
+
+  it('a spectator changes the layout when they are not filtered out', () => {
+    const players = [seat('a'), seat('b'), seat('c'), seat('watcher', true)]
+    const playing = players.filter((p) => !p.spectator)
+
+    const correct = placeKingdoms(playing.length)
+    const wrong = placeKingdoms(players.length)
+
+    // Proof the bug was real: same kingdom, two different places.
+    expect(correct).toHaveLength(3)
+    expect(wrong).toHaveLength(4)
+    // Seat 0 is pinned to -PI/2 whatever the count, so the drift has to be read
+    // off a later seat — every one of which moves.
+    expect(wrong[1]!.angle).not.toBeCloseTo(correct[1]!.angle)
+    expect(wrong[2]!.angle).not.toBeCloseTo(correct[2]!.angle)
+  })
+
+  it('the mismatch grows with the roster, which is why it showed at 6-7 players', () => {
+    // At full house the spacing error is a whole seat's worth of arc.
+    const sevenSeats = placeKingdoms(7)
+    const eightSeats = placeKingdoms(8)
+    const drift = Math.abs(eightSeats[6]!.angle - sevenSeats[6]!.angle)
+    expect(drift).toBeGreaterThan(0.5) // radians — visibly wrong, not a nudge
+  })
+
+  it('filtering spectators reproduces the arena layout exactly', () => {
+    const players = [seat('watcher', true), seat('a'), seat('b'), seat('c')]
+    const playing = players.filter((p) => !p.spectator)
+    expect(placeKingdoms(playing.length)).toEqual(placeKingdoms(3))
+
+    // And a spectator EARLIER in the list shifts every index after it, which is
+    // the severe form — kingdoms land on each other's sites, not just off-centre.
+    const wrongIndexOfA = players.findIndex((p) => p.id === 'a')
+    const rightIndexOfA = playing.findIndex((p) => p.id === 'a')
+    expect(wrongIndexOfA).not.toBe(rightIndexOfA)
+  })
+})

@@ -432,13 +432,35 @@
 /* Portrait phones/tablets: smaller header chrome. */
 @media (max-width: 900px) and (orientation: portrait), (max-width: 700px) and (orientation: portrait) {
   .battlefield__kingdom-header h2 {
-    font-size: 1.1rem;
+    /* The kingdom name is identity, not information — it never changes during a
+       match and the castle is already coloured. On a phone the arena needs the
+       room far more than the title does. */
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+  }
+
+  .battlefield__kingdom-header {
+    gap: 0.6rem;
   }
 
   .battlefield__level-circle {
-    width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    border-width: 2px;
+  }
+}
+
+/* Narrow phones: smaller still, so the name cannot reach the arena's edge. */
+@media (max-width: 420px) and (orientation: portrait) {
+  .battlefield__kingdom-header h2 {
+    font-size: 0.8rem;
+  }
+
+  .battlefield__level-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 0.72rem;
   }
 }
 
@@ -451,13 +473,13 @@
   }
 
   .battlefield__kingdom-header h2 {
-    font-size: 0.95rem;
+    font-size: 0.8rem;
   }
 
   .battlefield__level-circle {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
+    width: 24px;
+    height: 24px;
+    font-size: 0.72rem;
     border-width: 2px;
   }
 }

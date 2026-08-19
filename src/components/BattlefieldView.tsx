@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
+import { SpectatorLog } from './SpectatorLog'
 import type {
   AbilityCastEvent,
   AttackUndoneEvent,
@@ -355,6 +356,19 @@ export function BattlefieldView({
       style={cssVars}
     >
       <h1 className="battlefield__sr-title">Battlefield</h1>
+      {/* Spectators have no kingdom header or ability bar, and an eliminated
+          player has lost their ability bar too — so for both, nothing on screen
+          names who cast what. The log fills that gap; it is collapsed by
+          default so it never covers the fight it is describing. */}
+      {(spectator || you?.eliminated) && (
+        <SpectatorLog
+          kingdomOf={(id) => roster.find((p) => p.id === id)?.kingdomId ?? null}
+          // An eliminated player still has their kingdom header on screen, so
+          // the log drops below it rather than landing on top of it. A true
+          // spectator has that corner to itself.
+          belowHeader={!spectator}
+        />
+      )}
       {!spectator && (
         <div className="battlefield__kingdom-header">
           <div className="battlefield__level-circle">
@@ -553,7 +567,14 @@ export function BattlefieldView({
       {/* PixiJS effects overlay (Epic 9): visualizes authoritative events;
           pointer-events:none keeps the SVG the interactive targeting surface. */}
       <BattlefieldFx
-        order={match.players.map((p) => ({ id: p.id, kingdomId: p.kingdomId }))}
+        // MUST be `roster`, not `match.players`. Placement is derived from the
+        // seat list's LENGTH and INDEX, so handing this layer a different list
+        // than the castles use puts every effect somewhere the kingdom is not.
+        // `match.players` includes spectators; the arena does not seat them, so
+        // a single watcher made this an 8-seat circle over a 7-seat board —
+        // wrong spacing for everyone, and wrong index for every kingdom after
+        // the spectator in the list.
+        order={roster.map((p) => ({ id: p.id, kingdomId: p.kingdomId }))}
         tickRate={tickRate}
       />
       <BlackHoleAccumulator />
