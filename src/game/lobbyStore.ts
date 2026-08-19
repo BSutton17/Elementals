@@ -11,6 +11,7 @@ import {
   type LobbyMatch,
   type MatchConfig,
   type MatchSnapshot,
+  type BotDifficulty,
 } from './lobby'
 import type { KingdomId } from './kingdoms'
 
@@ -170,6 +171,37 @@ export async function setEliminatedSeeAllHealth(on: boolean): Promise<void> {
     eliminatedSeeAllHealth: on,
   })) as Ack
   if (!res.ok) setState({ error: res.error?.message ?? 'Cannot change that rule' })
+}
+
+/**
+ * Host-only: add a computer opponent to the room.
+ *
+ * The server picks the bot's kingdom, perks and name — a bot cannot click, and
+ * the room refuses to start with a seat that has not chosen — so the client
+ * sends only the difficulty and renders whatever comes back on the next lobby
+ * broadcast. No local bot state is kept anywhere.
+ */
+export async function addBot(difficulty: BotDifficulty = 'hard'): Promise<void> {
+  const res = (await socket.emitWithAck('lobby:addBot', { difficulty })) as Ack
+  if (!res.ok) setState({ error: res.error?.message ?? 'Cannot add a bot' })
+}
+
+/** Host-only: change which trained opponent drives an existing bot seat. */
+export async function setBotDifficulty(
+  botId: string,
+  difficulty: BotDifficulty,
+): Promise<void> {
+  const res = (await socket.emitWithAck('lobby:setBotDifficulty', {
+    botId,
+    difficulty,
+  })) as Ack
+  if (!res.ok) setState({ error: res.error?.message ?? 'Cannot change that bot' })
+}
+
+/** Host-only: remove a bot seat from the room. */
+export async function removeBot(botId: string): Promise<void> {
+  const res = (await socket.emitWithAck('lobby:removeBot', { botId })) as Ack
+  if (!res.ok) setState({ error: res.error?.message ?? 'Cannot remove that bot' })
 }
 
 /** Opt this seat out of playing — watch the match as a spectator instead. */

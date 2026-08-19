@@ -844,3 +844,175 @@
   font-size: 0.74rem;
   color: #8b93a7;
 }
+
+/* ---- Bots in the roster ------------------------------------------------ */
+
+/* A bot reads as a player first and a bot second: same row, same spacing, one
+   tag. Deliberately not a separate panel — a bot occupies a real seat, and a
+   roster that separates them would misrepresent the match. */
+.lobby__tag--bot {
+  background: linear-gradient(120deg, #6ee7ff, #4aa8ff);
+  color: #0b0e17;
+}
+
+/* Tap to cycle Easy -> Medium -> Hard. A button rather than a menu: three
+   values do not justify an open-then-choose interaction, and on a phone the
+   platform picker would cover the roster being edited.
+
+   Colour carries the level so it is readable at a glance across a full roster
+   — green is gentle, amber is a real game, red is the strongest model. */
+.lobby__bot-level {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.4rem;
+  min-height: 1.9rem;
+  padding: 0.2rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.08s ease;
+}
+
+button.lobby__bot-level:hover {
+  filter: brightness(1.15);
+}
+
+button.lobby__bot-level:active {
+  transform: scale(0.96);
+}
+
+button.lobby__bot-level:focus-visible {
+  outline: 2px solid #6ee7ff;
+  outline-offset: 2px;
+}
+
+/* The non-host view: same pill, no affordance. */
+.lobby__bot-level--static {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.lobby__bot-level--easy {
+  background: rgba(74, 222, 128, 0.16);
+  border-color: rgba(74, 222, 128, 0.45);
+  color: #86efac;
+}
+
+.lobby__bot-level--medium {
+  background: rgba(255, 210, 74, 0.16);
+  border-color: rgba(255, 210, 74, 0.45);
+  color: #ffd24a;
+}
+
+.lobby__bot-level--hard {
+  background: rgba(255, 107, 107, 0.16);
+  border-color: rgba(255, 107, 107, 0.45);
+  color: #ff9b9b;
+}
+
+.lobby__bot-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lobby__bot-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #aab3c5;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.lobby__bot-remove:hover {
+  color: #ffb4b4;
+  background: rgba(255, 92, 92, 0.16);
+  border-color: rgba(255, 92, 92, 0.4);
+}
+
+.lobby__bot-remove:focus-visible {
+  outline: 2px solid #ff8b8b;
+  outline-offset: 2px;
+}
+
+/* Full width under the roster, matching the list's own rounding, so it reads as
+   the next row rather than a floating control. */
+.lobby__add-bot {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #cdd4e2;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.lobby__add-bot:hover:not(:disabled) {
+  color: #e8ecf5;
+  background: rgba(110, 231, 255, 0.08);
+  border-color: rgba(110, 231, 255, 0.45);
+}
+
+.lobby__add-bot:focus-visible {
+  outline: 2px solid #6ee7ff;
+  outline-offset: 2px;
+}
+
+.lobby__add-bot:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* Phones, portrait. Keep the pill on the same line as the kingdom name rather
+   than letting it drop alone onto a third line. */
+@media (max-width: 420px) {
+  .lobby__bot-level {
+    min-width: 4rem;
+    font-size: 0.72rem;
+  }
+
+  .lobby__add-bot {
+    padding: 0.7rem 1rem;
+  }
+}
+
+/* Phones, landscape. Vertical space is the scarce thing, so the controls lose
+   height only — the touch targets stay wide enough to hit. */
+@media (orientation: landscape) and (max-height: 35rem) {
+  .lobby__bot-level,
+  .lobby__bot-remove {
+    min-height: 1.6rem;
+    height: 1.6rem;
+  }
+
+  .lobby__bot-remove {
+    width: 1.6rem;
+    font-size: 1rem;
+  }
+
+  .lobby__add-bot {
+    margin-top: 0.35rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+  }
+}

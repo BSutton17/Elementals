@@ -26,6 +26,33 @@ export interface LobbyPlayer {
   socketId: string | null
   /** A spectator watches without a kingdom/castle (the 8th seat). */
   spectator?: boolean
+  /** True when this seat is played by the computer rather than a person. */
+  isBot?: boolean
+  /** Which trained opponent drives it. Only meaningful alongside `isBot`. */
+  botDifficulty?: BotDifficulty
+}
+
+/** The three computer-opponent strengths the server ships. */
+export type BotDifficulty = 'easy' | 'medium' | 'hard'
+
+/** Ordered for the cycle control — Easy is the gentlest. */
+export const BOT_DIFFICULTIES: readonly BotDifficulty[] = ['easy', 'medium', 'hard']
+
+/**
+ * The next difficulty in the cycle, wrapping hard -> easy.
+ *
+ * A tap-to-cycle control rather than a dropdown: there are only three values,
+ * so a menu costs two interactions (open, choose) where a tap costs one, and on
+ * a phone it avoids the platform picker covering the roster you are editing.
+ */
+export function nextDifficulty(current: BotDifficulty | undefined): BotDifficulty {
+  const at = BOT_DIFFICULTIES.indexOf(current ?? 'hard')
+  return BOT_DIFFICULTIES[(at + 1) % BOT_DIFFICULTIES.length]!
+}
+
+/** Sentence-case label for a difficulty, for anything player-facing. */
+export function botDifficultyLabel(d: BotDifficulty): string {
+  return d.charAt(0).toUpperCase() + d.slice(1)
 }
 
 export interface MatchConfig {

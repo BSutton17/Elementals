@@ -1,7 +1,10 @@
 import { LobbyView } from '../components/LobbyView'
 import { useLobby } from '../game/useLobby'
 import {
+  addBot,
   leaveRoom,
+  removeBot,
+  setBotDifficulty,
   selectKingdom,
   selectPerks,
   setEliminatedSeeAllHealth,
@@ -29,6 +32,9 @@ export function LobbyScreen() {
       onSpectate={() => void spectate()}
       onStart={() => void startMatch()}
       onLeave={() => void leaveRoom()}
+      onAddBot={(d) => void addBot(d)}
+      onSetBotDifficulty={(id, d) => void setBotDifficulty(id, d)}
+      onRemoveBot={(id) => void removeBot(id)}
     />
   )
 }

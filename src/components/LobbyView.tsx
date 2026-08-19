@@ -7,7 +7,13 @@ import { IoIosStar, IoIosStarOutline } from 'react-icons/io'
 import { accentFor, outlineFor } from '../game/contrast'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { KINGDOM_ICONS } from '../game/kingdomIcons'
-import { MIN_PLAYERS_TO_START, type LobbyMatch } from '../game/lobby'
+import {
+  MIN_PLAYERS_TO_START,
+  botDifficultyLabel,
+  nextDifficulty,
+  type BotDifficulty,
+  type LobbyMatch,
+} from '../game/lobby'
 import {
   PERKS,
   PERKS_PER_PLAYER,
@@ -29,6 +35,10 @@ interface LobbyViewProps {
   onSpectate: () => void
   onStart: () => void
   onLeave: () => void
+  /** Host-only bot controls. Absent for non-hosts, which hides the whole UI. */
+  onAddBot?: (difficulty: BotDifficulty) => void
+  onSetBotDifficulty?: (botId: string, difficulty: BotDifficulty) => void
+  onRemoveBot?: (botId: string) => void
 }
 
 /** A player's chosen perks, as icon chips beside their name in the roster. */
@@ -147,6 +157,9 @@ export function LobbyView({
   onSpectate,
   onStart,
   onLeave,
+  onAddBot,
+  onSetBotDifficulty,
+  onRemoveBot,
 }: LobbyViewProps) {
   const [showHowTo, setShowHowTo] = useState(false)
   const me = match.players.find((p) => p.id === youId)
@@ -182,6 +195,10 @@ export function LobbyView({
   const maxActive = match.maxActivePlayers ?? 7
   const activeCount = match.players.filter((p) => !p.spectator && p.kingdomId !== null).length
   const spectatorCount = match.players.filter((p) => p.spectator).length
+  // A bot needs a kingdom seat like anyone else, so the button goes dead once
+  // the playing seats are gone — the server refuses anyway, but a disabled
+  // button says so without a round trip and an error toast.
+  const rosterFull = activeCount >= maxActive
   const playersFull = activeCount >= maxActive && !(me && !me.spectator && me.kingdomId !== null)
 
   // Tell the host exactly what's blocking the start.
@@ -231,6 +248,7 @@ export function LobbyView({
             >
               <span className="lobby__name">
                 {p.name}
+                {p.isBot && <span className="lobby__tag lobby__tag--bot">Bot</span>}
                 {p.id === youId && <span className="lobby__tag">You</span>}
                 {p.id === match.hostId && <span className="lobby__tag lobby__tag--host">Host</span>}
               </span>
@@ -239,13 +257,63 @@ export function LobbyView({
                 {kingdomLabel(p.kingdomId) && (
                   <span className="lobby__kingdom">{kingdomLabel(p.kingdomId)}</span>
                 )}
-                <span className={`lobby__ready${p.ready ? ' lobby__ready--on' : ''}`}>
-                  {p.ready ? 'Ready' : 'Not ready'}
-                </span>
+                {p.isBot ? (
+                  isHost && onSetBotDifficulty && onRemoveBot ? (
+                    <span className="lobby__bot-controls">
+                      <button
+                        type="button"
+                        className={`lobby__bot-level lobby__bot-level--${
+                          p.botDifficulty ?? 'hard'
+                        }`}
+                        onClick={() =>
+                          onSetBotDifficulty(p.id, nextDifficulty(p.botDifficulty))
+                        }
+                        aria-label={`${p.name} difficulty: ${botDifficultyLabel(
+                          p.botDifficulty ?? 'hard',
+                        )}. Tap to change.`}
+                        title="Tap to change difficulty"
+                      >
+                        {botDifficultyLabel(p.botDifficulty ?? 'hard')}
+                      </button>
+                      <button
+                        type="button"
+                        className="lobby__bot-remove"
+                        onClick={() => onRemoveBot(p.id)}
+                        aria-label={`Remove ${p.name}`}
+                        title={`Remove ${p.name}`}
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ) : (
+                    // Everyone else sees the setting, they just cannot change it.
+                    <span
+                      className={`lobby__bot-level lobby__bot-level--${
+                        p.botDifficulty ?? 'hard'
+                      } lobby__bot-level--static`}
+                    >
+                      {botDifficultyLabel(p.botDifficulty ?? 'hard')}
+                    </span>
+                  )
+                ) : (
+                  <span className={`lobby__ready${p.ready ? ' lobby__ready--on' : ''}`}>
+                    {p.ready ? 'Ready' : 'Not ready'}
+                  </span>
+                )}
               </span>
             </li>
           ))}
         </ul>
+        {isHost && onAddBot && (
+          <button
+            type="button"
+            className="lobby__add-bot"
+            onClick={() => onAddBot('hard')}
+            disabled={rosterFull}
+          >
+            + Add Bot
+          </button>
+        )}
       </section>
 
       <section className="lobby__kingdoms" aria-label="Choose your kingdom">

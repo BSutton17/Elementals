@@ -1,11 +1,11 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, test, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { LobbyView } from './LobbyView'
 import { SELECTABLE_KINGDOMS } from '../game/kingdoms'
 import { KINGDOM_DIFFICULTY, MAX_DIFFICULTY } from '../game/kingdomInfo'
-import type { LobbyMatch } from '../game/lobby'
+import { nextDifficulty, type LobbyMatch, type LobbyPlayer } from '../game/lobby'
 
 /** A full perk selection, so a fixture player can ready up. */
 const PERKS = ['sharperSwords', 'extraGuards']
@@ -363,4 +363,150 @@ describe('the kingdom grid holds its shape', () => {
       expect(cols[1]!.trim()).toBe('repeat(4, minmax(0, 1fr))')
     }
   })
+})
+
+// ---- Bots in the lobby ----------------------------------------------------
+//
+// The behaviour worth pinning is who is allowed to do what: a bot must read as
+// a player, only the host gets the controls, and a non-host must still be able
+// to SEE what they are about to play against.
+
+function makeBotSeat(over: Partial<LobbyPlayer> = {}): LobbyPlayer {
+  return {
+    id: 'bot-1',
+    name: 'Ember',
+    kingdomId: 'fire',
+    perks: [],
+    ready: true,
+    connected: true,
+    socketId: null,
+    isBot: true,
+    botDifficulty: 'medium',
+    ...over,
+  }
+}
+
+function lobbyWithBot(extra: Partial<LobbyMatch> = {}, bot = makeBotSeat()): LobbyMatch {
+  return {
+    roomCode: 'ABCD',
+    phase: 'lobby',
+    hostId: 'me',
+    players: [
+      {
+        id: 'me',
+        name: 'Bryson',
+        kingdomId: 'water',
+        perks: [],
+        ready: false,
+        connected: true,
+        socketId: 's1',
+      },
+      bot,
+    ],
+    playerCount: 2,
+    maxPlayers: 8,
+    maxActivePlayers: 7,
+    tick: 0,
+    winnerId: null,
+    ...extra,
+  }
+}
+
+const baseProps = {
+  onToggleReady: noop,
+  onSelectKingdom: noop,
+  onSelectPerks: noop,
+  onSpectate: noop,
+  onStart: noop,
+  onLeave: noop,
+}
+
+test('a bot is labelled in the roster and shows its difficulty', () => {
+  render(
+    <LobbyView
+      match={lobbyWithBot()}
+      youId="me"
+      {...baseProps}
+      onAddBot={noop}
+      onSetBotDifficulty={noop}
+      onRemoveBot={noop}
+    />,
+  )
+  expect(screen.getByText('Ember')).toBeTruthy()
+  expect(screen.getByText('Bot')).toBeTruthy()
+  // Named for the seat, so a screen reader hears which bot is being changed.
+  expect(screen.getByRole('button', { name: /Ember difficulty: Medium/i })).toBeTruthy()
+})
+
+test('the host can add a bot', () => {
+  const onAddBot = vi.fn()
+  render(<LobbyView match={lobbyWithBot()} youId="me" {...baseProps} onAddBot={onAddBot} />)
+  fireEvent.click(screen.getByRole('button', { name: /add bot/i }))
+  expect(onAddBot).toHaveBeenCalledWith('hard')
+})
+
+test('the host can change a bot from medium to hard', () => {
+  const onSetBotDifficulty = vi.fn()
+  render(
+    <LobbyView
+      match={lobbyWithBot()}
+      youId="me"
+      {...baseProps}
+      onAddBot={noop}
+      onSetBotDifficulty={onSetBotDifficulty}
+      onRemoveBot={noop}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: /Ember difficulty: Medium/i }))
+  expect(onSetBotDifficulty).toHaveBeenCalledWith('bot-1', 'hard')
+})
+
+test('the host can remove a bot', () => {
+  const onRemoveBot = vi.fn()
+  render(
+    <LobbyView
+      match={lobbyWithBot()}
+      youId="me"
+      {...baseProps}
+      onAddBot={noop}
+      onSetBotDifficulty={noop}
+      onRemoveBot={onRemoveBot}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Remove Ember' }))
+  expect(onRemoveBot).toHaveBeenCalledWith('bot-1')
+})
+
+test('a non-host sees the difficulty but gets no controls', () => {
+  render(<LobbyView match={lobbyWithBot()} youId="someone-else" {...baseProps} />)
+  expect(screen.getByText('Medium')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: /Ember difficulty/i })).toBeNull()
+  expect(screen.queryByRole('button', { name: /add bot/i })).toBeNull()
+})
+
+test('the difficulty button cycles easy -> medium -> hard -> easy', () => {
+  // The cycle is the whole interaction, so it is pinned directly rather than
+  // through the component: three taps must return to where they started, or a
+  // host can get stuck unable to reach one of the levels.
+  expect(nextDifficulty('easy')).toBe('medium')
+  expect(nextDifficulty('medium')).toBe('hard')
+  expect(nextDifficulty('hard')).toBe('easy')
+  // An unset bot is Hard, so its first tap goes to Easy.
+  expect(nextDifficulty(undefined)).toBe('easy')
+})
+
+test('adding a bot is refused once every playing seat is taken', () => {
+  const full = lobbyWithBot({
+    maxActivePlayers: 2,
+  })
+  render(<LobbyView match={full} youId="me" {...baseProps} onAddBot={noop} />)
+  expect((screen.getByRole('button', { name: /add bot/i }) as HTMLButtonElement).disabled).toBe(true)
+})
+
+test('a bot shows its difficulty where a person shows ready state', () => {
+  render(<LobbyView match={lobbyWithBot()} youId="me" {...baseProps} onAddBot={noop} onSetBotDifficulty={noop} onRemoveBot={noop} />)
+  // The human is still described by readiness; the bot never is, because a bot
+  // is always ready and the word would be noise.
+  expect(screen.getByText('Not ready')).toBeTruthy()
+  expect(screen.queryAllByText('Ready').length).toBe(0)
 })
