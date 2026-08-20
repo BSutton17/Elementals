@@ -96,12 +96,39 @@ export class LavaFloorSystem {
     const bias: number[] = []
     const phase: number[] = []
     const speed: number[] = []
+
+    // The outline is built from a few LOW-FREQUENCY HARMONICS rather than an
+    // independent random per direction.
+    //
+    // Independent randoms were the reason this read as spiky: neighbouring
+    // samples could differ by the full +/-30% with nothing connecting them, so
+    // the edge was a run of unrelated spikes rather than a shape. Harmonics
+    // vary smoothly with angle, so adjacent samples agree and the silhouette
+    // comes out as lobes and inlets — which is what "never a circle" was
+    // actually after.
+    //
+    // Two harmonics, deliberately: one sets the overall lopsidedness (2-3
+    // lobes), the second adds a gentler ripple on top. More would start to look
+    // like noise again.
+    const lobes = 2 + Math.floor(this.rng() * 2); // 2 or 3 big lobes
+    const ripples = lobes + 2 + Math.floor(this.rng() * 2);
+    const lobePhase = this.rng() * Math.PI * 2;
+    const ripplePhase = this.rng() * Math.PI * 2;
+    // Split the budget so the big lobe dominates and the ripple decorates.
+    const lobeAmp = config.roughness * 0.68;
+    const rippleAmp = config.roughness * 0.32;
+
     for (let i = 0; i < samples; i++) {
-      // Each direction reaches its own distance. This is the whole reason the
-      // flood does not look like a circle.
-      bias.push(1 - config.roughness + this.rng() * config.roughness * 2)
-      phase.push(this.rng() * Math.PI * 2)
-      speed.push(0.35 + this.rng() * 0.55)
+      const angle = (i / samples) * Math.PI * 2;
+      bias.push(
+        1 +
+          Math.sin(angle * lobes + lobePhase) * lobeAmp +
+          Math.sin(angle * ripples + ripplePhase) * rippleAmp,
+      );
+      // The drift is a function of ANGLE too, so the edge breathes as a sheet
+      // instead of every vertex shimmering on its own clock.
+      phase.push(angle * lobes + lobePhase);
+      speed.push(0.28 + this.rng() * 0.18);
     }
 
     this.floods.set(key, {
@@ -174,7 +201,9 @@ export class LavaFloorSystem {
       for (let i = 0; i < samples; i++) {
         const angle = (i / samples) * Math.PI * 2
         // The lobes drift as well as differ, so the edge is never static.
-        const wobble = 1 + Math.sin(flood.phase[i]! + seconds * flood.speed[i]!) * 0.09
+        // Coherent along the edge, so the sheet swells and settles rather
+        // than each vertex jittering independently.
+        const wobble = 1 + Math.sin(flood.phase[i]! + seconds * flood.speed[i]!) * 0.055
         const r = reach * flood.bias[i]! * wobble
         points.push({
           x: flood.origin.x + Math.cos(angle) * r,

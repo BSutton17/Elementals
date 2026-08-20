@@ -344,8 +344,23 @@ export function makeBlobNode(parent: Container): BlobNode {
     draw(points: Vec2[], fill: number, rim: number, alpha: number): void {
       g.clear()
       if (points.length >= 3) {
-        g.moveTo(points[0]!.x, points[0]!.y)
-        for (let i = 1; i < points.length; i++) g.lineTo(points[i]!.x, points[i]!.y)
+        // Drawn as CURVES through the sample points, not straight segments.
+        //
+        // `lineTo` made the outline a polygon: even with a perfectly smooth set
+        // of radii the silhouette was faceted, and every sample showed up as a
+        // corner. The standard fix for a closed blob is to run a quadratic
+        // through each point using the MIDPOINTS as the on-curve anchors — each
+        // sample becomes a control point that the curve bends around rather than
+        // a vertex it hits, so the edge is continuous everywhere.
+        const mid = (a: Vec2, b: Vec2): Vec2 => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+        const n = points.length;
+        const first = mid(points[n - 1]!, points[0]!);
+        g.moveTo(first.x, first.y);
+        for (let i = 0; i < n; i++) {
+          const control = points[i]!;
+          const next = mid(control, points[(i + 1) % n]!);
+          g.quadraticCurveTo(control.x, control.y, next.x, next.y);
+        }
         g.closePath()
         g.fill({ color: fill, alpha })
         // The crust: brighter and hotter right at the advancing front.

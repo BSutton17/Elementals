@@ -1276,8 +1276,12 @@ export const LAVA_FLOOR_CONFIG: LavaFloorConfig = {
   spreadMs: 3600, // "a few seconds" to cover the battlefield
   fadeMs: 2600, // and a slow cool-down at the end
   radius: 780,
-  samples: 26,
-  roughness: 0.3, // ±30% per direction — lobes and inlets, never a circle
+  samples: 34,
+  // Now that the outline is harmonics drawn as curves rather than independent
+  // randoms drawn as line segments, a SMALLER roughness reads as bigger, softer
+  // lobes — the old 0.3 was mostly producing spikes, not shape. More samples
+  // because they are curve control points now, and cheap.
+  roughness: 0.22,
   fillColor: MOLTEN.crust,
   rimColor: MOLTEN.lava,
   emberColor: MOLTEN.ember,
