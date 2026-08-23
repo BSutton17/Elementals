@@ -605,14 +605,19 @@ export function BattlefieldView({
           }
           nextRepairCost={
             you.castle.nextRepairCost ??
-            Math.round(500 * Math.pow(1.25, you.castle.repairs ?? 0))
+            Math.round(350 * Math.pow(1.25, you.castle.repairs ?? 0))
           }
           // The server's own price wins; these literals only cover the frames
           // before the first sync lands. They mirror SHIELD.COST /
           // SHIELD.COST_GROWTH and have to be retuned alongside them.
+          //
+          // Both of these had gone stale — repair still said 500 and shield 400
+          // after the server moved to 350 and 300 — which is what a hand-copied
+          // constant does. Harmless here only because it is overwritten within a
+          // frame; check them whenever balance.ts moves.
           shieldCost={
             you.castle.nextShieldCost ??
-            Math.round(400 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
+            Math.round(300 * Math.pow(1.05, you.castle.shieldsPurchased ?? 0))
           }
           shieldCooldownSeconds={(you.castle.shieldCooldownRemaining ?? 0) / tickRate}
           // Light's Fireflies: a swarm on your castle bars you from buying a
