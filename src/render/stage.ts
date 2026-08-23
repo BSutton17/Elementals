@@ -1,4 +1,5 @@
 import { Application } from 'pixi.js'
+import { detectQuality, type RenderQuality } from './quality'
 import { LayerManager } from './layers'
 import { AnimationFramework } from './framework'
 import {
@@ -48,6 +49,8 @@ export class PixiStage {
   /** Element the screen shake transforms — the arena box holding the SVG
    *  castles AND this canvas, so both shake together as one screen. */
   private shakeTarget: HTMLElement | null = null
+  /** Resolved once at mount; see quality.ts. */
+  private quality: RenderQuality = { resolution: 1, antialias: true, reduced: false }
   private baseScale = 1
   private baseX = 0
   private baseY = 0
@@ -98,12 +101,26 @@ export class PixiStage {
     // whole screen moves as one; fall back to the host if there's no parent.
     // A non-primary stage leaves this null so it doesn't fight for the transform.
     this.shakeTarget = this.screenShake ? (host.parentElement ?? host) : null
+    // ⚠️ RESOLUTION IS CAPPED, and this is the mobile fix. Two stages are
+    // mounted at once and both used to rasterise at the raw device pixel ratio
+    // — 3 on a modern phone, so each canvas filled NINE times the logical
+    // pixels and there are two of them. That fixed cost is why six or seven
+    // kingdoms tipped over: the per-effect work grew into a budget the
+    // per-pixel work had already spent.
+    //
+    // No effect is altered. See quality.ts for why 2x is the visible ceiling
+    // and why antialias is redundant above 1x.
+    this.quality = detectQuality()
     await this.app.init({
       backgroundAlpha: 0,
-      antialias: this.antialias,
+      antialias: this.antialias && this.quality.antialias,
       resizeTo: host,
       autoDensity: true,
-      resolution: window.devicePixelRatio || 1,
+      resolution: this.quality.resolution,
+      // A hint, not a guarantee. It matters on hybrid-GPU laptops, where the
+      // default can hand a particle-heavy canvas to the integrated chip; phones
+      // largely ignore it. Harmless where unsupported.
+      powerPreference: 'high-performance',
     })
     // If destroy() was called while `app.init()` was still pending (common under
     // React StrictMode's mount→unmount→mount), tear the freshly-inited app down
