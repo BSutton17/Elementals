@@ -14,6 +14,7 @@ import { KitsuneRushOverlay } from '../components/kitsuneRush/KitsuneRushOverlay
 import { CrawlerSwarm } from '../components/crawlers/CrawlerSwarm'
 import { squashCrawler } from '../game/matchStore'
 import { CasinoStage } from '../components/casino/CasinoStage'
+import { useWatchedVictim } from '../game/spectatorFocus'
 import { RouletteMirror, type MirrorSpin } from '../components/roulette/RouletteMirror'
 import { useLobby } from '../game/useLobby'
 import { useGameState } from '../game/useGameState'
@@ -28,22 +29,56 @@ const DEFAULT_TICK_RATE = 20
 export function BattlefieldScreen() {
   const { match, youId } = useLobby()
   const game = useGameState()
+
+  // ⚠️ BEFORE ANY EARLY RETURN. A spectator watches one player for the effects
+  // that key off "are YOU afflicted", and the pick has to be made on every
+  // render or the hook order changes between the spectator and player branches.
+  const gassedPlayers = game.players
+    .filter((p) => p.statuses?.some((s) => s.id === 'toxicGas'))
+    .map((p) => p.id)
+  const casinoPlayers = game.players
+    .filter((p) => p.pendingSpin != null || p.pendingBet != null)
+    .map((p) => p.id)
+  const watchedGassed = useWatchedVictim(gassedPlayers)
+  const watchedCasino = useWatchedVictim(casinoPlayers)
+
   if (!match) return null
   // Spectators watch the full battlefield with no UI: no controls and none of
   // the victim-only screen overlays (they have no castle to be afflicted).
   const spectator = match.players.find((p) => p.id === youId)?.spectator === true
   if (spectator) {
+    // A spectator sees the effects that are ABOUT THE FIELD, and not the ones
+    // that are about a private hand.
+    //
+    // Blizzard is already global — the storm covers every screen for as long as
+    // any kingdom carries it — so it needs no victim at all. Toxic Gas and the
+    // casino are victim-scoped, so one afflicted player is watched at a time
+    // (see `useWatchedVictim` for why the pick is held rather than re-rolled).
+    //
+    // Blackjack is deliberately NOT here: the draw is the caster's own hand and
+    // watching it from outside gives away a card nobody at the table has seen.
+    // `BattlefieldView` gates the reveal on the same `spectator` flag.
+    const watched = game.players.find((p) => p.id === watchedCasino)
     return (
-      <BattlefieldView
-        match={match}
-        youId={youId}
-        players={game.players}
-        tick={game.tick}
-        volcano={game.volcano}
-        caprice={game.caprice}
-        centrepiece={game.centrepiece}
-        spectator
-      />
+      <>
+        <BattlefieldView
+          match={match}
+          youId={youId}
+          players={game.players}
+          tick={game.tick}
+          volcano={game.volcano}
+          caprice={game.caprice}
+          centrepiece={game.centrepiece}
+          spectator
+        />
+        <FogOverlay active={watchedGassed !== null} variant="toxic" />
+        <BlizzardOverlay
+          active={game.players.some((p) => p.statuses?.some((s) => s.id === 'blizzard'))}
+        />
+        <CasinoStage
+          debt={{ spinAt: watched?.pendingSpin?.atTick, betAt: watched?.pendingBet?.atTick }}
+        />
+      </>
     )
   }
   // Thick Fog blinds only its victim: the local player carries the `vision:fog`

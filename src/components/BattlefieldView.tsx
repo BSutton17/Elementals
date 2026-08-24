@@ -580,7 +580,13 @@ export function BattlefieldView({
       <BlackHoleAccumulator />
       {/* Joker's Blackjack: the whole card reveal, replacing the default bolt.
           The damage is held server-side until the impact frame below. */}
-      <BlackjackReveal cast={blackjack} />
+      {/* Spectators do not see the draw. The card is the caster's own hand and
+          the reveal is theatre for the two kingdoms involved — showing it to
+          the stands gives away a card nobody at the table has seen yet.
+          Blizzard, Toxic Gas and the casino ARE shown to spectators, because
+          those are events on the field rather than a private hand; see the
+          spectator branch in BattlefieldScreen. */}
+      <BlackjackReveal cast={spectator ? null : blackjack} />
       {/* Joker's Lucky Draw: the caster's own five-card selection. */}
       <LuckyDrawOverlay outcome={luckyOutcome} castKey={luckyKey.current} />
       {castHint && (
