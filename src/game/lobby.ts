@@ -79,6 +79,16 @@ export interface LobbyMatch {
   /** Host rule: an eliminated player keeps seeing every surviving kingdom's
    *  health bar. Off unless the host turned it on. */
   eliminatedSeeAllHealth?: boolean
+  /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
+  visibility?: 'private' | 'public'
+  /**
+   * When a public lobby starts itself, as an absolute timestamp, or null.
+   *
+   * A deadline rather than a countdown: "18 seconds left" drifts by each
+   * client's own latency and clients end up disagreeing about when the match
+   * begins. Subtract this from `Date.now()` to render.
+   */
+  startsAt?: number | null
   tick: number
   winnerId: string | null
   config?: MatchConfig | null
@@ -97,6 +107,16 @@ export interface MatchSnapshot {
   /** Host rule: an eliminated player keeps seeing every surviving kingdom's
    *  health bar. Off unless the host turned it on. */
   eliminatedSeeAllHealth?: boolean
+  /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
+  visibility?: 'private' | 'public'
+  /**
+   * When a public lobby starts itself, as an absolute timestamp, or null.
+   *
+   * A deadline rather than a countdown: "18 seconds left" drifts by each
+   * client's own latency and clients end up disagreeing about when the match
+   * begins. Subtract this from `Date.now()` to render.
+   */
+  startsAt?: number | null
   config: MatchConfig | null
   you: LobbyPlayer | null
   players: LobbyPlayer[]

@@ -261,6 +261,21 @@ export function BattlefieldView({
   // holds its damage until the cinematic delivers it, so the card is always
   // seen landing before the victim is hurt. Positions are converted from arena
   // space (1000×1000) to viewport percentages for the overlay.
+  // Love's BFFS!!! link, read from SYNCED STATE rather than only from the event
+  // that created it — so a spectator or a reconnecting player sees a bond that
+  // formed before they were watching.
+  //
+  // ⚠️ ONLY WHEN UNAMBIGUOUS. The synced status carries no source id, so with
+  // two links live at once there is no way to tell which castle is tied to
+  // which, and guessing would draw a ribbon between the wrong pair — visibly
+  // wrong, and worse than drawing nothing. Two bearers is the common case by a
+  // wide margin; beyond that the live event path still handles anyone who was
+  // watching when it formed.
+  const bffsBearers = players
+    .filter((p) => p.statuses?.some((s) => s.id === 'bffsLink'))
+    .map((p) => p.id)
+  const bffsPair = bffsBearers.length === 2 ? bffsBearers : null
+
   const [blackjack, setBlackjack] = useState<BlackjackCinematic | null>(null)
   const blackjackKey = useRef(0)
   useEffect(
@@ -546,7 +561,7 @@ export function BattlefieldView({
 
         {/* Layer: Love's BFFS!!! link ribbons spanning paired castles. Below
             the floating numbers so damage values still read on top. */}
-        <BffsLinkLayer positionOf={positionOf} />
+        <BffsLinkLayer positionOf={positionOf} linkedPair={bffsPair} />
 
         {/* Layer: floating combat numbers (#265–#266) — topmost so damage and
             healing values read clearly above the castles. */}

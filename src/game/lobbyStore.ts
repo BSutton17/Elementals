@@ -95,7 +95,7 @@ interface RoomAck {
 }
 
 async function enterRoom(
-  event: 'lobby:create' | 'lobby:join',
+  event: 'lobby:create' | 'lobby:join' | 'lobby:joinPublic',
   payload: Record<string, unknown>,
 ): Promise<Ack<RoomAck>> {
   const res = (await socket.emitWithAck(event, payload)) as Ack<RoomAck>
@@ -114,6 +114,18 @@ export function createRoom(name: string): Promise<Ack<RoomAck>> {
 
 export function joinRoom(name: string, roomCode: string): Promise<Ack<RoomAck>> {
   return enterRoom('lobby:join', { name, roomCode })
+}
+
+/**
+ * Matchmaking. Resolves only once the server has actually seated us.
+ *
+ * ⚠️ THIS CAN TAKE FIFTEEN SECONDS AND THAT IS BY DESIGN — the server searches
+ * for an existing room before opening one, so two people who queue within the
+ * window land in the SAME lobby rather than each starting a room alone. The
+ * caller is expected to be showing a searching state for the whole wait.
+ */
+export function joinPublicRoom(name: string): Promise<Ack<RoomAck>> {
+  return enterRoom('lobby:joinPublic', { name })
 }
 
 export async function reconnectToRoom(roomCode: string): Promise<Ack<RoomAck>> {

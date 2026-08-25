@@ -10,6 +10,8 @@ interface StartupScreenProps {
   name: string
   onName: (name: string) => void
   onJoin: () => void
+  /** Enter matchmaking — the searching screen takes over from here. */
+  onJoinPublic: () => void
 }
 
 /**
@@ -17,7 +19,7 @@ interface StartupScreenProps {
  * a room, App routes to the lobby. Also hosts the How to Play walkthrough —
  * with a gentle pulse on the button until it's been opened once.
  */
-export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
+export function StartupScreen({ name, onName, onJoin, onJoinPublic }: StartupScreenProps) {
   const { connected } = useSocket()
   const { error } = useLobby()
   const [showHowTo, setShowHowTo] = useState(false)
@@ -49,8 +51,19 @@ export function StartupScreen({ name, onName, onJoin }: StartupScreenProps) {
           Create Room
         </button>
 
+        {/* Public is the primary of the two: it is the one that works without
+            already knowing someone. Private keeps the code-entry screen. */}
+        <button
+          type="button"
+          className="startup__secondary"
+          disabled={!nameOk}
+          onClick={onJoinPublic}
+        >
+          Join Public
+        </button>
+
         <button type="button" className="startup__secondary" onClick={onJoin}>
-          Join Room
+          Join Private
         </button>
 
         {error && <p className="startup__error">{error}</p>}

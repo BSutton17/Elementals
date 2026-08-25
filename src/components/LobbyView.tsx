@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { RoomCode } from './RoomCode'
 import { HowToPlay } from '../pages/HowToPlay'
 import { KINGDOMS, SELECTABLE_KINGDOMS, type KingdomId } from '../game/kingdoms'
@@ -165,6 +165,9 @@ export function LobbyView({
   const me = match.players.find((p) => p.id === youId)
   const isReady = me?.ready ?? false
   const isSpectator = me?.spectator === true
+  const isPublic = match.visibility === 'public'
+  // A public room has no host at all, so `hostId` is null and this is false for
+  // everyone — the server starts the match on a timer instead.
   const isHost = youId != null && youId === match.hostId
   const myPerks = me?.perks ?? []
   // Kitsune's "Three tailed fox" picks one more than everyone else.
@@ -361,7 +364,15 @@ export function LobbyView({
         </div>
 
         {/* Host-only room rules. Shown to everyone so the table knows what
-            game they've agreed to, but only the host can change them. */}
+            game they've agreed to, but only the host can change them.
+
+            ⚠️ HIDDEN ENTIRELY IN A PUBLIC ROOM, not just disabled. Seeing every
+            surviving kingdom's health after dying is an advantage handed to
+            someone who can no longer be punished for it, and among friends it
+            is also a coaching channel — both are fine when a table agrees to
+            them and neither is something a stranger should switch on for you.
+            The server refuses it as well; this only keeps the UI honest. */}
+        {!isPublic && (
         <div className="lobby__rules">
           <label className="lobby__rule">
             <input
@@ -382,6 +393,7 @@ export function LobbyView({
             </span>
           </label>
         </div>
+        )}
 
         <div className="lobby__spectate-row">
           <button
@@ -467,15 +479,21 @@ export function LobbyView({
       </div>
 
       <div className="lobby__footer">
-      {isHost && (
-        <button
-          type="button"
-          className="lobby__start-btn"
-          disabled={!canStart}
-          onClick={onStart}
-        >
-          {startLabel}
-        </button>
+      {/* A public room starts itself, so there is no button to press — the
+          countdown takes its place. */}
+      {isPublic ? (
+        <PublicCountdown startsAt={match.startsAt ?? null} />
+      ) : (
+        isHost && (
+          <button
+            type="button"
+            className="lobby__start-btn"
+            disabled={!canStart}
+            onClick={onStart}
+          >
+            {startLabel}
+          </button>
+        )
       )}
 
       <div className="lobby__actions">
@@ -494,5 +512,46 @@ export function LobbyView({
       </div>
       </div>
     </main>
+  )
+}
+
+/**
+ * The clock a public room starts on.
+ *
+ * ⚠️ COUNTS DOWN FROM A DEADLINE, not from a duration the server sent. Being
+ * handed "18 seconds" makes every client's clock drift by its own latency and
+ * they visibly disagree about when the match begins; subtracting an absolute
+ * timestamp from `Date.now()` is the same answer on every machine.
+ *
+ * Ticks four times a second rather than once: at 1 Hz the number can appear to
+ * skip a second when a render lands just after a boundary.
+ */
+function PublicCountdown({ startsAt }: { startsAt: number | null }) {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (startsAt === null) return
+    const id = window.setInterval(() => setNow(Date.now()), 250)
+    return () => window.clearInterval(id)
+  }, [startsAt])
+
+  if (startsAt === null) {
+    return (
+      <p className="lobby__countdown lobby__countdown--waiting">
+        Waiting for players…
+      </p>
+    )
+  }
+
+  const seconds = Math.max(0, Math.ceil((startsAt - now) / 1000))
+  return (
+    <p
+      className={`lobby__countdown${seconds <= 5 ? ' lobby__countdown--soon' : ''}`}
+      role="timer"
+      aria-live="off"
+    >
+      Starting in <strong>{seconds}s</strong>
+      <span className="lobby__countdown-hint">Empty seats fill with bots</span>
+    </p>
   )
 }

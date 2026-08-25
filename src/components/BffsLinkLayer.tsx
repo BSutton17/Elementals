@@ -61,8 +61,21 @@ type Vec = { x: number; y: number }
 
 export function BffsLinkLayer({
   positionOf,
+  linkedPair = null,
 }: {
   positionOf: (id: string) => { x: number; y: number } | undefined
+  /**
+   * The two ids currently carrying `bffsLink` according to SYNCED STATE, when
+   * that is unambiguous — otherwise null.
+   *
+   * ⚠️ WITHOUT THIS THE RIBBON ONLY EXISTS FOR PEOPLE WHO WERE WATCHING WHEN IT
+   * FORMED. Every link here was built purely from the live `statusApplied`
+   * event, so anyone who arrived afterwards — a spectator, who by nature joins
+   * mid-match, or anyone who refreshed — saw two castles that the game state
+   * says are bound and no ribbon between them. The effect was not hidden from
+   * them; it had simply already happened.
+   */
+  linkedPair?: readonly string[] | null
 }) {
   const posRef = useRef(positionOf)
   posRef.current = positionOf
@@ -76,6 +89,32 @@ export function BffsLinkLayer({
       active: false, a: '', b: '', seed: 0, flash: 0, tint: null, tintT: 0, fading: 0,
     })),
   )
+
+  // --- rebuild from synced state, for anyone who arrived late ----------------
+  //
+  // Runs whenever the pair changes rather than once on mount: a spectator can
+  // be watching before a link forms, and the state arrives on the next sync
+  // either way.
+  useEffect(() => {
+    if (!linkedPair || linkedPair.length !== 2) return
+    const [a, b] = linkedPair
+    const slots = slotsRef.current
+    const already = slots.some(
+      (s) => s.active && ((s.a === a && s.b === b) || (s.a === b && s.b === a)),
+    )
+    if (already) return
+    const slot = slots.find((s) => !s.active)
+    if (!slot) return
+    slot.active = true
+    slot.a = a!
+    slot.b = b!
+    slot.seed = Math.random() * Math.PI * 2
+    slot.fading = 0
+    // No forming flash: this link did not just form, it was already there. A
+    // pulse would announce an event that happened before this client was
+    // looking.
+    slot.flash = 0
+  }, [linkedPair?.[0], linkedPair?.[1]])
 
   // --- event tracking: activate / flash / tint / end links --------------------
   useEffect(() => {
