@@ -537,3 +537,70 @@ describe('only one thing may hold the middle of the battlefield', () => {
     expect(onCast).not.toHaveBeenCalled()
   })
 })
+
+// Mobile: the ability description used to stay on screen after you tapped away.
+// Touch browsers synthesize `mouseenter` on tap (which is how the tooltip opens
+// on a phone at all) but do not reliably synthesize the matching `mouseleave`,
+// so nothing ever closed it and it covered the neighbouring cards.
+describe('ability tooltip dismissal (mobile)', () => {
+  const renderBar = () =>
+    render(
+      <AbilityBar
+        kingdomId="fire"
+        theme={null}
+        currency={5000}
+        citizens={10}
+        castleHp={10000}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={10}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={12}
+        abilities={mockAbilities}
+        tickRate={20}
+        onCastAbility={() => {}}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+      />
+    )
+
+  const openFirstTooltip = (container: HTMLElement) => {
+    const card = container.querySelector('.ability-button-container') as HTMLElement
+    fireEvent.mouseEnter(card)
+    return card
+  }
+
+  it('opens the description when a card is tapped', () => {
+    const { container } = renderBar()
+    openFirstTooltip(container)
+    expect(container.querySelector('.ability-tooltip')).toBeTruthy()
+  })
+
+  it('closes the description when the next tap lands outside the card', () => {
+    const { container } = renderBar()
+    openFirstTooltip(container)
+    expect(container.querySelector('.ability-tooltip')).toBeTruthy()
+
+    // The tap that used to leave the tooltip stranded: no `mouseleave`, just a
+    // pointer going down somewhere else entirely.
+    fireEvent.pointerDown(document.body)
+    expect(container.querySelector('.ability-tooltip')).toBeNull()
+  })
+
+  it('keeps the description open while the tap is on the card itself', () => {
+    const { container } = renderBar()
+    const card = openFirstTooltip(container)
+    fireEvent.pointerDown(card)
+    expect(container.querySelector('.ability-tooltip')).toBeTruthy()
+  })
+
+  it('closes the description when a touch is cancelled', () => {
+    const { container } = renderBar()
+    openFirstTooltip(container)
+    fireEvent.pointerCancel(document.body)
+    expect(container.querySelector('.ability-tooltip')).toBeNull()
+  })
+})

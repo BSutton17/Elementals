@@ -1,24 +1,26 @@
-.searching {
-  display: grid;
-  place-items: center;
-  min-height: 100dvh;
-  padding: 2rem;
-}
+/* Matchmaking screen.
+ *
+ * The shell — background, colour, type, buttons — comes from `.startup`
+ * (StartupScreen.css), which JoinScreen reuses the same way, so the whole
+ * pre-lobby flow reads as one continuous place. Everything here is
+ * search-specific: the spinner and the hand-off fade.
+ */
 
 .searching__content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 1.5rem;
   text-align: center;
 }
 
+/* The ring picks up the menu's accent gradient rather than a flat border, so it
+   belongs to the same screen as the Play button. Drawn as a conic gradient
+   masked into a ring: one element, no pseudo-element stacking. */
 .searching__spinner {
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.12);
-  border-top-color: currentColor;
+  background: conic-gradient(from 0deg, transparent 0deg, #6bb8ff 220deg, #b79bff 320deg, transparent 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
   animation: searching-spin 900ms linear infinite;
 }
 
@@ -41,16 +43,9 @@
   transform: translateY(-0.35rem);
 }
 
+/* Tighter than the menu's hero title: this is a status line, not a headline. */
 .searching__title {
-  margin: 0;
-  font-size: 1.35rem;
-  font-weight: 600;
-}
-
-.searching__hint {
-  margin: 0.35rem 0 0;
-  opacity: 0.65;
-  font-size: 0.95rem;
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
 }
 
 .searching__failed {
@@ -58,24 +53,6 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-}
-
-.searching__error {
-  margin: 0;
-  color: #ff8a8a;
-}
-
-.searching__cancel {
-  padding: 0.5rem 1.25rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.searching__cancel:hover {
-  border-color: rgba(255, 255, 255, 0.45);
 }
 
 @keyframes searching-spin {
@@ -86,18 +63,20 @@
 
 @keyframes searching-settle {
   to {
-    border-color: currentColor;
+    background: conic-gradient(from 0deg, #6bb8ff 0deg, #b79bff 360deg);
     transform: scale(1.06);
     opacity: 0.85;
   }
 }
 
-/* Honour a reduced-motion preference: the spin is decoration, the state is not. */
+/* Honour a reduced-motion preference: the spin is decoration, the state is not.
+   The ring stays visible as a complete circle so it still reads as "working". */
 @media (prefers-reduced-motion: reduce) {
   .searching__spinner,
   .searching__spinner--found {
     animation: none;
-    border-top-color: currentColor;
+    background: conic-gradient(from 0deg, #6bb8ff 0deg, #b79bff 360deg);
+    opacity: 0.85;
   }
   .searching__text {
     transition: none;

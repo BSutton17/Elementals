@@ -1,6 +1,6 @@
 # Epic 9 — Battlefield Visual Effects (PixiJS) — Handoff
 
-You are taking over the **visual effects / animation layer** for *Kingdoms* (a 2–8 player
+You are taking over the **visual effects / animation layer** for *Kingdoms* (a 2–7 player
 real-time elemental RTS). This document is everything you need to be productive. Read it
 fully before touching code.
 
@@ -17,7 +17,8 @@ only *visualizes* events the server already decided. Concretely:
 - The renderer's only inputs are: (a) authoritative gameplay **events**, and (b) battlefield
   **coordinates** (from `placement.ts`). Its only output is pixels.
 - Keep effects **data-driven** (config objects in a registry), **reusable** (no per-kingdom
-  branches), and **performant** (pooling, caps — matches can have 8 players throwing spells).
+  branches), and **performant** (pooling, caps — matches can have 7 kingdoms throwing spells,
+  and the target device is a phone).
 
 If you ever feel tempted to read HP, decide whether something hit, or branch on a specific
 kingdom's name inside `render/`, stop — that's a design smell.

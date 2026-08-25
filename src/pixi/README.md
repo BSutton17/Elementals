@@ -1,10 +1,13 @@
-# pixi — PixiJS Rendering
+# pixi — (folder unused)
 
-The gameplay canvas rendered with PixiJS (animated with GSAP). Owns:
+**There is no code here.** The battlefield is currently drawn with **React +
+SVG + CSS** ([`../components/BattlefieldView.tsx`](../components/BattlefieldView.tsx)
+and the per-ability overlay components beside it), not with PixiJS.
 
-- Pixi app/stage bootstrap
-- Visual entities (kingdoms, projectiles, effects)
-- Event→visual translators: turning server `evt:*` gameplay events into
-  projectiles, impacts, particles, trails (see [ARCHITECTURE.md](../../../ARCHITECTURE.md))
+The visual-effects framework — canvas particle systems, easing, camera, and the
+per-ability effect specs — lives in [`../render/`](../render/); start with
+`render/HANDOFF.md`.
 
-Rendering only — it reads game state/events and never decides gameplay outcomes.
+PixiJS is still a dependency and remains the intended path for heavy particle
+work. This folder is kept only so the path in older tickets and in
+ARCHITECTURE.md history resolves somewhere.

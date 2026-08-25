@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { CiLock, CiClock2, CiNoWaitingSign } from 'react-icons/ci'
 import { FaSnowflake } from 'react-icons/fa'
 import type { ClientAbilityMetadata } from '../game/abilities'
@@ -69,6 +69,43 @@ export function AbilityButton({
   /** Dark's Yin and Yang: the side-picker is open. */
   const [picking, setPicking] = useState(false)
   const [upgradeHovered, setUpgradeHovered] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // MOBILE: dismiss the tooltip when the next tap lands somewhere else.
+  //
+  // Touch browsers synthesize `mouseenter` on tap so the card's description
+  // opens on a phone — which is wanted. What they do NOT reliably synthesize is
+  // the matching `mouseleave`, because a finger that has lifted is not hovering
+  // anything. The tooltip therefore stayed on screen after tapping away, and on
+  // a small screen it covers the neighbouring cards.
+  //
+  // Listening for the next pointer-down anywhere outside this card closes it.
+  // Registered only while something is actually open, in the capture phase so a
+  // handler that stops propagation can't strand a tooltip. Harmless on desktop:
+  // `mouseleave` has already fired by then, so this is a no-op there.
+  const tooltipOpen = hovered || upgradeHovered
+  useEffect(() => {
+    if (!tooltipOpen) return
+    const dismiss = (event: Event) => {
+      const target = event.target as Node | null
+      if (target && containerRef.current?.contains(target)) return
+      setHovered(false)
+      setUpgradeHovered(false)
+    }
+    const close = () => {
+      setHovered(false)
+      setUpgradeHovered(false)
+    }
+    document.addEventListener('pointerdown', dismiss, true)
+    // A cancelled touch (scroll, call, notification) leaves no pointer behind.
+    document.addEventListener('pointercancel', close, true)
+    window.addEventListener('blur', close)
+    return () => {
+      document.removeEventListener('pointerdown', dismiss, true)
+      document.removeEventListener('pointercancel', close, true)
+      window.removeEventListener('blur', close)
+    }
+  }, [tooltipOpen])
 
   // Compute cooldown timing
   const isCooldown = cooldownRemaining > 0
@@ -126,6 +163,7 @@ export function AbilityButton({
 
   return (
     <div
+      ref={containerRef}
       className="ability-button-container"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

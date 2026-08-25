@@ -56,9 +56,14 @@ export function SearchingScreen({ name, onSeated, onCancel }: SearchingScreenPro
     // Runs once per mount: re-queuing on a re-render would open a second search.
   }, [])
 
+  // Shares the menu's shell (`.startup`): same night-sky background, type, and
+  // button treatment as StartupScreen and JoinScreen, which all read as one
+  // place. Only the search-specific pieces — the spinner and the hand-off fade —
+  // are styled locally. Matchmaking used to render on the bare page and came out
+  // white, which looked like a different app had loaded mid-flow.
   return (
-    <main className="searching">
-      <div className="searching__content">
+    <main className="startup searching">
+      <div className="startup__content searching__content">
         <div
           className={`searching__spinner${phase === 'found' ? ' searching__spinner--found' : ''}`}
           role="progressbar"
@@ -68,21 +73,25 @@ export function SearchingScreen({ name, onSeated, onCancel }: SearchingScreenPro
         {/* The text fades on `found`; the spinner keeps turning underneath so
             the screen does not go empty during the hand-off. */}
         <div className={`searching__text${phase !== 'searching' ? ' searching__text--out' : ''}`}>
-          <h2 className="searching__title">Searching for room…</h2>
-          <p className="searching__hint">Looking for other players</p>
+          <h2 className="startup__title startup__title--sm searching__title">
+            {phase === 'searching' ? 'Searching for room…' : 'Room found'}
+          </h2>
+          <p className="startup__tagline">
+            {phase === 'searching' ? 'Looking for other players' : 'Taking you to the lobby'}
+          </p>
         </div>
 
         {phase === 'failed' && (
           <div className="searching__failed">
-            <p className="searching__error">{error}</p>
-            <button type="button" className="searching__cancel" onClick={onCancel}>
+            <p className="startup__error">{error}</p>
+            <button type="button" className="startup__secondary" onClick={onCancel}>
               Back
             </button>
           </div>
         )}
 
         {phase === 'searching' && (
-          <button type="button" className="searching__cancel" onClick={onCancel}>
+          <button type="button" className="startup__secondary" onClick={onCancel}>
             Cancel
           </button>
         )}

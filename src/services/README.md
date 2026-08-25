@@ -1,9 +1,12 @@
-# services — Client Service Layer
+# services — (folder unused)
 
-Domain-oriented wrappers around the transport that express **intents** and
-subscribe to server events (e.g. `lobbyService`, `matchService`). They call the
-shared socket from `sockets/` and expose clean methods to pages/components.
+**There is no code here.** The planned domain service layer was never built; the
+responsibility is split between:
 
-- Services turn UI actions into `match:*` / `lobby:*` intents (see
-  [SOCKET_EVENTS.md](../../../SOCKET_EVENTS.md)).
-- They never resolve gameplay — the server is authoritative.
+- [`../sockets/`](../sockets/) — the shared socket singleton and its helpers,
+  which is where intents are emitted from
+- [`../game/`](../game/) — the state mirror and stores (`matchStore.ts`,
+  `lobbyStore.ts`, `gameState.ts`) that subscribe to server events
+
+Kept only so the path in older tickets resolves somewhere. The contract itself
+is [SOCKET_EVENTS.md](../../../SOCKET_EVENTS.md).

@@ -1,7 +1,8 @@
-# hooks — Reusable React Hooks
+# hooks — (folder unused)
 
-Shared custom hooks for cross-cutting client concerns (e.g. reading game state,
-timers/interpolation, input). Keep them pure and reusable.
+**There is no code here.** Hooks live beside the system they belong to:
+`../game/useGameState.ts`, `../game/useLobby.ts`,
+`../game/useTutorialSandbox.ts`, `../sockets/useSocket.ts`.
 
-Note: the socket connection-status hook lives with the socket manager in
-`sockets/` for cohesion; general-purpose hooks belong here.
+That colocation turned out to be the more useful arrangement, so this folder was
+never populated. Kept only so the path in older tickets resolves somewhere.

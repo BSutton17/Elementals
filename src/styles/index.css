@@ -27,3 +27,34 @@ html, body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ---------------------------------------------------------------------------
+ * Touch tuning.
+ *
+ * Kingdoms is played on a phone first. Two mobile-browser defaults get in the
+ * way of that, and both are assumptions about DOCUMENTS rather than games:
+ *
+ *  1. Double-tap-to-zoom. To tell a single tap from the first half of a double
+ *     tap, mobile browsers hold every tap for ~300 ms before dispatching the
+ *     click. In a game where casts are on cooldowns and Creepy Crawlers are
+ *     swatted by tapping them, that delay reads as input lag — not as the
+ *     browser being careful. `manipulation` keeps panning and pinch-zoom and
+ *     drops only the double-tap gesture, so taps dispatch immediately.
+ *
+ *  2. The grey tap-highlight rectangle, which flashes a box over ability cards
+ *     that already have their own pressed state and ignores their rounded
+ *     corners.
+ *
+ * Set on the root and inherited, with `button` restated because UA stylesheets
+ * give form controls their own `touch-action`.
+ * ------------------------------------------------------------------------- */
+html {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role='button'] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
