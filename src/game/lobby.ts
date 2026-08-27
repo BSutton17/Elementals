@@ -15,6 +15,43 @@ export const MIN_PLAYERS_TO_START = 2
  */
 export const MAX_ACTIVE_PLAYERS = 7
 
+/**
+ * What one seat did in a finished match. Mirrors the server's
+ * `MatchParticipantResult` — see SOCKET_EVENTS.md.
+ */
+export interface MatchParticipantResult {
+  playerId: string
+  name: string
+  kingdomId: string | null
+  accountId: string | null
+  isBot: boolean
+  botDifficulty: string | null
+  placement: number
+  eliminatedAtTick: number | null
+  survivedTicks: number
+  stats: {
+    damageDealt: number
+    damageTaken: number
+    healingDone: number
+    goldEarned: number
+    goldSpent: number
+    abilitiesCast: number
+    killsCredited: number
+  }
+}
+
+export interface MatchResult {
+  roomCode: string
+  endedAt: string
+  durationTicks: number
+  tickRate: number
+  participants: MatchParticipantResult[]
+  playerCount: number
+  humanCount: number
+  winnerId: string | null
+  balanceVersion: string
+}
+
 export interface LobbyPlayer {
   id: string
   name: string

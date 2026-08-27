@@ -1,0 +1,568 @@
+/* Shop and cosmetics.
+ *
+ * Built from the game's own vocabulary — the same night-sky ground, the same
+ * text colours, 999px pills for actions, 0.6rem for panels — with one addition:
+ * KINGDOM COLOUR IS THE PALETTE. The castle previews carry sixteen hues that
+ * already mean something, so nothing here invents an accent to compete with
+ * them. The interface stays near-monochrome and lets the items be the colour.
+ *
+ * Deliberately absent: glassmorphism, glow, gradient cards, drop shadows on
+ * every tile. Hairline borders and spacing do the work. The one gradient on the
+ * page is the primary action, which is how the menu already uses it.
+ */
+
+.shop {
+  flex: 1;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem clamp(1rem, 4vw, 2rem) 3rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* Desktop: the detail sits beside the grid rather than covering it, so an item
+   can be compared against the others while it is open. */
+@media (min-width: 60rem) {
+  .shop:has(.detail) {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+  }
+}
+
+.shop__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.store-blurb__timer {
+  color: #6b7385;
+}
+
+/* --- kingdom filter -------------------------------------------------------- */
+
+.shop__filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #aab3c5;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: #e8ecf5;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Selection is carried by fill and weight, not by hue — the dot is the
+   kingdom's colour and stays the same whether the chip is on or off. */
+.chip--on {
+  color: #0b0e17;
+  background: #e8ecf5;
+  border-color: #e8ecf5;
+}
+
+.chip__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+.chip:focus-visible,
+.item:focus-visible {
+  outline: 2px solid #6bb8ff;
+  outline-offset: 2px;
+}
+
+/* --- grid ------------------------------------------------------------------ */
+
+/* Dense, like a game's inventory — not four huge cards with air between them. */
+.shop__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.6rem;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.55rem 0.55rem 0.6rem;
+  font: inherit;
+  color: #e8ecf5;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  /* A 2px top rule in the rarity colour — a stripe, not a glowing frame. */
+  border-top-width: 2px;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.item--selected {
+  background: rgba(107, 184, 255, 0.09);
+  border-color: rgba(107, 184, 255, 0.45);
+}
+
+/* Rarity: the stripe is a SECOND signal. The written label in the card is the
+   first, so nothing here depends on distinguishing these four colours. */
+.item[data-rarity='common'] { border-top-color: rgba(255, 255, 255, 0.16); }
+.item[data-rarity='uncommon'] { border-top-color: #5fa77b; }
+.item[data-rarity='rare'] { border-top-color: #5b8def; }
+.item[data-rarity='legendary'] { border-top-color: #d9a441; }
+
+/* The preview dominates: it is the thing being bought. */
+.item__preview {
+  display: block;
+  aspect-ratio: 1 / 0.92;
+  background: radial-gradient(circle at 50% 65%, rgba(255, 255, 255, 0.05), transparent 70%);
+  border-radius: 0.35rem;
+}
+
+.item__preview svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.item__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.item__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.item__rarity {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+.item__status {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.item__price {
+  color: #d9a441;
+  font-weight: 700;
+}
+
+/* Can't afford it: dimmed, but still legible — it is a price, not an error. */
+.item__price--short {
+  color: #8a7440;
+}
+
+.item__owned {
+  color: #6b7385;
+  font-weight: 600;
+}
+
+.item__equipped {
+  color: #4ade80;
+  font-weight: 700;
+}
+
+.item__locked {
+  color: #6b7385;
+}
+
+/* Loading: the grid's own shape, so the page does not jump when it fills. */
+.item--ghost {
+  aspect-ratio: 1 / 1.45;
+  background: rgba(255, 255, 255, 0.03);
+  border-top-color: rgba(255, 255, 255, 0.09);
+  cursor: default;
+}
+
+.shop__guest {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #6b7385;
+}
+
+/* --- detail ---------------------------------------------------------------- */
+
+.detail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.1rem;
+  background: #12151f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.6rem;
+}
+
+@media (min-width: 60rem) {
+  .detail {
+    position: sticky;
+    top: 4.5rem;
+  }
+}
+
+.detail__close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  color: #aab3c5;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.detail__close:hover {
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.detail__preview {
+  aspect-ratio: 1 / 0.9;
+  background: radial-gradient(circle at 50% 65%, rgba(255, 255, 255, 0.06), transparent 70%);
+  border-radius: 0.45rem;
+}
+
+.detail__preview svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.detail__name {
+  margin: 0.2rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.detail__sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6b7385;
+}
+
+.detail__rarity {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.detail__rarity[data-rarity='uncommon'] { color: #7fc59a; }
+.detail__rarity[data-rarity='rare'] { color: #8fb2f5; }
+.detail__rarity[data-rarity='legendary'] { color: #d9a441; }
+
+.detail__kingdom::before,
+.detail__slot::before {
+  content: '·';
+  margin-right: 0.4rem;
+}
+
+.detail__blurb {
+  margin: 0.2rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: #aab3c5;
+}
+
+.detail__error {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #ff8a8a;
+}
+
+.detail__action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.detail__action .account-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.detail__state {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #6b7385;
+}
+
+.detail__shortfall {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8a7440;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- toast ----------------------------------------------------------------- */
+
+/* One short confirmation, bottom-centre, gone on its own. A purchase needs an
+   acknowledgement; it does not need a dialog to dismiss. */
+.shop__toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0b0e17;
+  background: #e8ecf5;
+  border-radius: 999px;
+  animation: shopToast 2.6s ease forwards;
+}
+
+@keyframes shopToast {
+  0% { opacity: 0; transform: translate(-50%, 0.5rem); }
+  12% { opacity: 1; transform: translate(-50%, 0); }
+  80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -0.35rem); }
+}
+
+/* --- responsive ------------------------------------------------------------ */
+
+@media (max-width: 30rem) {
+  .shop {
+    padding: 0.85rem 0.85rem 2.5rem;
+  }
+  /* Smaller tiles rather than fewer: a game inventory should read as a set. */
+  .shop__grid {
+    grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
+    gap: 0.45rem;
+  }
+  .item {
+    padding: 0.4rem 0.4rem 0.45rem;
+  }
+  .item__name {
+    font-size: 0.78rem;
+  }
+}
+
+/* Landscape phones: the detail must not push the grid off a 360px-tall screen. */
+@media (max-height: 640px) and (max-width: 60rem) {
+  .detail {
+    max-height: 70dvh;
+    overflow-y: auto;
+  }
+  .detail__preview {
+    aspect-ratio: 1 / 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: none;
+  }
+  .shop__toast {
+    animation: none;
+  }
+}
+
+/* --- wardrobe (profile: assign skins per kingdom) --------------------------- */
+
+.wardrobe {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* A row per kingdom, not a card per kingdom. Sixteen bordered boxes would be
+   sixteen frames competing with the castles inside them. */
+.wardrobe__kingdom {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wardrobe__kingdom:last-child {
+  border-bottom: none;
+}
+
+/* The live preview IS the feedback: pick an option and this castle changes. */
+.wardrobe__preview {
+  width: 4.5rem;
+  flex: none;
+  aspect-ratio: 1 / 0.95;
+}
+
+.wardrobe__preview svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wardrobe__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wardrobe__name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.wardrobe__slot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.wardrobe__slot-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #6b7385;
+  min-width: 3.2rem;
+}
+
+.wardrobe__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.wardrobe__option {
+  padding: 0.25rem 0.65rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #aab3c5;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.wardrobe__option:hover:not(:disabled) {
+  color: #e8ecf5;
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* The chosen one is filled, not merely tinted — `aria-checked` carries it for
+   anyone not seeing the fill. */
+.wardrobe__option--on {
+  color: #0b0e17;
+  background: #e8ecf5;
+  border-color: #e8ecf5;
+}
+
+.wardrobe__option:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wardrobe__option:focus-visible {
+  outline: 2px solid #6bb8ff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 30rem) {
+  .wardrobe__preview {
+    width: 3.4rem;
+  }
+  .wardrobe__slot-label {
+    min-width: 0;
+  }
+}
+
+/* --- rarity groups (Daily) -------------------------------------------------- */
+
+.shop__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.shop__group + .shop__group {
+  margin-top: 1.4rem;
+}
+
+/* A heading with a hairline rule, not a coloured banner. The word carries the
+   tier; the small colour cue on the left repeats it without replacing it. */
+.shop__group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #aab3c5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.shop__group-title::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  flex: none;
+}
+
+.shop__group-title[data-rarity='uncommon']::before { background: #5fa77b; }
+.shop__group-title[data-rarity='rare']::before { background: #5b8def; }
+.shop__group-title[data-rarity='legendary']::before { background: #d9a441; }
+
+.shop__group-count {
+  margin-left: auto;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: #6b7385;
+  font-variant-numeric: tabular-nums;
+}

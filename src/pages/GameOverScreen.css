@@ -1,19 +1,22 @@
 .game-over {
   --winner-color: #ffd24a;
 
-  height: 100vh;
-  height: 100dvh;
-  width: 100vw;
-  width: 100dvw;
+  /* ⚠️ min-height, NOT height, and no overflow:hidden. This screen used to hold
+     three lines of text and could safely be a sealed box. It now carries a
+     scoreboard of up to seven rows, which on a landscape phone is taller than
+     the viewport — the old rules clipped it with no way to scroll. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
   padding: 2rem;
   color: #e8ecf5;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   text-align: center;
-  overflow: hidden;
   background:
     radial-gradient(1000px 600px at 50% 30%, rgba(255, 210, 74, 0.1), transparent 65%),
     #0b0e17;
@@ -32,6 +35,12 @@
 }
 
 .game-over__content {
+  /* `margin: auto` is what lets this centre when it fits AND scroll when it
+     does not. A centred flex item that overflows gets clipped at the TOP,
+     where the title is, and no amount of scrolling reaches it. */
+  margin: auto;
+  width: 100%;
+  max-width: 40rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -119,5 +128,16 @@
   .game-over__leave {
     padding: 0.6rem 2rem;
     font-size: 0.95rem;
+  }
+
+  /* Landscape phones are ~360px tall. Cap the table and let it scroll inside
+     itself, so the headline and the way out both stay on screen. */
+  .scoreboard__scroll {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .game-over__subtitle {
+    font-size: 0.9rem;
   }
 }

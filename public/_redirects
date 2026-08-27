@@ -1,0 +1,10 @@
+# Legal pages are real files, and are listed BEFORE the catch-all so they are
+# served rather than swallowed by the single-page app. Google's OAuth console
+# needs plain, stable URLs for these before the consent screen can be published.
+/privacy   /privacy.html   200
+/terms     /terms.html     200
+
+# Single-page app: every other path must serve index.html so React Router can
+# handle it. Without this, refreshing /profile or /shop on Netlify returns a
+# 404 - the file genuinely does not exist, the route only exists in the browser.
+/*  /index.html  200

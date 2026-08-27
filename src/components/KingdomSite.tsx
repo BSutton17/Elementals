@@ -54,6 +54,10 @@ export function KingdomSite({
 }) {
   const selectable = onSelect != null
   // Water's "Current" mark (from Waterfall): the castle looks half-submerged.
+  // Rough advance width for the 26px label font — enough to place the badge
+  // beside the name without measuring text, which SVG makes awkward and which
+  // would cost a layout pass every frame.
+  const nameWidth = player.name.length * 13
   const submerged = player.statuses?.some((s) => s.id === 'current') ?? false
   // Ice's Frozen: the whole castle is encased in a block of ice.
   const frozen = (player.statuses?.some((s) => s.id === 'frozen') ?? false) && !player.eliminated
@@ -145,12 +149,43 @@ export function KingdomSite({
         />
       )}
 
-      {/* Your own name is hidden above your castle (you know it's yours). */}
-      {!isYou && (
-        <text y={-124} className="battlefield__name" data-testid="kingdom-name">
+      {/* Every kingdom is named, your own included. The level sits to the left
+          of the name, and both are visible to everyone — an opponent's level is
+          part of reading the table.
+
+          Guests and bots have no level, so the badge is simply absent for them.
+          A dash or a zero would read as a rendering fault rather than as "this
+          player has no account". */}
+      <g transform={`translate(0 ${-124})`} data-testid="kingdom-label">
+        {player.level != null && (
+          <>
+            <rect
+              x={-nameWidth / 2 - 34}
+              y={-17}
+              width={28}
+              height={22}
+              rx={4}
+              className="battlefield__level-box"
+            />
+            <text
+              x={-nameWidth / 2 - 20}
+              className="battlefield__level"
+              data-testid="kingdom-level"
+            >
+              {player.level}
+            </text>
+          </>
+        )}
+        {/* Your own name is marked. It used to be hidden entirely — "you know
+            it's yours" — and now that every kingdom is named, something has to
+            answer the same question at a glance on a ring of seven castles. */}
+        <text
+          className={`battlefield__name${isYou ? ' battlefield__name--you' : ''}`}
+          data-testid="kingdom-name"
+        >
           {player.name}
         </text>
-      )}
+      </g>
 
       {/* Joker's Slot Machine, from the OUTSIDE: whoever owes a spin reads
           "Spinning…" until their reels stop, then shows the symbols they
@@ -204,6 +239,9 @@ export function KingdomSite({
           color={color}
           outline={getCastleOutline(player.kingdomId)}
           eliminated={player.eliminated}
+          // Resolved by the server, so a client one release behind still shows
+          // a stranger the right castle rather than the wrong one.
+          paint={player.castlePaint}
         />
       </g>
 

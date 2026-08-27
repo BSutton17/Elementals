@@ -779,7 +779,10 @@
   bottom: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
-  width: 260px;
+  /* Never wider than the screen. At 260px flat, a card near the edge of a
+     320-360px phone pushed the tooltip off the viewport - and since it opens on
+     TAP on mobile, that is the common case, not an edge case. */
+  width: min(260px, calc(100vw - 1.5rem));
   background: linear-gradient(135deg, rgba(11, 14, 23, 0.97) 0%, rgba(20, 25, 40, 0.95) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

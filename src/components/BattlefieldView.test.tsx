@@ -81,8 +81,31 @@ describe('BattlefieldView', () => {
     expect(screen.getAllByTestId('kingdom-site')).toHaveLength(3)
     expect(screen.getAllByTestId('castle')).toHaveLength(3)
     expect(container.querySelector('.battlefield__layer-projectiles')).toBeTruthy()
-    expect(screen.queryByText(/Alice/)).toBeNull() // your own name is hidden
-    expect(screen.getByText('Bob')).toBeTruthy() // opponents' names still show
+    // EVERY kingdom is named now, your own included - it used to be hidden.
+    expect(screen.getByText('Alice')).toBeTruthy()
+    expect(screen.getByText('Bob')).toBeTruthy()
+  })
+
+  it('marks your own name so you can find your castle among seven', () => {
+    // The reason the name was hidden was "you know it's yours". Now that they
+    // all show, something else has to answer that at a glance.
+    const { container } = render(<BattlefieldView match={match} youId="a" players={game()} />)
+    const mine = site(container, 'a').querySelector('[data-testid="kingdom-name"]')!
+    const theirs = site(container, 'b').querySelector('[data-testid="kingdom-name"]')!
+    expect(mine.classList.contains('battlefield__name--you')).toBe(true)
+    expect(theirs.classList.contains('battlefield__name--you')).toBe(false)
+  })
+
+  it('shows a level beside the name, and nothing for players without one', () => {
+    // Guests and bots have no level. A dash or a zero would read as a
+    // rendering fault rather than as "this player has no account".
+    const players = game()
+    players[0]!.level = 12
+    const { container } = render(<BattlefieldView match={match} youId="a" players={players} />)
+    expect(
+      site(container, 'a').querySelector('[data-testid="kingdom-level"]')!.textContent,
+    ).toBe('12')
+    expect(site(container, 'b').querySelector('[data-testid="kingdom-level"]')).toBeNull()
   })
 
   it('renders health bars proportional to castle HP (#195)', () => {

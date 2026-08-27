@@ -1,0 +1,56 @@
+import type { ReactNode } from 'react'
+import { AirDecor } from './airDecor'
+import { ElectricityDecor } from './electricityDecor'
+import { FireDecor } from './fireDecor'
+import { IceDecor } from './iceDecor'
+import { NatureDecor } from './natureDecor'
+import { WaterDecor } from './waterDecor'
+
+/**
+ * The decoration registry.
+ *
+ * A skin's `paint.decor` is an ID, and this maps it to the geometry that draws
+ * it — the same split the game already uses for abilities, where the server
+ * emits an event id and the client decides what it looks like.
+ *
+ * ⚠️ AN UNKNOWN ID DRAWS NOTHING. A client one release behind a new skin shows
+ * a plainer castle in the right colours rather than a broken one, and a retired
+ * decoration never leaves a hole.
+ */
+
+export interface DecorProps {
+  /** The kingdom's own colour, so a decoration can stay in its family. */
+  color: string
+  /** The skin's outline, for detailing that should match the silhouette. */
+  outline: string
+  /** The skin's accent, for detailing that should match the battlements. */
+  accent: string
+  /** True while the castle is dead — decorations should go quiet, not vanish. */
+  eliminated: boolean
+  /**
+   * Document-unique suffix for any id this decoration defines.
+   *
+   * ⚠️ CLIP PATHS AND GRADIENTS MUST USE THIS. Seven castles share one screen
+   * and several of them can be wearing the same skin, so a hardcoded id is
+   * emitted seven times over. `url(#id)` then resolves to whichever copy the
+   * document happens to hold, and unmounting that castle can strip the
+   * definition out from under the others.
+   */
+  uid: string
+}
+
+export const DECOR: Record<string, (props: DecorProps) => ReactNode> = {
+  ...WaterDecor,
+  ...FireDecor,
+  ...AirDecor,
+  ...IceDecor,
+  ...ElectricityDecor,
+  ...NatureDecor,
+}
+
+/** Draws a decoration by id, or nothing if it is unknown. */
+export function Decor({ id, ...props }: DecorProps & { id?: string }): ReactNode {
+  if (!id) return null
+  const render = DECOR[id]
+  return render ? render(props) : null
+}

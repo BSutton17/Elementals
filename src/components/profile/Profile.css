@@ -1,0 +1,446 @@
+/* Profile and username dialogs.
+ *
+ * Built from the menu's existing vocabulary rather than a new one: the same
+ * ground (#0b0e17), the same text colours, the same 999px pills for actions
+ * and 0.6rem radius for panels and fields. The blue-violet gradient appears on
+ * exactly one control per dialog — the primary action — which is how
+ * StartupScreen already uses it.
+ *
+ * Modal structure follows HowToPlay: __backdrop + __panel under role="dialog".
+ */
+
+.profile-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #e8ecf5;
+}
+
+.profile-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.72);
+}
+
+.profile-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+  max-height: calc(100dvh - 2.5rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.9rem;
+  background: #12151f;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.profile-modal__close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  color: #aab3c5;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.profile-modal__close:hover {
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.profile-modal__title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.profile-modal__lead {
+  margin: -0.6rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #aab3c5;
+}
+
+/* --- identity header ------------------------------------------------------ */
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding-right: 2rem; /* clears the close button */
+}
+
+.profile-identity__avatar {
+  display: grid;
+  place-items: center;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: #6bb8ff;
+  flex: none;
+}
+
+.profile-identity__text {
+  min-width: 0;
+}
+
+.profile-identity__name {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.profile-identity__meta {
+  margin: 0.1rem 0 0;
+  font-size: 0.82rem;
+  color: #6b7385;
+}
+
+/* --- sections ------------------------------------------------------------- */
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-section__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-row__label {
+  font-size: 0.9rem;
+  color: #aab3c5;
+}
+
+.profile-row__value {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.profile-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #6b7385;
+}
+
+/* --- field ---------------------------------------------------------------- */
+
+.profile-field {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  font: inherit;
+  font-size: 1.05rem;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 0.6rem;
+}
+
+.profile-field:focus {
+  outline: none;
+  border-color: #6bb8ff;
+  box-shadow: 0 0 0 3px rgba(107, 184, 255, 0.18);
+}
+
+.profile-field[aria-invalid='true'] {
+  border-color: #ff8a8a;
+}
+
+.profile-field[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(255, 138, 138, 0.18);
+}
+
+/* Always rendered, so the panel never resizes as the message changes. */
+.profile-hint {
+  margin: -0.5rem 0 0;
+  min-height: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.15rem;
+  color: #6b7385;
+}
+
+.profile-hint--bad {
+  color: #ff8a8a;
+}
+
+/* --- actions -------------------------------------------------------------- */
+
+.profile-modal__actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.profile-modal__actions--end {
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-btn {
+  padding: 0.6rem 1.15rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.profile-btn:focus-visible {
+  outline: 2px solid #6bb8ff;
+  outline-offset: 2px;
+}
+
+.profile-btn--primary {
+  flex: 1;
+  color: #0b0e17;
+  background: linear-gradient(120deg, #6bb8ff, #b79bff);
+  border-color: transparent;
+}
+
+.profile-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(120deg, #7fc2ff, #c2aaff);
+}
+
+.profile-btn--quiet {
+  color: #aab3c5;
+  background: transparent;
+  border-color: transparent;
+}
+
+.profile-btn--quiet:hover {
+  color: #ff8a8a;
+  background: rgba(255, 138, 138, 0.1);
+}
+
+.profile-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* --- the menu's profile button -------------------------------------------- */
+
+/* Mirrors `.startup__howto` in the opposite corner, so the two read as a pair. */
+.startup__profile {
+  text-decoration: none;
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 12rem;
+  padding: 0.45rem 0.9rem 0.45rem 0.6rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.startup__profile:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.startup__profile:focus-visible {
+  outline: 2px solid #6bb8ff;
+  outline-offset: 2px;
+}
+
+.startup__profile-icon {
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #6bb8ff;
+  flex: none;
+}
+
+.startup__profile-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bottom-right destination, mirroring How to Play bottom-left. */
+.startup__shop {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 2;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The signed-in name where the sign-in button used to be. */
+.startup__signed-in {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e8ecf5;
+}
+
+/* ==========================================================================
+   Responsive. Three cases, all of them real: desktop, portrait phone, and
+   landscape phone — which is the one that breaks things, because it is wide
+   but only ~360px tall.
+   ========================================================================== */
+
+/* Narrow portrait: `.startup__secondary` goes full-width here (see
+   StartupScreen.css), which would stretch the pinned Shop button across the
+   screen. `.startup__howto` already carries this override; Shop needs it too. */
+@media (max-width: 420px) {
+  .startup__shop {
+    width: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Short screens (landscape phones): tuck the corners in so they cannot crowd
+   the centred column, and drop the username so the button cannot collide with
+   the title — on a 568px-wide landscape screen those two nearly touch. */
+@media (max-height: 640px) {
+  .startup__shop {
+    width: auto;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .startup__profile {
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.4rem;
+  }
+
+  .startup__profile-name {
+    display: none;
+  }
+
+  /* The dialog has to fit between a keyboard and the top of a short screen. */
+  .profile-modal {
+    padding: 0.6rem;
+  }
+
+  .profile-modal__panel {
+    gap: 0.7rem;
+    padding: 1.1rem;
+    max-height: calc(100dvh - 1.2rem);
+  }
+
+  .profile-modal__title {
+    font-size: 1.15rem;
+  }
+
+  .profile-modal__lead {
+    font-size: 0.85rem;
+  }
+
+  .profile-identity__avatar {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  /* On a narrow phone the name would crowd the title; the icon alone reads. */
+  .startup__profile-name {
+    display: none;
+  }
+  .startup__profile {
+    padding: 0.45rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-btn {
+    transition: none;
+  }
+}
+
+/* Terms/privacy consent line under the age gate. Small, but present at the one
+   moment a person is actually agreeing to something. */
+.profile-legal {
+  margin: 0.2rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #6b7385;
+}
+
+.profile-legal a {
+  color: #aab3c5;
+}
+
+.profile-legal a:hover {
+  color: #6bb8ff;
+}
+
+.profile-label {
+  display: block;
+  margin: 0.3rem 0 -0.3rem;
+  font-size: 0.84rem;
+  color: #aab3c5;
+}
+
+/* Destructive, and never the primary action in its dialog. */
+.profile-btn--danger {
+  color: #ff8a8a;
+  border-color: rgba(255, 138, 138, 0.35);
+  background: rgba(255, 138, 138, 0.08);
+}
+
+.profile-btn--danger:hover:not(:disabled) {
+  background: rgba(255, 138, 138, 0.18);
+}

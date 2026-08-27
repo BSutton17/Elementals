@@ -5,6 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>elementals</title>
+    <!-- Google Identity Services: draws the sign-in button and runs the
+         popup. Must live INSIDE <head> - placed between <html> and <head>
+         it is invalid, and only works because browsers repair it. -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,652 @@
+/* Shared shell for the account pages — Profile and Shop.
+ *
+ * Same visual language as the menu (StartupScreen.css): the night-sky ground,
+ * the same text colours, 999px pills for actions and 0.6rem for panels. Unlike
+ * the menu these are scrollable pages rather than a centred column, because
+ * both will grow long once statistics and a catalogue arrive.
+ *
+ * Deliberately restrained: hairline borders, no glow, no glassmorphism, and the
+ * blue-violet gradient on exactly one control per page.
+ */
+
+.account {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(80, 120, 255, 0.18), transparent 60%),
+    #0b0e17;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* --- top bar --------------------------------------------------------------- */
+
+.account__bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem clamp(1rem, 4vw, 2rem);
+  background: rgba(11, 14, 23, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: none; /* deliberate: no glass */
+}
+
+.account__back {
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: #aab3c5;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.account__back:hover {
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.account__back:focus-visible,
+.account-btn:focus-visible,
+.store-tab:focus-visible {
+  outline: 2px solid #6bb8ff;
+  outline-offset: 2px;
+}
+
+.account__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* --- body ------------------------------------------------------------------ */
+
+.account__body {
+  flex: 1;
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 2rem) 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.account__status {
+  margin: 0;
+  color: #aab3c5;
+}
+
+/* --- identity -------------------------------------------------------------- */
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.account-identity__avatar {
+  display: grid;
+  place-items: center;
+  font-size: 3.4rem;
+  line-height: 1;
+  color: #6bb8ff;
+  flex: none;
+}
+
+.account-identity__name {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.account-identity__meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: #6b7385;
+}
+
+/* --- sections -------------------------------------------------------------- */
+
+.account-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.account-section__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+/* Sections that exist but have nothing in them yet. Named rather than hidden,
+   so the page reads as "not built yet" instead of "broken". */
+.account-section__pending {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #6b7385;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.account-row__label {
+  font-size: 0.92rem;
+  color: #aab3c5;
+}
+
+.account-row__value {
+  flex: 1;
+  min-width: 6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* --- empty states ---------------------------------------------------------- */
+
+.account__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.account__empty-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.account__empty-text {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #aab3c5;
+}
+
+.account__empty .account-btn {
+  margin-top: 0.4rem;
+}
+
+/* --- shop tabs ------------------------------------------------------------- */
+
+.store-tabs {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 46rem;
+  margin: 1.25rem auto -0.75rem;
+  padding: 0 clamp(1rem, 4vw, 2rem);
+}
+
+.store-tab {
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #aab3c5;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.store-tab:hover {
+  color: #e8ecf5;
+}
+
+/* The active tab is marked by weight and an underline, not a filled pill —
+   `aria-selected` carries it for anyone not seeing the colour. */
+.store-tab--active {
+  color: #e8ecf5;
+  border-bottom-color: #6bb8ff;
+}
+
+.store-blurb {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #aab3c5;
+}
+
+/* --- buttons --------------------------------------------------------------- */
+
+.account-btn {
+  padding: 0.6rem 1.2rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.account-btn:hover {
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.account-btn--primary {
+  color: #0b0e17;
+  background: linear-gradient(120deg, #6bb8ff, #b79bff);
+  border-color: transparent;
+}
+
+.account-btn--primary:hover {
+  background: linear-gradient(120deg, #7fc2ff, #c2aaff);
+}
+
+.account-btn--quiet {
+  color: #aab3c5;
+  background: transparent;
+  border-color: transparent;
+}
+
+.account-btn--quiet:hover {
+  color: #ff8a8a;
+  background: rgba(255, 138, 138, 0.1);
+}
+
+.account__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-btn {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Responsive. These pages scroll, so the risk is not overflow but wasted
+   vertical space on a screen that has none.
+   ========================================================================== */
+
+/* Short screens (landscape phones, ~360px tall): the sticky bar and the
+   identity block together would eat most of the viewport before any content
+   appeared. Compress both, and keep the bar sticky so the way out is always
+   one tap away. */
+@media (max-height: 640px) {
+  .account__bar {
+    padding: 0.55rem clamp(0.75rem, 4vw, 2rem);
+  }
+
+  .account__title {
+    font-size: 1rem;
+  }
+
+  .account__body {
+    padding: 1rem clamp(0.75rem, 4vw, 2rem) 2rem;
+    gap: 1.1rem;
+  }
+
+  .account-identity__avatar {
+    font-size: 2.4rem;
+  }
+
+  .account-identity__name {
+    font-size: 1.25rem;
+  }
+
+  .account-section {
+    padding-top: 1rem;
+    gap: 0.5rem;
+  }
+
+  .account__empty {
+    padding: 1.1rem;
+    gap: 0.5rem;
+  }
+}
+
+/* Narrow portrait: the label / value / button row runs out of width and wraps
+   into a stack. Without this the Change button gets squeezed below its
+   comfortable tap size. */
+@media (max-width: 30rem) {
+  .account-row {
+    gap: 0.5rem 0.75rem;
+  }
+
+  .account-row__value {
+    text-align: left;
+    flex-basis: 100%;
+    order: 3;
+  }
+
+  .account-row .account-btn {
+    margin-left: auto;
+  }
+
+  .store-tabs {
+    padding: 0 0.75rem;
+  }
+
+  /* Buttons in an empty state stretch, matching the menu's narrow-phone rule
+     where the primary actions go full-width. */
+  .account__empty .account-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* --- level bar ------------------------------------------------------------- */
+
+.level-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.level-bar__track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+/* The one gradient on this page, on the one element that is about progress. */
+.level-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6bb8ff, #b79bff);
+  transition: width 0.4s ease;
+}
+
+.level-bar__label {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b7385;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- stat strip ------------------------------------------------------------ */
+
+/* A row of four figures, not four cards. Cards would put a border around every
+   number and make the set harder to compare than it is to read. */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.4rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+
+.stat__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+/* --- kingdom table --------------------------------------------------------- */
+
+.kingdom-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.kingdom-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.kingdom-row:last-child {
+  border-bottom: none;
+}
+
+.kingdom-row__swatch {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+/* Colour identifies the kingdom, but the name is always written out beside it. */
+.kingdom-row__name {
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.kingdom-row__mastery {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d9a441;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid rgba(217, 164, 65, 0.35);
+  border-radius: 999px;
+}
+
+.kingdom-row__stat {
+  font-size: 0.82rem;
+  color: #6b7385;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Push the counts to the right, away from the identity on the left. */
+.kingdom-row__stat:nth-last-child(2) {
+  margin-left: auto;
+}
+
+@media (max-width: 30rem) {
+  .stat-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-bar__fill {
+    transition: none;
+  }
+}
+
+/* --- coin balance ---------------------------------------------------------- */
+
+/* Gold, and the only place gold appears — so a number in this colour always
+   means coins and never anything else. */
+.coin-balance {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(217, 164, 65, 0.3);
+  border-radius: 999px;
+  background: rgba(217, 164, 65, 0.08);
+  white-space: nowrap;
+}
+
+.coin-balance__value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #d9a441;
+  font-variant-numeric: tabular-nums;
+}
+
+.coin-balance__unit {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a7440;
+}
+
+/* --- daily quests ---------------------------------------------------------- */
+
+.quests {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.quest {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.quest--done {
+  opacity: 0.62;
+}
+
+.quest__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+/* Tier is a written word, not a colour: knowing a quest is hard is the reason
+   to attempt it, and that must not depend on seeing the hue. */
+.quest__tier {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.4rem;
+  border-radius: 3px;
+  flex: none;
+}
+
+.quest__tier--easy {
+  color: #9fd8b4;
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.quest__tier--medium {
+  color: #e8c98a;
+  background: rgba(217, 164, 65, 0.14);
+}
+
+.quest__tier--hard {
+  color: #f0a89a;
+  background: rgba(224, 112, 90, 0.14);
+}
+
+.quest__text {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.quest__check {
+  margin-left: auto;
+  color: #4ade80;
+  font-weight: 700;
+  flex: none;
+}
+
+.quest__track {
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.quest__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #6bb8ff;
+  transition: width 0.4s ease;
+}
+
+.quest--done .quest__fill {
+  background: #4ade80;
+}
+
+.quest__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+  color: #6b7385;
+  font-variant-numeric: tabular-nums;
+}
+
+.quest__reward {
+  color: #8a7440;
+  white-space: nowrap;
+}
+
+@media (max-width: 30rem) {
+  .coin-balance {
+    padding: 0.3rem 0.6rem;
+  }
+  .quest__foot {
+    font-size: 0.72rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quest__fill {
+    transition: none;
+  }
+}
+
+/* Destructive action. Marked by colour AND by sitting alone in its own row, so
+   it is never adjacent to something harmless. */
+.account-btn--danger {
+  color: #ff8a8a;
+  border-color: rgba(255, 138, 138, 0.35);
+  background: rgba(255, 138, 138, 0.08);
+}
+
+.account-btn--danger:hover {
+  background: rgba(255, 138, 138, 0.16);
+}
+
+.account-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ff8a8a;
+}
+
+.account-section a {
+  color: #6bb8ff;
+}

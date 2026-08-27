@@ -2,6 +2,7 @@ import { useLobby } from '../game/useLobby'
 import { leaveRoom } from '../game/lobbyStore'
 import { clearGameState } from '../game/gameState'
 import { getKingdomTheme } from '../game/kingdomThemes'
+import { Scoreboard } from '../components/Scoreboard'
 import './GameOverScreen.css'
 
 /**
@@ -10,7 +11,7 @@ import './GameOverScreen.css'
  * winning kingdom, and returns the player to the main menu.
  */
 export function GameOverScreen() {
-  const { match, youId } = useLobby()
+  const { match, youId, result } = useLobby()
   if (!match) return null
 
   const winner = match.players.find((p) => p.id === match.winnerId) ?? null
@@ -48,6 +49,12 @@ export function GameOverScreen() {
             kingdom standing.
           </p>
         )}
+
+        {/* The record of what actually happened. Absent only if the server
+            ended the match without one - an older build, or a room torn down
+            before the result could be built - in which case the headline above
+            still stands on its own. */}
+        {result && <Scoreboard result={result} youId={youId} />}
 
         <button type="button" className="game-over__leave" onClick={handleLeave}>
           Return to Menu

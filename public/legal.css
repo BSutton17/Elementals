@@ -1,0 +1,147 @@
+/* Shared styling for the legal pages.
+ *
+ * Standalone files, outside the React app — they need no bundle, load instantly,
+ * and give Google's OAuth console a plain URL to point at. Same palette as the
+ * game so they read as part of it, but plainer: these are documents to be read,
+ * not a screen to be operated.
+ */
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 3rem 1.25rem 5rem;
+  background: #0b0e17;
+  color: #e8ecf5;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+a {
+  color: #6bb8ff;
+  text-underline-offset: 2px;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 2rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  color: #aab3c5;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+.back:hover {
+  color: #e8ecf5;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.8rem, 6vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.updated {
+  margin: 0 0 2.5rem;
+  font-size: 0.88rem;
+  color: #6b7385;
+}
+
+h2 {
+  margin: 2.5rem 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  margin: 1.75rem 0 0.5rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #aab3c5;
+}
+
+p,
+li {
+  margin: 0 0 0.9rem;
+}
+
+ul {
+  padding-left: 1.2rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Facts worth not missing: what we do not collect, and how to delete. */
+.callout {
+  margin: 1.5rem 0;
+  padding: 1rem 1.2rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid #6bb8ff;
+  border-radius: 0.4rem;
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.92rem;
+}
+
+th,
+td {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+.scroller {
+  overflow-x: auto;
+}
+
+footer {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.88rem;
+  color: #6b7385;
+}

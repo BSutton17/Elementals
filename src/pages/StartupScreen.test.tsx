@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { StartupScreen } from './StartupScreen'
 
 const noop = () => {}
+
+// The menu links to /profile and /shop, so it needs a router in scope. Wrapping
+// here rather than at every call site keeps these tests about the menu.
+const render = (ui: React.ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>)
 
 describe('StartupScreen', () => {
   it('renders the game title', () => {

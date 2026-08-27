@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { connectSocket, disconnectSocket, socket } from './sockets/socket'
 import { identify } from './sockets/session'
 import { useLobby } from './game/useLobby'
@@ -9,13 +10,30 @@ import { SearchingScreen } from './pages/SearchingScreen'
 import { LobbyScreen } from './pages/LobbyScreen'
 import { BattlefieldScreen } from './pages/BattlefieldScreen'
 import { GameOverScreen } from './pages/GameOverScreen'
+import { ProfileScreen } from './pages/ProfileScreen'
+import { StoreScreen } from './pages/StoreScreen'
 
+/**
+ * Two navigation systems, on purpose.
+ *
+ * ROUTES (`/`, `/profile`, `/shop`) are places a player chooses to go and
+ * expects to come back from — so they get real URLs, and the phone's back
+ * gesture leaves the shop rather than the site.
+ *
+ * SCREENS are steps inside a flow, not destinations: joining by code, and the
+ * matchmaking hand-off. Giving those URLs would let someone deep-link into a
+ * half-finished flow, and would put a back button in the middle of it.
+ *
+ * A match outranks both — see below.
+ */
 type PreLobbyScreen = 'menu' | 'join' | 'searching'
 
 function App() {
   const { match } = useLobby()
   const [screen, setScreen] = useState<PreLobbyScreen>('menu')
   const [name, setName] = useState('')
+  const navigate = useNavigate()
+  const location = useLocation()
 
   // Open the shared connection on mount and (re)identify our session on connect.
   useEffect(() => {
@@ -47,23 +65,37 @@ function App() {
     )
   }
 
-  // Once in a match, the phase decides the screen: an active match moves every
-  // player to the battlefield automatically (ticket #39); a finished match
-  // shows the game-over screen until the player returns to the menu.
+  // ⚠️ A MATCH OUTRANKS THE URL. Being in a game is a fact about the server, not
+  // a place in the browser: the match screens are driven by phase and cannot be
+  // navigated away from with a back gesture. If a player is standing on /profile
+  // when their lobby starts, they belong on the battlefield.
   if (match) {
     if (match.phase === 'ended') return <GameOverScreen />
     return match.phase === 'active' ? <BattlefieldScreen /> : <LobbyScreen />
   }
 
-  return screen === 'join' ? (
-    <JoinScreen name={name} onName={setName} onBack={() => setScreen('menu')} />
-  ) : (
-    <StartupScreen
-      name={name}
-      onName={setName}
-      onJoin={() => setScreen('join')}
-      onJoinPublic={() => setScreen('searching')}
-    />
+  if (screen === 'join') {
+    return <JoinScreen name={name} onName={setName} onBack={() => setScreen('menu')} />
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <StartupScreen
+            name={name}
+            onName={setName}
+            onJoin={() => setScreen('join')}
+            onJoinPublic={() => setScreen('searching')}
+          />
+        }
+      />
+      <Route path="/profile" element={<ProfileScreen onBack={() => navigate('/')} />} />
+      <Route path="/shop" element={<StoreScreen onBack={() => navigate('/')} />} />
+      {/* Anything else is a typo or a stale link, not an error worth a page. */}
+      <Route path="*" element={<Navigate to="/" replace state={{ from: location.pathname }} />} />
+    </Routes>
   )
 }
 

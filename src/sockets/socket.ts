@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import { getToken } from "../game/auth";
 
 /**
  * Reusable Socket.IO client manager for the Kingdoms client.
@@ -31,6 +32,14 @@ const SERVER_URL: string =
  */
 export const socket: Socket = io(SERVER_URL, {
   autoConnect: false,
+  // A FUNCTION, not an object literal. Socket.IO calls this on every connect
+  // AND every reconnect, so a token saved after the page loaded is picked up
+  // automatically. An object would be frozen at import time, which means
+  // signing in would not take effect until a full refresh.
+  //
+  // No token is a perfectly valid state: that is a guest, and guests play the
+  // whole game. The server treats the absence as "unknown", never as "denied".
+  auth: (cb) => cb({ token: getToken() ?? undefined }),
 });
 
 /** Opens the shared connection if it isn't already open. */

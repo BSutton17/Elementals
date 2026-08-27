@@ -12,6 +12,7 @@ import {
   type MatchConfig,
   type MatchSnapshot,
   type BotDifficulty,
+  type MatchResult,
 } from './lobby'
 import type { KingdomId } from './kingdoms'
 
@@ -25,6 +26,12 @@ export interface MatchState {
   youId: string | null
   /** Server clock at the last snapshot/start, for aligning timers. */
   serverTime: number | null
+  /**
+   * The finished match's full record, once `match:ended` delivers it. Null
+   * during a match, and null after one that ended without a result — an older
+   * server, or a match torn down before it could be built.
+   */
+  result: MatchResult | null
   error: string | null
 }
 
@@ -32,6 +39,7 @@ let state: MatchState = {
   match: null,
   youId: null,
   serverTime: null,
+  result: null,
   error: null,
 }
 
@@ -68,12 +76,18 @@ socket.on(
 
 // Match conclusion: the server announces the winner and stops broadcasting
 // syncs. Flip the phase locally so the UI routes to the game-over screen.
-socket.on('match:ended', (payload: { winnerId: string | null }) => {
-  if (!state.match) return
-  setState({
-    match: { ...state.match, phase: 'ended', winnerId: payload.winnerId },
-  })
-})
+socket.on(
+  'match:ended',
+  (payload: { winnerId: string | null; result?: MatchResult | null }) => {
+    if (!state.match) return
+    setState({
+      match: { ...state.match, phase: 'ended', winnerId: payload.winnerId },
+      // Optional on purpose: an older server sends only `winnerId`, and the
+      // scoreboard falls back to the plain result rather than breaking.
+      result: payload.result ?? null,
+    })
+  },
+)
 
 // Full authoritative snapshot (sent on reconnection): rebuild match state.
 socket.on('state:full', (snapshot: MatchSnapshot) => {

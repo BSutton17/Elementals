@@ -656,7 +656,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   luckyDraw: {
     id: 'luckyDraw',
     name: 'Lucky Draw',
-    description: 'Take a card. One of five effects is randomly applied to your castle',
+    description: 'Take a card, any card. One of five effects is randomly applied to your castle',
     hotkey: 'R',
     kind: 'utility',
     element: 'joker',
@@ -713,7 +713,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   flashBang: {
     id: 'flashBang',
     name: 'Flash Bang',
-    description: 'A blinding pop that stretches every cooldown already running on every OPPOSING kingdom — you are spared. Abilities sitting ready are untouched, so it only bites a field that has just spent its kit.',
+    description: 'A blinding pop that stretches every cooldown already running on every kingdom. Abilities sitting ready are untouched, so it only bites a field that has just spent its kit.',
     hotkey: 'R',
     kind: 'utility',
     element: 'light',
@@ -773,7 +773,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   neverEndingNightmare: {
     id: 'neverEndingNightmare',
     name: 'Never-ending Nightmare',
-    description: 'Strip a kingdom back to its opening move: for their next 3 attacks they can cast nothing but their basic attack — no medium, no heavy, no ultimate. Their utilities still work.',
+    description: 'Strip a kingdom back to its opening move: for their next 3 attacks they can cast nothing but their basic attack.',
     hotkey: 'R',
     kind: 'utility',
     element: 'dark',
@@ -819,7 +819,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   oldFriends: {
     id: 'oldFriends',
     name: 'Old Friends',
-    description: 'An army of foxes. Against a shield they deal heavy damage to it and leave — none of it carries over. Against a kingdom with no shield up they move IN and stay, gnawing away and feeding your Ancient Memory the whole time. Buying a shield is the only way to drive them off.',
+    description: 'Send an army of foxes towards an enemy. If a kingdom is shielded they do heavy damage. If a kingdom is not shielded they move IN and stay, gnawing away and feeding your Ancient Memory the whole time. Buying a shield is the only way to drive them off.',
     hotkey: 'F',
     kind: 'attack',
     element: 'kitsune',
@@ -898,7 +898,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   theEndOfTheWorld: {
     id: 'theEndOfTheWorld',
     name: 'The End of the World',
-    description: 'A volcano erupts in the middle of the battlefield with 1000 health per living kingdom and 20 seconds on the clock. Every kingdom but you must click on the volcano and attack it. If they fail, each kingdom takes heavy damage. Only one thing may hold the middle of the field: you cannot raise it while another kingdom’s centrepiece still stands.',
+    description: 'A volcano erupts in the middle of the battlefield. Every kingdom has 20 seconds to defeat it. If they fail, each kingdom takes heavy damage. Only one thing may hold the middle of the field: you cannot raise it while another kingdom’s centrepiece still stands.',
     hotkey: 'Space',
     kind: 'ultimate',
     element: 'magma',
@@ -924,7 +924,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   butterflies: {
     id: 'butterflies',
     name: 'Butterflies',
-    description: 'A heavy hit that leaves the target both softer and clumsier for 20 seconds: they take 10% more damage from everyone, and HALF of their own attacks now miss outright. Follow it with Infected and every one of those whiffs comes back at them.',
+    description: 'A heavy hit that leaves the target both softer and clumsier for 20 seconds: they take 10% more damage from everyone, and HALF of their own attacks now miss outright.',
     hotkey: 'E',
     kind: 'attack',
     element: 'insects',
@@ -935,7 +935,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   infected: {
     id: 'infected',
     name: 'Infected',
-    description: 'Heavy damage, and for 15 seconds any attack the target MISSES is deflected straight back into their own castle. Worthless on its own — nothing makes them miss but Butterflies, and against a target already carrying it, half of everything they throw rebounds.',
+    description: 'Heavy damage, and for 15 seconds any attack the target MISSES is deflected straight back into their own castle.',
     hotkey: 'F',
     kind: 'attack',
     element: 'insects',

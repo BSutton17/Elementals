@@ -1,0 +1,369 @@
+/* Skin decorations.
+ *
+ * ⚠️ ONLY LEGENDARY SKINS MOVE, and only slowly. A castle that jitters is noise
+ * on a battlefield holding seven of them, and a skin has to survive being
+ * looked at for a fifteen-minute match. Every animation here is long-period and
+ * low-amplitude.
+ */
+
+/* Soft glow for coral's sea plants. Filter-free: a drop-shadow on seven castles
+   is expensive, and a second translucent circle reads the same. */
+.skin__glow {
+  opacity: 0.95;
+}
+
+/* --- legendary: Leviathan Palace ------------------------------------------- */
+
+/* The core breathes. ~4s, so it reads as alive rather than as a pulse effect. */
+.skin__core {
+  transform-origin: 0px 20px;
+  animation: skin-breathe 4.2s ease-in-out infinite;
+}
+
+@keyframes skin-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.16); opacity: 1; }
+}
+
+/* Bubbles rise past the castle and fade near the top. */
+.skin__bubble {
+  animation: skin-bubble 5.5s ease-in infinite;
+}
+
+@keyframes skin-bubble {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.55; }
+  85% { opacity: 0.35; }
+  100% { transform: translateY(-78px); opacity: 0; }
+}
+
+/* The skull looms, very slightly. Enough to feel alive; not enough to distract
+   from a match being played over the top of it. */
+.skin__skull {
+  transform-origin: 0px -96px;
+  animation: skin-loom 6s ease-in-out infinite;
+}
+
+@keyframes skin-loom {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2.5px) scale(1.015); }
+}
+
+/* The eyes burn — the intimidating part. Out of phase with each other so the
+   head never reads as mechanical. */
+.skin__eye {
+  animation: skin-eye 2.8s ease-in-out infinite;
+}
+
+.skin__eye--right {
+  animation-delay: 0.45s;
+}
+
+@keyframes skin-eye {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* The fins sweep slowly, like something holding position in a current. */
+.skin__fin {
+  transform-origin: 0px -10px;
+  animation: skin-sweep 7s ease-in-out infinite;
+}
+
+@keyframes skin-sweep {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1.4deg); }
+}
+
+/* The fin's trailing edge catches the light. */
+.skin__fin-edge {
+  animation: skin-shimmer 5s ease-in-out infinite;
+}
+
+@keyframes skin-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.95; }
+}
+
+/* --- legendary: Supernova Citadel ------------------------------------------ */
+
+/* The star breathes. Slow, so it reads as alive rather than as a hit-flash. */
+.skin__star {
+  transform-origin: 0px -86px;
+  animation: skin-star 5.2s ease-in-out infinite;
+}
+
+@keyframes skin-star {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.09); }
+}
+
+/* The rings turn. Different rates AND directions, so the pair never lines up
+   into a single spinning object. */
+.skin__ring {
+  transform-origin: 0px -86px;
+  animation: skin-orbit 30s linear infinite;
+}
+
+.skin__ring--slow {
+  animation-duration: 46s;
+  animation-direction: reverse;
+}
+
+@keyframes skin-orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Flares and fire streams flicker, out of phase via inline delays. */
+.skin__flare {
+  animation: skin-flare 3.6s ease-in-out infinite;
+}
+
+@keyframes skin-flare {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
+}
+
+/* The plasma sea swells. Tiny amplitude: this sits under every castle in the
+   match and must never pull the eye off the battlefield. */
+.skin__plasma {
+  animation: skin-plasma 6.4s ease-in-out infinite;
+}
+
+@keyframes skin-plasma {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50% { transform: translateY(-2px); opacity: 1; }
+}
+
+/* Cinders rise past the fortress and burn out near the top. */
+.skin__cinder {
+  animation: skin-cinder 5.8s ease-in infinite;
+}
+
+@keyframes skin-cinder {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.65; }
+  85% { opacity: 0.4; }
+  100% { transform: translateY(-82px); opacity: 0; }
+}
+
+/* --- legendary: Storm Titan ------------------------------------------------ */
+
+/* The hurricane STREAMS rather than rotating.
+ *
+ * ⚠️ THIS IS THE IMPORTANT ONE. Spinning a ring of arms about the castle is
+ * the obvious build, and any rigid rotation eventually sweeps them straight
+ * across the sprite - the one thing a skin may never do, because players read
+ * that silhouette through fog to know who is attacking them. A marching dash
+ * pattern on a static arc cannot do that: the geometry never moves at all, only
+ * the gaps in it. Durations are set per-arc inline so no two arcs march
+ * together. */
+.skin__gale {
+  animation: skin-gale 4s linear infinite;
+}
+
+@keyframes skin-gale {
+  to { stroke-dashoffset: -44; }
+}
+
+/* The storm head boils, very slightly. */
+.skin__canopy {
+  transform-origin: 0px -88px;
+  animation: skin-canopy 9s ease-in-out infinite;
+}
+
+@keyframes skin-canopy {
+  0%, 100% { transform: translateX(0) scale(1); }
+  50% { transform: translateX(2.5px) scale(1.02); }
+}
+
+/* ⚠️ LIGHTNING MUST NOT STROBE. Each bolt is lit for a sliver of a long cycle
+   and the three are staggered by 1.5s, so there is normally no bolt on screen
+   and never more than one. `steps` because a flash has no ramp — an eased bolt
+   reads as a glowing rope being turned up and down. */
+.skin__bolt {
+  opacity: 0;
+  animation: skin-bolt 4.5s steps(1, end) infinite;
+}
+
+@keyframes skin-bolt {
+  0%, 100% { opacity: 0; }
+  1.5% { opacity: 1; }
+  3% { opacity: 0; }
+  4.5% { opacity: 0.8; }
+  6% { opacity: 0; }
+}
+
+/* The glow where a bolt lands fades rather than cutting, because heat does. */
+.skin__strike {
+  opacity: 0;
+  animation: skin-strike 4.5s ease-out infinite;
+}
+
+@keyframes skin-strike {
+  0% { opacity: 0; }
+  2% { opacity: 0.9; }
+  14% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* Debris caught in the rotation. */
+.skin__debris {
+  animation: skin-debris 7s ease-in-out infinite;
+}
+
+@keyframes skin-debris {
+  0%, 100% { opacity: 0.2; transform: translateX(0); }
+  50% { opacity: 0.65; transform: translateX(-5px); }
+}
+
+/* Lightning caught in the stone. This BREATHES rather than flickering: the
+   bolts are the flicker, and two flickering things at once is just noise. */
+.skin__vein {
+  animation: skin-vein 3.8s ease-in-out infinite;
+}
+
+@keyframes skin-vein {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* --- legendary: Frozen Crown ----------------------------------------------- */
+
+/* The small shards travel a circle high above the keep.
+ *
+ * ⚠️ THE ORBIT IS SMALL ON PURPOSE. A wide ring would sweep straight through
+ * the castle, which is the one thing a skin may never do - the same trap Air's
+ * Storm Titan fell into. This circle's lowest point still clears the keep. */
+.skin__crown {
+  transform-origin: 0px -94px;
+  animation: skin-crown 36s linear infinite;
+}
+
+/* Counter-rotation at exactly the same rate, so a shard rides the circle
+   without ever tipping over. */
+.skin__crown-upright {
+  animation: skin-crown 36s linear infinite reverse;
+}
+
+@keyframes skin-crown {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Aurora drifts and swells. Long periods and low amplitude, because this sits
+   behind a castle somebody is trying to read. */
+.skin__aurora {
+  animation: skin-aurora 12s ease-in-out infinite;
+}
+
+@keyframes skin-aurora {
+  0%, 100% { opacity: 0.35; transform: translateX(0); }
+  50% { opacity: 0.85; transform: translateX(4px); }
+}
+
+/* The light inside each big shard. */
+.skin__shardglow {
+  animation: skin-shardglow 4.6s ease-in-out infinite;
+}
+
+@keyframes skin-shardglow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.95; }
+}
+
+/* Motes rising off the citadel. */
+.skin__mote {
+  animation: skin-mote 6.2s ease-in infinite;
+}
+
+@keyframes skin-mote {
+  0% { transform: translateY(0); opacity: 0; }
+  18% { opacity: 0.7; }
+  82% { opacity: 0.45; }
+  100% { transform: translateY(-74px); opacity: 0; }
+}
+
+/* --- legendary: Thunder God Citadel ---------------------------------------- */
+
+/* The reactor breathes. Slow, so it reads as contained power rather than as a
+   hit-flash. */
+.skin__reactor {
+  transform-origin: 0px -64px;
+  animation: skin-reactor 4.8s ease-in-out infinite;
+}
+
+@keyframes skin-reactor {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Charge running through the walls. Breathes rather than flickers: the bolts
+   are the flicker, and two flickering things at once is just noise. */
+.skin__charge {
+  animation: skin-charge 3.4s ease-in-out infinite;
+}
+
+@keyframes skin-charge {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* An eliminated castle goes still: the kingdom is dead, and a corpse that keeps
+   breathing reads as a bug. */
+.castle[data-eliminated] .skin__skull,
+.castle[data-eliminated] .skin__eye,
+.castle[data-eliminated] .skin__fin,
+.castle[data-eliminated] .skin__core,
+.castle[data-eliminated] .skin__bubble,
+.castle[data-eliminated] .skin__star,
+.castle[data-eliminated] .skin__ring,
+.castle[data-eliminated] .skin__flare,
+.castle[data-eliminated] .skin__plasma,
+.castle[data-eliminated] .skin__cinder,
+.castle[data-eliminated] .skin__gale,
+.castle[data-eliminated] .skin__canopy,
+.castle[data-eliminated] .skin__bolt,
+.castle[data-eliminated] .skin__strike,
+.castle[data-eliminated] .skin__debris,
+.castle[data-eliminated] .skin__vein,
+.castle[data-eliminated] .skin__crown,
+.castle[data-eliminated] .skin__crown-upright,
+.castle[data-eliminated] .skin__aurora,
+.castle[data-eliminated] .skin__shardglow,
+.castle[data-eliminated] .skin__mote,
+.castle[data-eliminated] .skin__reactor,
+.castle[data-eliminated] .skin__charge,
+.castle[data-eliminated] .skin__fin-edge {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skin__skull,
+  .skin__eye,
+  .skin__fin,
+  .skin__core,
+  .skin__bubble,
+  .skin__star,
+  .skin__ring,
+  .skin__flare,
+  .skin__plasma,
+  .skin__cinder,
+  .skin__gale,
+  .skin__canopy,
+  .skin__bolt,
+  .skin__strike,
+  .skin__debris,
+  .skin__vein,
+  .skin__crown,
+  .skin__crown-upright,
+  .skin__aurora,
+  .skin__shardglow,
+  .skin__mote,
+  .skin__reactor,
+  .skin__charge,
+  .skin__fin-edge {
+    animation: none;
+  }
+}

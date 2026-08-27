@@ -1,0 +1,192 @@
+/* End-of-match scoreboard.
+ *
+ * A table, deliberately — this is columns of numbers people compare across
+ * rows, which is what tables are for. Cards would scatter the same figures and
+ * make comparison harder, and a game result is read at a glance.
+ *
+ * Same palette as the rest of the game; the only colour that varies is each
+ * kingdom's own swatch, which is information rather than decoration.
+ */
+
+.scoreboard {
+  width: 100%;
+  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.scoreboard__meta {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #6b7385;
+}
+
+/* The table scrolls inside its own box, so a narrow phone never scrolls the
+   whole page sideways. */
+.scoreboard__scroll {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.scoreboard__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.scoreboard__caption {
+  padding: 0.7rem 0.9rem 0.4rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7385;
+}
+
+.scoreboard__table th {
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7385;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scoreboard__table td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+}
+
+.scoreboard__table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Digits line up in columns so they can be compared down the page. */
+.scoreboard__table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scoreboard__rank-h,
+.scoreboard__rank {
+  width: 3.2rem;
+  color: #aab3c5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.scoreboard__who {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-width: 9rem;
+}
+
+.scoreboard__swatch {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 2px;
+  flex: none;
+  align-self: center;
+}
+
+.scoreboard__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.scoreboard__kingdom {
+  font-size: 0.78rem;
+  color: #6b7385;
+  white-space: nowrap;
+}
+
+.scoreboard__you {
+  color: #6bb8ff;
+  font-weight: 700;
+}
+
+.scoreboard__bot {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #6b7385;
+}
+
+/* Your own row is marked by weight and a rail, not by colour alone. */
+.scoreboard__row--you td {
+  background: rgba(107, 184, 255, 0.07);
+}
+
+.scoreboard__row--you .scoreboard__rank {
+  box-shadow: inset 2px 0 0 #6bb8ff;
+  color: #e8ecf5;
+}
+
+/* Narrow portrait: shed the least useful columns rather than letting six of
+   them fight over 360px. Damage and Taken are what people compare; Casts and
+   the kingdom label are supporting detail. */
+@media (max-width: 30rem) {
+  .scoreboard__table th:nth-child(6),
+  .scoreboard__table td:nth-child(6) {
+    display: none;
+  }
+
+  .scoreboard__kingdom {
+    display: none;
+  }
+
+  .scoreboard__table {
+    font-size: 0.82rem;
+  }
+
+  .scoreboard__table th,
+  .scoreboard__table td {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .scoreboard__rank-h,
+  .scoreboard__rank {
+    width: 2.6rem;
+  }
+
+  .scoreboard__who {
+    min-width: 6.5rem;
+  }
+}
+
+/* Very narrow (small phones): Gold goes too. A five-column table that fits
+   beats a six-column one that scrolls sideways under a thumb. */
+@media (max-width: 22rem) {
+  .scoreboard__table th:nth-child(5),
+  .scoreboard__table td:nth-child(5) {
+    display: none;
+  }
+}
+
+/* Short screens: tighten rows so more of the table is visible at once inside
+   the height cap GameOverScreen applies in landscape. */
+@media (max-height: 640px) {
+  .scoreboard__caption {
+    padding: 0.5rem 0.7rem 0.3rem;
+  }
+
+  .scoreboard__table td {
+    padding: 0.4rem 0.7rem;
+  }
+
+  .scoreboard__meta {
+    font-size: 0.78rem;
+  }
+}

@@ -46,6 +46,15 @@ export interface AbilityPrices {
 }
 
 export interface GamePlayer {
+  /** Account level, or undefined for guests and bots. */
+  level?: number
+  /** Resolved castle paint from an equipped skin, or undefined for standard. */
+  castlePaint?: {
+    fill?: string
+    outline?: string
+    accent?: string
+    strokeScale?: number
+  }
   id: string
   name: string
   kingdomId: string | null

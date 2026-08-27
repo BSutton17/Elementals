@@ -605,3 +605,27 @@
 @media (prefers-reduced-motion: reduce) {
   .kingdom-site__nightmare { animation: nightmare-fade-in 0.45s ease-out both; }
 }
+
+/* Your own kingdom's name. Every castle is labelled now, so this answers
+   "which one is mine" on a ring of seven — by weight and colour together, not
+   colour alone. */
+.battlefield__name--you {
+  fill: #6bb8ff;
+  font-weight: 800;
+}
+
+/* Account level, to the left of the name. Absent for guests and bots, who have
+   no level — a dash there would read as a rendering fault. */
+.battlefield__level-box {
+  fill: rgba(11, 14, 23, 0.72);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 1.5;
+}
+
+.battlefield__level {
+  fill: #e8ecf5;
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
