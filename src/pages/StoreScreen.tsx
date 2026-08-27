@@ -125,6 +125,21 @@ export function StoreScreen({ onBack }: { onBack: () => void }) {
    * Best first, and within a tier ordered by kingdom so the grid is stable
    * between visits rather than reshuffling.
    */
+  /**
+   * Featured, ordered by rarity so the two legendaries land in the top row of
+   * the 2x2 and the two rares in the bottom one.
+   *
+   * ⚠️ THE ORDER IS NOT INCIDENTAL. Featured is the only place legendaries
+   * appear, and a grid that puts one legendary next to one rare on each row
+   * reads as four equivalent items. Rows carry the tier.
+   */
+  const featuredOrdered = useMemo(() => {
+    if (tab !== 'featured') return null
+    return [...shown].sort(
+      (a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity),
+    )
+  }, [tab, shown])
+
   const grouped = useMemo(() => {
     if (tab !== 'daily') return null
     const buckets = new Map<string, CosmeticItem[]>()
@@ -334,8 +349,8 @@ export function StoreScreen({ onBack }: { onBack: () => void }) {
                   </section>
                 ))
               ) : (
-                <div className="shop__grid">
-                  {shown.map((item) => (
+                <div className={`shop__grid${featuredOrdered ? ' shop__grid--featured' : ''}`}>
+                  {(featuredOrdered ?? shown).map((item) => (
                     <ItemCard
                       key={item.id}
                       item={item}

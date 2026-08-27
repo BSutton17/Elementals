@@ -166,22 +166,27 @@ export function StartupScreen({ name, onName, onJoin, onJoinPublic }: StartupScr
         </Link>
       )}
 
-      {/* Bottom-right, mirroring How to Play. The shop is a place you visit, so
-          it sits at the edge with the other destinations rather than in the
-          centre column, which is reserved for the one thing this screen is for:
-          getting into a game. Open to guests — browsing needs no account. */}
-      <Link to="/shop" className="startup__secondary startup__shop">
-        Shop
-      </Link>
-
-      {/* Pinned to the menu's bottom-left corner, out of the main column. */}
-      <button
-        type="button"
-        className={`startup__secondary startup__howto${nudge && !showHowTo ? ' startup__howto--nudge' : ''}`}
-        onClick={() => setShowHowTo(true)}
-      >
-        How to Play
-      </button>
+      {/* ⚠️ ONE BAR, NOT TWO PINNED CORNERS. These were separately positioned
+          bottom-left and bottom-right, which meant nothing stopped them meeting
+          in the middle — and on a narrow phone they did, because the
+          full-width rule for `.startup__secondary` won the cascade over each
+          button's own `width: auto` and Shop stretched clean across How to
+          Play. A flex row with space-between cannot overlap at any width, and
+          it also gives them somewhere to stack when the screen is very narrow.
+          The centre column is still reserved for the one thing this screen is
+          for: getting into a game. Both are open to guests. */}
+      <nav className="startup__dock" aria-label="Elsewhere">
+        <button
+          type="button"
+          className={`startup__secondary startup__dock-btn${nudge && !showHowTo ? ' startup__howto--nudge' : ''}`}
+          onClick={() => setShowHowTo(true)}
+        >
+          How to Play
+        </button>
+        <Link to="/shop" className="startup__secondary startup__dock-btn">
+          Shop
+        </Link>
+      </nav>
 
       {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
 

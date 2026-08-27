@@ -264,7 +264,7 @@
 
 /* --- the menu's profile button -------------------------------------------- */
 
-/* Mirrors `.startup__howto` in the opposite corner, so the two read as a pair. */
+/* Top-right, opposite the bottom dock. */
 .startup__profile {
   text-decoration: none;
   position: absolute;
@@ -310,17 +310,6 @@
   white-space: nowrap;
 }
 
-/* Bottom-right destination, mirroring How to Play bottom-left. */
-.startup__shop {
-  position: absolute;
-  right: 1.25rem;
-  bottom: 1.25rem;
-  z-index: 2;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-}
-
 /* The signed-in name where the sign-in button used to be. */
 .startup__signed-in {
   margin: 0;
@@ -335,31 +324,10 @@
    but only ~360px tall.
    ========================================================================== */
 
-/* Narrow portrait: `.startup__secondary` goes full-width here (see
-   StartupScreen.css), which would stretch the pinned Shop button across the
-   screen. `.startup__howto` already carries this override; Shop needs it too. */
-@media (max-width: 420px) {
-  .startup__shop {
-    width: auto;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-  }
-}
-
 /* Short screens (landscape phones): tuck the corners in so they cannot crowd
    the centred column, and drop the username so the button cannot collide with
    the title — on a 568px-wide landscape screen those two nearly touch. */
 @media (max-height: 640px) {
-  .startup__shop {
-    width: auto;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    padding: 0.4rem 1rem;
-    font-size: 0.85rem;
-  }
-
   .startup__profile {
     top: 0.75rem;
     right: 0.75rem;

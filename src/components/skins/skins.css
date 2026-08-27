@@ -310,6 +310,40 @@
   50% { opacity: 1; }
 }
 
+/* --- legendary: World Tree -------------------------------------------------- */
+
+/* The crown sways. Very slightly, and very slowly — a tree this size would
+   barely move at all, and anything faster reads as wind rather than mass. */
+.skin__canopy-sway {
+  transform-origin: 0px -60px;
+  animation: skin-canopy-sway 10s ease-in-out infinite;
+}
+
+@keyframes skin-canopy-sway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(0.9deg); }
+}
+
+/* Sap running out along the roots. A marching dash, so the root geometry never
+   moves — the same reason Air's gales and Electricity's rings use one. */
+.skin__sap {
+  animation: skin-sap 5.5s linear infinite;
+}
+
+@keyframes skin-sap {
+  to { stroke-dashoffset: -40; }
+}
+
+/* And the ground glowing where it passes. */
+.skin__sap-glow {
+  animation: skin-sap-glow 5.5s ease-in-out infinite;
+}
+
+@keyframes skin-sap-glow {
+  0%, 100% { opacity: 0.08; }
+  50% { opacity: 0.28; }
+}
+
 /* An eliminated castle goes still: the kingdom is dead, and a corpse that keeps
    breathing reads as a bug. */
 .castle[data-eliminated] .skin__skull,
@@ -335,6 +369,9 @@
 .castle[data-eliminated] .skin__mote,
 .castle[data-eliminated] .skin__reactor,
 .castle[data-eliminated] .skin__charge,
+.castle[data-eliminated] .skin__canopy-sway,
+.castle[data-eliminated] .skin__sap,
+.castle[data-eliminated] .skin__sap-glow,
 .castle[data-eliminated] .skin__fin-edge {
   animation: none;
 }
@@ -363,6 +400,9 @@
   .skin__mote,
   .skin__reactor,
   .skin__charge,
+  .skin__canopy-sway,
+  .skin__sap,
+  .skin__sap-glow,
   .skin__fin-edge {
     animation: none;
   }

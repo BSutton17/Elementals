@@ -13,14 +13,17 @@
 
 .shop {
   flex: 1;
+  /* See AccountPage.css: the page is a fixed frame, so this has to be allowed
+     to shrink before anything inside it can scroll. */
+  min-height: 0;
   width: 100%;
   max-width: 72rem;
   margin: 0 auto;
-  padding: 1rem clamp(1rem, 4vw, 2rem) 3rem;
+  padding: 1rem clamp(1rem, 4vw, 2rem) 1rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* Desktop: the detail sits beside the grid rather than covering it, so an item
@@ -31,11 +34,20 @@
   }
 }
 
+/* ⚠️ THIS IS THE SCROLLER, not the page. The Daily tab holds every uncommon
+   in the game plus a rare per kingdom, which is far more than fits on a phone;
+   the tabs and the coin balance have to stay put while it is scrolled, or you
+   lose your way out of the tab you are in. */
 .shop__main {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 1.5rem;
 }
 
 .store-blurb__timer {
@@ -98,6 +110,15 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   gap: 0.6rem;
+}
+
+/* Featured is always exactly four items — two legendary, two rare — so it gets
+   a fixed 2x2 rather than an auto-fill that would reflow them into a row of
+   four on a wide screen and lose the legendary/rare reading order. The items
+   are sorted by rarity in StoreScreen, so the top row is the legendaries. */
+.shop__grid--featured {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 34rem;
 }
 
 .item {
@@ -375,6 +396,13 @@
     grid-template-columns: repeat(auto-fill, minmax(6.75rem, 1fr));
     gap: 0.45rem;
   }
+
+  /* Featured stays a 2x2 at every width — it is four items and the rows carry
+     the tier. */
+  .shop__grid--featured {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
   .item {
     padding: 0.4rem 0.4rem 0.45rem;
   }
@@ -383,14 +411,99 @@
   }
 }
 
-/* Landscape phones: the detail must not push the grid off a 360px-tall screen. */
-@media (max-height: 640px) and (max-width: 60rem) {
+/* ==========================================================================
+   Selecting a skin on a phone.
+
+   ⚠️ IN THE GRID FLOW, THE DETAIL IS BELOW THE FOLD. Under 60rem the shop is a
+   single column, so the panel appeared underneath the items — you tapped a
+   skin and nothing visibly happened until you scrolled. Worse, it pushed the
+   grid down, so the item you had just tapped moved out from under your thumb.
+
+   As a sheet anchored to the bottom of the viewport it appears where the tap
+   was, never moves the grid, and can be dismissed without scrolling anywhere.
+   ========================================================================== */
+@media (max-width: 60rem) {
   .detail {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
     max-height: 70dvh;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    margin: 0;
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+    box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.55);
+    animation: detail-rise 0.18s ease-out;
   }
+
+  /* A grab handle, so it reads as a sheet you can dismiss rather than a panel
+     that has appeared over the content. */
+  .detail::before {
+    content: '';
+    display: block;
+    width: 2.25rem;
+    height: 0.25rem;
+    margin: 0 auto 0.6rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .detail__close {
+    top: 0.65rem;
+    right: 0.65rem;
+  }
+
+  /* The last row has to stay reachable with the sheet up. */
+  .shop:has(.detail) .shop__main {
+    padding-bottom: 45dvh;
+  }
+}
+
+@keyframes detail-rise {
+  from { transform: translateY(12%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail { animation: none; }
+}
+
+/* Landscape phones are wide but only ~360px tall, so a sheet tall enough to be
+   useful would cover the whole screen. Side-by-side instead: the preview takes
+   the left, everything readable takes the right. */
+@media (max-height: 640px) and (max-width: 60rem) {
+  .detail {
+    max-height: 80dvh;
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    align-content: start;
+    column-gap: 0.9rem;
+  }
+
+  .detail::before {
+    grid-column: 1 / -1;
+  }
+
   .detail__preview {
-    aspect-ratio: 1 / 0.5;
+    grid-column: 1;
+    grid-row: 2 / span 6;
+    aspect-ratio: 1 / 0.85;
+    align-self: start;
+  }
+
+  .detail__name,
+  .detail__sub,
+  .detail__blurb,
+  .detail__price,
+  .detail__action,
+  .detail__note {
+    grid-column: 2;
   }
 }
 

@@ -9,6 +9,8 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  /* Room for the dock, so a tall column cannot slide underneath it. */
+  padding-bottom: 5rem;
   background:
     radial-gradient(1200px 600px at 50% -10%, rgba(80, 120, 255, 0.25), transparent 60%),
     radial-gradient(900px 500px at 50% 110%, rgba(255, 90, 60, 0.18), transparent 60%),
@@ -24,6 +26,42 @@
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
+  /* ⚠️ THE PAGE DOES NOT SCROLL; THIS DOES. `.startup` is locked to the
+     viewport, so on a short landscape phone the menu would simply be cut off
+     with no way to reach Create Room. Giving the column its own overflow keeps
+     the background and the dock fixed while the controls stay reachable. */
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  width: 100%;
+  max-width: 26rem;
+  padding: 0.25rem;
+}
+
+/* --- the bottom dock ------------------------------------------------------ */
+
+.startup__dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  pointer-events: none;
+}
+
+.startup__dock-btn {
+  pointer-events: auto;
+  text-decoration: none;
+  /* ⚠️ NEVER FULL WIDTH, whatever `.startup__secondary` says at this breakpoint.
+     Declared here rather than relying on source order, which is what let the
+     two buttons overlap in the first place. */
+  width: auto;
+  flex: 0 0 auto;
 }
 
 .startup__title {
@@ -162,15 +200,6 @@
   font-size: clamp(2.5rem, 10vw, 4rem);
 }
 
-/* How to Play sits in the menu's bottom-left corner rather than in the main
-   column, so the centred name/Create/Join flow reads as the primary path. */
-.startup__howto {
-  position: absolute;
-  left: 1.25rem;
-  bottom: 1.25rem;
-  z-index: 2;
-}
-
 /* First-run nudge: a soft glow pulse on How to Play until it's been opened. */
 .startup__howto--nudge {
   animation: startup-howto-nudge 2.2s ease-in-out infinite;
@@ -220,6 +249,7 @@
 @media (max-height: 640px) {
   .startup {
     padding: 1rem;
+    padding-bottom: 3.5rem;
   }
 
   .startup__content {
@@ -262,13 +292,14 @@
     font-size: 0.8rem;
   }
 
-  /* Short screens: tuck the corner button in tighter so it can't crowd the
-     centred column. */
-  .startup__howto {
-    left: 0.75rem;
-    bottom: 0.75rem;
-    padding: 0.4rem 1rem;
-    font-size: 0.85rem;
+  /* Short screens: tuck the dock in tighter so it cannot crowd the column. */
+  .startup__dock {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .startup__dock-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.82rem;
   }
 }
 
@@ -285,17 +316,22 @@
     width: 100%;
   }
 
-  .startup__play,
-  .startup__secondary {
+  /* ⚠️ SCOPED TO THE COLUMN. Unscoped, this also caught the dock buttons, and
+     whichever stylesheet happened to load last decided whether they were
+     full-width — which is a coin toss, and the reason Shop ended up lying
+     across How to Play. */
+  .startup__content .startup__play,
+  .startup__content .startup__secondary {
     width: 100%;
   }
 
-  /* ...except the pinned corner button, which stays its own size. */
-  .startup__howto {
-    width: auto;
-    left: 0.75rem;
-    bottom: 0.75rem;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
+  .startup__dock {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .startup__dock-btn {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
   }
 }

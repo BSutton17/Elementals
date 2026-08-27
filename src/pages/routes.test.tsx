@@ -293,6 +293,51 @@ describe('StoreScreen', () => {
     )
   })
 
+  /**
+   * Featured is the only place legendaries appear, and the 2x2 grid carries the
+   * tier in its ROWS: legendaries on top, rares beneath. A grid that interleaves
+   * them reads as four equivalent items, which is the one thing Featured is not.
+   *
+   * Ordering is asserted rather than eyeballed because the failure is silent —
+   * the shop still renders four cards, just in whatever order the server sent
+   * them, and nobody notices until a legendary is sitting in the bottom row.
+   */
+  it('orders featured skins legendaries first, so the top row is the legendaries', async () => {
+    localStorage.setItem('kingdoms.token', 'tok')
+    fetchShop.mockResolvedValue(
+      shop({
+        featured: [
+          cosmetic({ id: 'a.rare', name: 'Rare One', rarity: 'rare', price: 1400 }),
+          cosmetic({ id: 'b.leg', name: 'Legend One', rarity: 'legendary', price: 6000 }),
+          cosmetic({ id: 'c.rare', name: 'Rare Two', rarity: 'rare', price: 1400 }),
+          cosmetic({ id: 'd.leg', name: 'Legend Two', rarity: 'legendary', price: 6000 }),
+        ],
+      }),
+    )
+    wrap(<StoreScreen onBack={() => {}} />)
+
+    await screen.findByText('Legend One')
+    const grid = document.querySelector('.shop__grid--featured')
+    expect(grid).not.toBeNull()
+
+    const names = Array.from(grid!.querySelectorAll('.item__name')).map(
+      (n) => n.textContent,
+    )
+    expect(names.slice(0, 2).sort()).toEqual(['Legend One', 'Legend Two'])
+    expect(names.slice(2).sort()).toEqual(['Rare One', 'Rare Two'])
+  })
+
+  it('does not use the fixed 2x2 for the daily tab, which is any length', async () => {
+    localStorage.setItem('kingdoms.token', 'tok')
+    wrap(<StoreScreen onBack={() => {}} />)
+
+    const daily = await screen.findByRole('tab', { name: 'Daily' })
+    fireEvent.click(daily)
+
+    await screen.findByText('Ember')
+    expect(document.querySelector('.shop__grid--featured')).toBeNull()
+  })
+
   it('shows the balance and a reset countdown', async () => {
     wrap(<StoreScreen onBack={() => {}} />)
     expect(await screen.findByText('1,000')).toBeTruthy()
