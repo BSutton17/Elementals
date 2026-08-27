@@ -19,5 +19,18 @@ export default defineConfig({
      * actually schedule them. Matches `--test-concurrency` on the server.
      */
     maxWorkers: 6,
+    /**
+     * ⚠️ `src/__*.test.tsx` ARE RENDER HARNESSES, NOT TESTS. They draw skins
+     * and screens to files for visual review: no assertions, an absolute
+     * scratch path, and dozens of server-side castle renders each. `npm test`
+     * excludes them — see the script — because left in the run they added
+     * CPU-bound work to a suite already tuned around jsdom contention, and were
+     * part of why unrelated tests intermittently blew their 5s timeout.
+     *
+     * The exclusion lives in the script rather than here on purpose: an
+     * `exclude` in this config also blocks naming the file directly, which
+     * leaves no way to run one at all. To run one:
+     *   npx vitest run src/__preview.test.tsx
+     */
   },
 })

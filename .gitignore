@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local render harnesses for reviewing skins and layout. They write to an
+# absolute scratch path and assert nothing, so they are useful on one machine
+# and noise in the repository. See the `exclude` note in vite.config.ts.
+src/__*.test.tsx
