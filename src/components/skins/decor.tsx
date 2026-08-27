@@ -4,6 +4,8 @@ import { ElectricityDecor } from './electricityDecor'
 import { FireDecor } from './fireDecor'
 import { IceDecor } from './iceDecor'
 import { NatureDecor } from './natureDecor'
+import { SpaceDecor } from './spaceDecor'
+import { TimeDecor } from './timeDecor'
 import { WaterDecor } from './waterDecor'
 
 /**
@@ -28,6 +30,12 @@ export interface DecorProps {
   /** True while the castle is dead — decorations should go quiet, not vanish. */
   eliminated: boolean
   /**
+   * For skins that look different from match to match: a stable number chosen
+   * by the SERVER, so every client draws the same castle. Undefined for the
+   * shop and for skins that do not vary.
+   */
+  variantSeed?: number
+  /**
    * Document-unique suffix for any id this decoration defines.
    *
    * ⚠️ CLIP PATHS AND GRADIENTS MUST USE THIS. Seven castles share one screen
@@ -46,6 +54,8 @@ export const DECOR: Record<string, (props: DecorProps) => ReactNode> = {
   ...IceDecor,
   ...ElectricityDecor,
   ...NatureDecor,
+  ...TimeDecor,
+  ...SpaceDecor,
 }
 
 /** Draws a decoration by id, or nothing if it is unknown. */

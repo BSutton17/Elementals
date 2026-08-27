@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { CastleSprite, CASTLE_VIEWBOX } from '../CastleSprite'
 import { getCastleOutline, getKingdomTheme } from '../../game/kingdomThemes'
 import type { CosmeticItem } from '../../game/auth'
@@ -53,6 +54,33 @@ export function ItemDetail({
   const shortfall =
     balance !== null && balance < item.price ? item.price - balance : 0
 
+  /**
+   * Skins whose look is rolled per match cycle through combinations here, so
+   * the shop shows what you are actually buying rather than one arbitrary roll
+   * of it.
+   *
+   * ⚠️ THE SHOP IS THE ONLY PLACE THIS HAPPENS. In a match the seed comes from
+   * the server and holds for the whole game — a castle that reshuffled itself
+   * mid-fight would be unreadable, and worse, would not match what anyone else
+   * is looking at. This is a preview affordance, not the skin animating.
+   */
+  const varies = item.paint?.varies === true
+  const [shot, setShot] = useState(0)
+  useEffect(() => {
+    if (!varies) return
+    const reduced =
+      typeof matchMedia === 'function' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduced) return
+    const t = setInterval(() => setShot((n) => n + 1), 2600)
+    return () => clearInterval(t)
+  }, [varies, item.id])
+
+  // A fresh seed per shot, and a stable one when the skin does not vary.
+  const showcase = varies
+    ? { ...item.paint, variantSeed: (shot * 2654435761 + 12345) >>> 0 }
+    : item.paint
+
   return (
     <aside className="detail" aria-label={`${item.name} details`}>
       <button
@@ -69,7 +97,7 @@ export function ItemDetail({
           <CastleSprite
             color={theme?.primary ?? '#6b7385'}
             outline={getCastleOutline(item.kingdomId)}
-            paint={item.paint}
+            paint={showcase}
           />
         </svg>
       </div>

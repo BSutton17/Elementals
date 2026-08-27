@@ -286,6 +286,10 @@ export type CosmeticSlot = 'castle' | 'shield' | 'nameplate'
 
 /** Mirrors the server's `data/cosmetics.Paint`. Every field is optional. */
 export interface Paint {
+  varies?: boolean
+  variantSeed?: number
+  /** Shrinks the castle body only, anchored at its footing. See CastleSprite. */
+  scale?: number
   fill?: string
   outline?: string
   accent?: string

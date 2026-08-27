@@ -344,6 +344,41 @@
   50% { opacity: 0.28; }
 }
 
+/* --- legendary: Eternal Citadel -------------------------------------------- */
+
+/* The hands turn about the castle's own centre and pass BEHIND it — see the
+   clip in timeDecor. Slow: this is a movement, not a stopwatch, and the hour
+   hand taking the better part of a minute to come round is what makes it read
+   as one. Durations are set per-hand inline. */
+.skin__hand {
+  transform-origin: 0px 0px;
+  animation: skin-hand 48s linear infinite;
+}
+
+.skin__hand--minute {
+  animation-duration: 19s;
+  /* Negative delay so the two hands do not START stacked on top of each other.
+     A clock showing both hands at twelve is a logo, and that is exactly the
+     frame a viewer sees first. */
+  animation-delay: -6.5s;
+}
+
+@keyframes skin-hand {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Portals breathe rather than flicker — a torn-open piece of time should look
+   held open, not unstable. */
+.skin__portal {
+  animation: skin-portal 5.4s ease-in-out infinite;
+}
+
+@keyframes skin-portal {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
 /* An eliminated castle goes still: the kingdom is dead, and a corpse that keeps
    breathing reads as a bug. */
 .castle[data-eliminated] .skin__skull,
@@ -372,6 +407,8 @@
 .castle[data-eliminated] .skin__canopy-sway,
 .castle[data-eliminated] .skin__sap,
 .castle[data-eliminated] .skin__sap-glow,
+.castle[data-eliminated] .skin__hand,
+.castle[data-eliminated] .skin__portal,
 .castle[data-eliminated] .skin__fin-edge {
   animation: none;
 }
@@ -403,6 +440,8 @@
   .skin__canopy-sway,
   .skin__sap,
   .skin__sap-glow,
+  .skin__hand,
+  .skin__portal,
   .skin__fin-edge {
     animation: none;
   }

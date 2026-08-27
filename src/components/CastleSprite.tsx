@@ -22,6 +22,13 @@ import { Decor } from './skins/decor'
  * Mirrors the server's `data/cosmetics.Paint`.
  */
 export interface Paint {
+  /** Set by the server on skins whose look is rolled per match. */
+  variantSeed?: number
+  /**
+   * Shrinks the castle body only, anchored at its footing, so a decoration can
+   * dwarf it. See the warning where it is applied below.
+   */
+  scale?: number
   fill?: string
   outline?: string
   /** Battlements, gate arch and other detailing. Defaults to the main fill. */
@@ -81,6 +88,22 @@ export function CastleSprite({
   const stroke = paint?.outline ?? outline
   const accent = paint?.accent ?? fill
   const w = (base: number) => base * (paint?.strokeScale ?? 1)
+  /**
+   * ⚠️ A SKIN MAY SHRINK THE CASTLE, AND ONLY THE CASTLE. The decoration keeps
+   * the full coordinate space, so a legendary can dwarf the fortress it belongs
+   * to — which is the only honest way to draw something that is supposed to be
+   * enormous. Scale is anchored at the footing (y=30) so the castle stays on
+   * the ground rather than floating up as it shrinks.
+   *
+   * ⚠️ USE IT SPARINGLY. Every castle on a battlefield is otherwise the same
+   * size, and players find the one attacking them by that shape. Shrinking it
+   * makes it a smaller tap target and a fractionally harder read, which is a
+   * real cost — worth paying for one legendary, not for a set.
+   */
+  const bodyScale = paint?.scale
+  const bodyTransform = bodyScale
+    ? `translate(0 30) scale(${bodyScale}) translate(0 -30)`
+    : undefined
   return (
     <g
       className="castle"
@@ -96,6 +119,7 @@ export function CastleSprite({
           </linearGradient>
         </defs>
       )}
+      <g transform={bodyTransform}>
       {/* Keep (center tower) */}
       <rect x={-20} y={-58} width={40} height={46} rx={3} fill={fill} stroke={stroke} strokeWidth={w(3)} />
       {/* Keep battlements — the detailing a skin can accent separately from
@@ -123,6 +147,7 @@ export function CastleSprite({
       {/* Banner */}
       <line x1={0} y1={-64} x2={0} y2={-84} stroke={stroke} strokeWidth={w(3)} />
       <path d="M 0 -84 l 22 6 l -22 6 z" fill={accent} stroke={stroke} strokeWidth={w(2)} />
+      </g>
 
       {/* Decoration last, so it layers over the castle rather than under it. */}
       <Decor
@@ -132,6 +157,7 @@ export function CastleSprite({
         accent={accent}
         eliminated={eliminated}
         uid={instanceId}
+        variantSeed={paint?.variantSeed}
       />
     </g>
   )
