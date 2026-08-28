@@ -8,6 +8,7 @@ import {
   isSignedIn,
   signOut,
   exportMyData,
+  rerollFeatured,
   type PlayerProfile,
 } from '../game/auth'
 import { getKingdomTheme } from '../game/kingdomThemes'
@@ -40,6 +41,11 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [dataError, setDataError] = useState<string | null>(null)
+  // Admin tools: idle → working → what happened. One state rather than a
+  // boolean and a string, so "rerolling" and "rerolled" cannot both be true.
+  const [reroll, setReroll] = useState<
+    { status: 'idle' } | { status: 'working' } | { status: 'done' } | { status: 'failed'; message: string }
+  >({ status: 'idle' })
 
   useEffect(() => {
     if (!isSignedIn()) return
@@ -338,6 +344,52 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
                 }}
               />
             </section>
+
+            {/* Admin tools. Rendered on the server's say-so and gated there
+                too — hiding the section is presentation, not security. */}
+            {state.profile.admin && (
+              <section className="account-section">
+                <h3 className="account-section__title">Admin</h3>
+                <p className="account-section__pending">
+                  You own every cosmetic automatically, and the shop's Featured
+                  page can be redrawn from here. A reroll changes what{' '}
+                  <strong>everyone</strong> sees, and lasts until tomorrow's
+                  shop.
+                </p>
+
+                <div className="account-row">
+                  <span className="account-row__label">Featured shop</span>
+                  <button
+                    type="button"
+                    className="account-btn"
+                    disabled={reroll.status === 'working'}
+                    onClick={() => {
+                      setReroll({ status: 'working' })
+                      void rerollFeatured().then((result) =>
+                        setReroll(
+                          result.ok
+                            ? { status: 'done' }
+                            : { status: 'failed', message: result.message ?? 'Could not reroll.' },
+                        ),
+                      )
+                    }}
+                  >
+                    {reroll.status === 'working' ? 'Rerolling…' : 'Reroll'}
+                  </button>
+                </div>
+
+                {reroll.status === 'done' && (
+                  <p className="account-section__pending" role="status">
+                    Featured redrawn. Open the shop to see it.
+                  </p>
+                )}
+                {reroll.status === 'failed' && (
+                  <p className="account-error" role="alert">
+                    {reroll.message}
+                  </p>
+                )}
+              </section>
+            )}
 
             {/* The rights the privacy policy promises, exercisable here rather
                 than by emailing somebody. A right you have to ask for is one

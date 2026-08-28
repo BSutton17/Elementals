@@ -530,6 +530,247 @@
   100% { transform: translateY(62px); opacity: 0; }
 }
 
+/* --- legendary: Abyssal Throne --------------------------------------------- */
+
+/* The tendrils writhe. Barely: they are as thick as the castle's own walls, so
+   anything you could call movement drags the eye off the match. Each one runs
+   on its own delay - shadows that flex in step read as a mechanism. */
+.skin__tendril {
+  animation: skin-tendril 8s ease-in-out infinite;
+}
+
+@keyframes skin-tendril {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(1.5px) scaleY(1.02); }
+}
+
+/* The corona breathes around the black disc. */
+.skin__eclipse {
+  animation: skin-eclipse 6.5s ease-in-out infinite;
+}
+
+@keyframes skin-eclipse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* The throne burns in the gateway, and the wall seams answer it. */
+.skin__throne {
+  animation: skin-throne 4.2s ease-in-out infinite;
+}
+
+@keyframes skin-throne {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.skin__abyss-vein {
+  animation: skin-abyss-vein 3.8s ease-in-out infinite;
+}
+
+@keyframes skin-abyss-vein {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.95; }
+}
+
+/* --- legendary: Eternal Love Palace ---------------------------------------- */
+
+/* The hearts beat. A real heartbeat is TWO thumps and a rest, not a sine wave -
+   a single smooth swell reads as breathing, which is what the first pass looked
+   like. The two hearts are offset from each other by a third of a second so
+   they answer rather than pulse in step. */
+.skin__heartbeat {
+  transform-origin: 0px -56px;
+  animation: skin-heartbeat 3.4s ease-in-out infinite;
+}
+
+@keyframes skin-heartbeat {
+  0% { transform: scale(1); }
+  8% { transform: scale(1.035); }
+  16% { transform: scale(1); }
+  26% { transform: scale(1.022); }
+  36% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+/* Rose-gold energy running between the towers. The geometry never moves - only
+   the gaps in it do, the same rule Air's gale arcs set, because a ribbon of
+   light swinging across the sprite would cover the silhouette. */
+.skin__love-flow {
+  animation: skin-love-flow 5s linear infinite;
+}
+
+@keyframes skin-love-flow {
+  to { stroke-dashoffset: -64; }
+}
+
+/* The wings of light brighten and fade, very slowly. */
+.skin__love-wing {
+  animation: skin-love-wing 7.5s ease-in-out infinite;
+}
+
+@keyframes skin-love-wing {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* --- Joker: carnival lights, wheels and dice ------------------------------- */
+
+/* Bulbs chase rather than blink together. Delays are set per bulb inline, in a
+   repeating cycle of four, so a run of lights reads as a marquee - every bulb
+   on the same clock is a fault light, not a fairground. */
+.skin__bulb {
+  animation: skin-bulb 1.6s ease-in-out infinite;
+}
+
+@keyframes skin-bulb {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* Wheels turn: the ferris wheel and the roulette. Slowly - both are wide, and
+   a fast wheel behind a castle is a strobe. Both live inside the "everywhere
+   except the castle" clip, so neither can sweep across the silhouette. */
+.skin__wheel {
+  animation: skin-wheel 26s linear infinite;
+}
+
+@keyframes skin-wheel {
+  to { transform: rotate(360deg); }
+}
+
+/* Dice drift and tumble, each on its own offset. */
+.skin__dice {
+  animation: skin-dice 6.5s ease-in-out infinite;
+}
+
+@keyframes skin-dice {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(8deg); }
+}
+
+/* --- Kitsune: foxfire and tails -------------------------------------------- */
+
+/* Foxfire breathes rather than flickers. A fast flicker is a fault light and a
+   strobe on seven castles at once; kitsunebi is a slow, cold glow. Delays are
+   set per flame inline so no two burn together. */
+.skin__foxfire {
+  animation: skin-foxfire 3.2s ease-in-out infinite;
+}
+
+@keyframes skin-foxfire {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+/* The nine tails sway. Each turns about the point where it leaves the body, and
+   only by a couple of degrees: nine tails moving far enough to notice
+   individually is a hedge in a gale. */
+.skin__tail {
+  transform-origin: 0px 20px;
+  animation: skin-tail 6.4s ease-in-out infinite;
+}
+
+@keyframes skin-tail {
+  0%, 100% { transform: rotate(-1.6deg); }
+  50% { transform: rotate(1.6deg); }
+}
+
+/* --- Magma: smoke ---------------------------------------------------------- */
+
+/* Smoke drifts. Very slowly, and only sideways - a plume that visibly climbs
+   draws the eye off the match, and one that pulses reads as a heartbeat rather
+   than as weather. Each plume runs on its own delay. */
+.skin__smoke {
+  animation: skin-smoke 11s ease-in-out infinite;
+}
+
+@keyframes skin-smoke {
+  0%, 100% { transform: translateX(0); opacity: 0.75; }
+  50% { transform: translateX(4px); opacity: 1; }
+}
+
+/* --- legendary: World Volcano --------------------------------------------- */
+
+/* Lava flows. ⚠️ THE CHANNEL NEVER MOVES - only the dashes in it do. A river
+   drawn as a travelling shape would sweep across the sprite, and nothing may
+   cover the silhouette; a marching dash on a static channel reads as flow and
+   cannot. Same rule as Air's gale arcs, and durations are set per river inline
+   so no two run in step. */
+.skin__lava {
+  animation: skin-lava 5s linear infinite;
+}
+
+@keyframes skin-lava {
+  to { stroke-dashoffset: -72; }
+}
+
+/* Thrown rock: up, over, and gone. Each chunk runs the same arc on its own
+   delay, so the eruption is continuous without any one piece being followed. */
+.skin__erupt {
+  animation: skin-erupt 6.6s ease-out infinite;
+}
+
+@keyframes skin-erupt {
+  0% { transform: translateY(26px) scale(0.6); opacity: 0; }
+  12% { opacity: 1; }
+  70% { opacity: 0.9; }
+  100% { transform: translateY(-18px) scale(1.05); opacity: 0; }
+}
+
+/* --- Insects: bees --------------------------------------------------------- */
+
+/* Bees hover rather than fly anywhere. A bee that crosses the frame would sweep
+   over the castle, and nothing may cover the silhouette; a small bob in place,
+   with each bee on its own delay, reads as a swarm working the hive without any
+   of them going anywhere. */
+.skin__bee {
+  animation: skin-bee 2.6s ease-in-out infinite;
+}
+
+@keyframes skin-bee {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(2px, -3px); }
+  65% { transform: translate(-2px, 1px); }
+}
+
+/* --- legendary: The Weaver ------------------------------------------------- */
+
+/* The spider shifts its weight. Two units, over seven seconds: a spider at rest
+   is almost perfectly still, and anything faster reads as scuttling - which is
+   the wrong feeling for something that has already won. */
+.skin__spider {
+  animation: skin-spider 7s ease-in-out infinite;
+}
+
+@keyframes skin-spider {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(1.5px, 1px); }
+}
+
+/* ⚠️ THE WEB SHIMMERS; IT DOES NOT MOVE. A web that sways is a net being
+   dragged. Silk catches the light and holds still, so the whole thing changes
+   opacity together and no strand ever changes position - which also means it
+   can cross the castle without ever sweeping across the silhouette. */
+.skin__web {
+  animation: skin-web 5.5s ease-in-out infinite;
+}
+
+@keyframes skin-web {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* Wrapped bundles swing, barely. */
+.skin__dangle {
+  animation: skin-dangle 6.2s ease-in-out infinite;
+}
+
+@keyframes skin-dangle {
+  0%, 100% { transform: rotate(-1.6deg); }
+  50% { transform: rotate(1.6deg); }
+}
+
 /* An eliminated castle goes still: the kingdom is dead, and a corpse that keeps
    breathing reads as a bug. */
 .castle[data-eliminated] .skin__skull,
@@ -574,6 +815,25 @@
 .castle[data-eliminated] .skin__titan,
 .castle[data-eliminated] .skin__titan-eye,
 .castle[data-eliminated] .skin__dust,
+.castle[data-eliminated] .skin__tendril,
+.castle[data-eliminated] .skin__eclipse,
+.castle[data-eliminated] .skin__throne,
+.castle[data-eliminated] .skin__abyss-vein,
+.castle[data-eliminated] .skin__heartbeat,
+.castle[data-eliminated] .skin__love-flow,
+.castle[data-eliminated] .skin__love-wing,
+.castle[data-eliminated] .skin__bulb,
+.castle[data-eliminated] .skin__wheel,
+.castle[data-eliminated] .skin__dice,
+.castle[data-eliminated] .skin__foxfire,
+.castle[data-eliminated] .skin__tail,
+.castle[data-eliminated] .skin__smoke,
+.castle[data-eliminated] .skin__lava,
+.castle[data-eliminated] .skin__erupt,
+.castle[data-eliminated] .skin__bee,
+.castle[data-eliminated] .skin__spider,
+.castle[data-eliminated] .skin__web,
+.castle[data-eliminated] .skin__dangle,
 .castle[data-eliminated] .skin__fin-edge {
   animation: none;
 }
@@ -621,6 +881,25 @@
   .skin__titan,
   .skin__titan-eye,
   .skin__dust,
+  .skin__tendril,
+  .skin__eclipse,
+  .skin__throne,
+  .skin__abyss-vein,
+  .skin__heartbeat,
+  .skin__love-flow,
+  .skin__love-wing,
+  .skin__bulb,
+  .skin__wheel,
+  .skin__dice,
+  .skin__foxfire,
+  .skin__tail,
+  .skin__smoke,
+  .skin__lava,
+  .skin__erupt,
+  .skin__bee,
+  .skin__spider,
+  .skin__web,
+  .skin__dangle,
   .skin__fin-edge {
     animation: none;
   }

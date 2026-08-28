@@ -1,4 +1,5 @@
 import { socket } from '../sockets/socket'
+import { setCastlePaints, type CastlePaint } from './gameState'
 import {
   clearStoredRoomCode,
   getStoredRoomCode,
@@ -69,7 +70,15 @@ socket.on('lobby:updated', (payload: { match: LobbyMatch }) => {
 // Match initialization: capture the authoritative start info.
 socket.on(
   'match:started',
-  (payload: { serverTime: number; config: MatchConfig }) => {
+  (payload: {
+    serverTime: number
+    config: MatchConfig
+    players?: { id: string; castlePaint?: CastlePaint }[]
+  }) => {
+    // The rosters that carry skins are this one and `state:full`; the 20 Hz
+    // gameplay sync does not, so the paint is recorded here and merged back in
+    // on every tick. Without this the battlefield is all standard castles.
+    setCastlePaints(payload.players)
     setState({ serverTime: payload.serverTime })
   },
 )
@@ -92,6 +101,7 @@ socket.on(
 // Full authoritative snapshot (sent on reconnection): rebuild match state.
 socket.on('state:full', (snapshot: MatchSnapshot) => {
   storeRoomCode(snapshot.roomCode)
+  setCastlePaints(snapshot.players)
   setState({
     match: matchFromSnapshot(snapshot),
     youId: snapshot.you?.id ?? state.youId,

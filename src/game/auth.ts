@@ -211,6 +211,9 @@ export interface PlayerProfile {
   /** True until the age gate is answered. Onboarding must be resumable: a
    *  player who closed the tab halfway through has to be asked again. */
   needsAge: boolean
+  /** Admin tools are shown for this account. The server decides; this is only
+   *  what it said, and it re-checks before doing anything. */
+  admin: boolean
   level: number
   xp: number
   xpIntoLevel: number
@@ -257,6 +260,7 @@ export async function fetchProfile(): Promise<PlayerProfile | null> {
       username: raw.username ?? null,
       needsUsername: raw.needsUsername ?? raw.username == null,
       needsAge: raw.needsAge ?? false,
+      admin: raw.admin ?? false,
       level: raw.level ?? 1,
       xp: raw.xp ?? 0,
       xpIntoLevel: raw.xpIntoLevel ?? 0,
@@ -363,6 +367,23 @@ export async function buyItem(itemId: string): Promise<BuyResult> {
     const body = (await res.json()) as { balance?: number; message?: string }
     if (!res.ok) return { ok: false, message: body.message ?? 'Could not buy that.' }
     return { ok: true, balance: body.balance }
+  } catch {
+    return { ok: false, message: 'Could not reach the server. Try again.' }
+  }
+}
+
+/**
+ * Draws a new Featured page. Admins only — the server refuses everyone else,
+ * which is the check that matters; the button is merely hidden from them.
+ */
+export async function rerollFeatured(): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const res = await authedFetch('/admin/shop/reroll', { method: 'POST' })
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { message?: string }
+      return { ok: false, message: body.message ?? 'Could not reroll the shop.' }
+    }
+    return { ok: true }
   } catch {
     return { ok: false, message: 'Could not reach the server. Try again.' }
   }

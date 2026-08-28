@@ -45,16 +45,38 @@ export interface AbilityPrices {
   }
 }
 
+/**
+ * Mirrors the server's `data/cosmetics.Paint` and the client's CastleSprite.
+ *
+ * ⚠️ IT MUST LIST `decor`. The earlier version stopped at fill/outline/accent/
+ * strokeScale, which typechecks fine when passed to CastleSprite (every field
+ * is optional) while silently describing a skin as nothing but a colour — the
+ * decoration id IS the skin.
+ */
+export interface CastlePaint {
+  fill?: string
+  outline?: string
+  accent?: string
+  strokeScale?: number
+  gradient?: { from: string; to: string }
+  decor?: string
+  varies?: boolean
+  variantSeed?: number
+  scale?: number
+}
+
 export interface GamePlayer {
   /** Account level, or undefined for guests and bots. */
   level?: number
-  /** Resolved castle paint from an equipped skin, or undefined for standard. */
-  castlePaint?: {
-    fill?: string
-    outline?: string
-    accent?: string
-    strokeScale?: number
-  }
+  /**
+   * Resolved castle paint from an equipped skin, or undefined for standard.
+   *
+   * ⚠️ THIS DOES NOT COME FROM `state:sync`. That payload is built from the
+   * engine's PlayerState, which has no cosmetics on it; the paint is stamped
+   * on the lobby seats instead and merged back in by `applyStateSync`. The
+   * field is on GamePlayer because that is what the battlefield renders from.
+   */
+  castlePaint?: CastlePaint
   id: string
   name: string
   kingdomId: string | null
@@ -215,6 +237,43 @@ export function subscribeGame(listener: () => void): () => void {
  * Applies an authoritative `state:sync` payload. Exported so tests can drive
  * the store without a live socket.
  */
+/**
+ * Castle paint by player id, resolved by the server once per match.
+ *
+ * ⚠️ KEPT BESIDE THE LIVE STATE, NOT INSIDE IT. `state:sync` replaces the whole
+ * player list twenty times a second and carries no cosmetics, so anything
+ * merged into a player object is gone on the next tick — which is exactly why
+ * every castle rendered standard. Held here and re-attached on each sync.
+ */
+let castlePaints: Record<string, CastlePaint> = {}
+
+/** Records the paint from an authoritative roster (match:started, state:full). */
+export function setCastlePaints(
+  players: { id: string; castlePaint?: CastlePaint }[] | undefined,
+): void {
+  if (!players?.length) return
+  const next = { ...castlePaints }
+  for (const p of players) {
+    // An absent paint means "standard", and must not wipe a known one: the
+    // lobby roster and the snapshot do not always arrive in the same order.
+    if (p.castlePaint) next[p.id] = p.castlePaint
+  }
+  castlePaints = next
+  state = { ...state, players: withPaint(state.players) }
+  listeners.forEach((l) => l())
+}
+
+/** Forgets every skin. Called when gameplay state is cleared. */
+export function clearCastlePaints(): void {
+  castlePaints = {}
+}
+
+function withPaint(players: GamePlayer[]): GamePlayer[] {
+  return players.map((p) =>
+    castlePaints[p.id] ? { ...p, castlePaint: castlePaints[p.id] } : p,
+  )
+}
+
 export function applyStateSync(payload: {
   tick: number
   serverTime: number
@@ -226,7 +285,7 @@ export function applyStateSync(payload: {
   state = {
     tick: payload.tick,
     serverTime: payload.serverTime,
-    players: payload.players,
+    players: withPaint(payload.players),
     volcano: payload.volcano ?? null,
     caprice: payload.caprice ?? null,
     centrepiece: payload.centrepiece ?? null,
@@ -236,6 +295,7 @@ export function applyStateSync(payload: {
 
 /** Clears gameplay state (e.g. after leaving a match). */
 export function clearGameState(): void {
+  clearCastlePaints()
   state = {
     tick: 0,
     serverTime: null,

@@ -1,10 +1,16 @@
 import type { ReactNode } from 'react'
 import { AirDecor } from './airDecor'
+import { DarkDecor } from './darkDecor'
 import { EarthDecor } from './earthDecor'
 import { ElectricityDecor } from './electricityDecor'
 import { FireDecor } from './fireDecor'
 import { IceDecor } from './iceDecor'
+import { InsectsDecor } from './insectsDecor'
+import { JokerDecor } from './jokerDecor'
+import { KitsuneDecor } from './kitsuneDecor'
 import { LightDecor } from './lightDecor'
+import { LoveDecor } from './loveDecor'
+import { MagmaDecor } from './magmaDecor'
 import { NatureDecor } from './natureDecor'
 import { SpaceDecor } from './spaceDecor'
 import { TimeDecor } from './timeDecor'
@@ -60,6 +66,12 @@ export const DECOR: Record<string, (props: DecorProps) => ReactNode> = {
   ...SpaceDecor,
   ...LightDecor,
   ...EarthDecor,
+  ...DarkDecor,
+  ...LoveDecor,
+  ...JokerDecor,
+  ...KitsuneDecor,
+  ...MagmaDecor,
+  ...InsectsDecor,
 }
 
 /** Draws a decoration by id, or nothing if it is unknown. */

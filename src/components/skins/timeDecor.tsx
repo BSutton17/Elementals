@@ -829,12 +829,6 @@ function EternalCitadel({ eliminated, uid }: DecorProps) {
           ))}
         </g>
 
-        {/* The hands, turning about the castle. */}
-        <g transform="translate(0 -6)">
-          {hand(64, 9, 'skin__hand', 48, 0)}
-          {hand(84, 6, 'skin__hand skin__hand--minute', 19, 1)}
-        </g>
-
         {/* Portals, with a fragment of the wrong century inside each. */}
         {[
           { x: -74, y: -52, rx: 15, ry: 20, rot: -18, era: 'M -6 8 L -6 -6 L 6 -6 L 6 8 z M -6 -6 L 0 -12 L 6 -6', d: 0 },
@@ -851,7 +845,25 @@ function EternalCitadel({ eliminated, uid }: DecorProps) {
         ))}
       </g>
 
-      {/* The pivot, over the keep — the one part of the movement in front. */}
+      {/* ---- the hands, IN FRONT of the castle --------------------------
+          ⚠️ THEY WERE INSIDE THE "EVERYWHERE EXCEPT THE CASTLE" CLIP, and every
+          time one swept over the keep the clip ate it: a hand would travel to
+          the castle, vanish, and reappear on the other side. That is the
+          correct treatment for the RING — a ring passes behind a thing standing
+          in the middle of it — but a clock's hands sweep across its FACE, and
+          here the castle is the face. They are the one moving part that has to
+          cross the sprite.
+          
+          ⚠️ AND THAT IS ALLOWED BECAUSE THEY ARE NARROW. Nine units on a
+          hundred-unit wall is a bar, not a mask; the silhouette reads straight
+          through it, the same licence the Weaver's web and the Colossus's
+          fingers get. A hand as wide as a tower would not be allowed. */}
+      <g transform="translate(0 -6)">
+        {hand(64, 9, 'skin__hand', 48, 0)}
+        {hand(84, 6, 'skin__hand skin__hand--minute', 19, 1)}
+      </g>
+
+      {/* The pivot they turn on, over the keep. */}
       <circle cx={0} cy={-6} r={7} fill={GOLD} stroke={OUTLINE} strokeWidth={2} />
       <circle cx={0} cy={-6} r={2.6} fill={GOLD_DARK} />
 
