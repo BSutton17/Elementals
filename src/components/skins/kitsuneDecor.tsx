@@ -71,6 +71,12 @@ function tail(
     flex?: number
     /** Seconds for one full sweep out and back. */
     dur?: number
+    /**
+     * Degrees the last quarter of the tail hooks over, clockwise. Zero leaves
+     * the spine exactly as drawn, which is what every other tail in the kingdom
+     * gets.
+     */
+    curl?: number
   } = {},
 ) {
   const N = 40
@@ -96,12 +102,42 @@ function tail(
     return w * (0.2 + 0.8 * swell) * wave * close
   }
 
-  const pts = Array.from({ length: N + 1 }, (_, i) => {
-    const t = i / N
+  /**
+   * The tip hooks over.
+   *
+   * ⚠️ IT BENDS THE SPINE, IT DOES NOT MOVE THE END POINT. Curling a tail by
+   * dragging its last control point changes where the tail REACHES, and the
+   * fan's silhouette is the thing that took nine hand-drawn spines to get
+   * right. This rotates the sampled points past `CURL_FROM` about the point at
+   * `CURL_FROM`, by an angle that ramps in quadratically — so the tail runs
+   * exactly as drawn for three quarters of its length and then turns over, the
+   * way the last few inches of a fox's tail do.
+   */
+  const CURL_FROM = 0.78
+  const curl = ((opts.curl ?? 0) * Math.PI) / 180
+  const [px, py] = at(CURL_FROM)
+  const place = (t: number): [number, number] => {
     const [x, y] = at(t)
-    const [x2, y2] = at(Math.min(1, t + 0.02))
-    const dx = x2 - x
-    const dy = y2 - y
+    if (!curl || t <= CURL_FROM) return [x, y]
+    const k = (t - CURL_FROM) / (1 - CURL_FROM)
+    const a = curl * k * k
+    const cos = Math.cos(a)
+    const sin = Math.sin(a)
+    const ox = x - px
+    const oy = y - py
+    return [px + ox * cos - oy * sin, py + ox * sin + oy * cos]
+  }
+
+  // Tangents come from the placed points rather than from the raw curve, so the
+  // outline, the shading bands and the escaping strand tips all follow the hook
+  // instead of pointing where the tail would have gone without it.
+  const placed = Array.from({ length: N + 1 }, (_, i) => place(i / N))
+  const pts = placed.map(([x, y], i) => {
+    const t = i / N
+    const [x2, y2] = placed[Math.min(N, i + 1)]!
+    const [x0, y0] = placed[Math.max(0, i - 1)]!
+    const dx = i === N ? x - x0 : x2 - x
+    const dy = i === N ? y - y0 : y2 - y
     const len = Math.hypot(dx, dy) || 1
     return { t, x, y, nx: -dy / len, ny: dx / len, dx: dx / len, dy: dy / len, half: widthAt(t) / 2 }
   })
@@ -164,13 +200,21 @@ function tail(
         const b = pts.find((q) => q.t >= 0.82)!
         const sx = b.x + b.nx * b.half * k
         const sy = b.y + b.ny * b.half * k
-        const len = w * (0.55 + i * 0.18)
+        /* ⚠️ A HOOKED TIP CANNOT WEAR A WIDE SPRAY OF STRANDS. These three
+           hairs escape past the end and read as feathering only while the mass
+           behind them is going the same way; once the tail curls, the mass
+           turns off and leaves them standing apart — three separated spikes on
+           the end of a hook, which is a FINGER. Shorter and gathered when there
+           is a curl, untouched when there is not, so the tails on the other two
+           skins are exactly as they were. */
+        const len = w * (0.55 + i * 0.18) * (curl ? 0.58 : 1)
+        const splay = curl ? 0.4 : 1
         return (
           <path
             key={`t${i}`}
             d={`M ${sx.toFixed(1)} ${sy.toFixed(1)}
-                Q ${(sx + e.dx * len * 0.6 + e.nx * len * 0.28 * k).toFixed(1)} ${(sy + e.dy * len * 0.6 + e.ny * len * 0.28 * k).toFixed(1)}
-                  ${(sx + e.dx * len + e.nx * len * 0.5 * k).toFixed(1)} ${(sy + e.dy * len + e.ny * len * 0.5 * k).toFixed(1)}`}
+                Q ${(sx + e.dx * len * 0.6 + e.nx * len * 0.28 * k * splay).toFixed(1)} ${(sy + e.dy * len * 0.6 + e.ny * len * 0.28 * k * splay).toFixed(1)}
+                  ${(sx + e.dx * len + e.nx * len * 0.5 * k * splay).toFixed(1)} ${(sy + e.dy * len + e.ny * len * 0.5 * k * splay).toFixed(1)}`}
             fill="none"
             stroke={i === 1 ? '#ffffff' : FUR}
             strokeWidth={w * 0.16}
@@ -860,12 +904,11 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
    * base barely moves, the middle leans, the tip travels furthest. A rotation
    * on its own moves a rigid blade, however far you turn it.
    *
-   * The tips travel roughly fifty units peak to peak — a quarter of the frame's
-   * width. A literal 180° swing is the one thing that cannot happen here: it
-   * would carry every tail down across the palace and out of the frame, and the
-   * clip would cut them in half on the way. This reads as a big lazy sweep
-   * BECAUSE the far end moves so much further than the near end, which is the
-   * effect a bigger angle was reaching for.
+   * The tips travel about twenty units peak to peak. The first version at this
+   * was twice that and it was too much — the fan churned rather than breathed.
+   * Half reads as a slow living drift and still carries, because the far end
+   * moves so much further than the near end: it is the DIFFERENCE along the
+   * length that says "tail", not the raw distance.
    *
    * The outer two run smallest on purpose — they already reach x ±86 and the
    * frame stops at ±92, so a wide swing there would be sliced at the edge.
@@ -874,10 +917,11 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
     p: [[number, number], [number, number], [number, number], [number, number]]
     w: number
     d: number
-    /** Swing, shear, seconds. */
+    /** Swing, shear, seconds, and how far the tip hooks over. */
     s: number
     f: number
     t: number
+    c: number
   }[] = [
     /* ⚠️ NOT ALL OF THEM CURL UP. Nine tails all hooking the same way is the
        stiffness again in its last form — the group sweeps like a single comb.
@@ -897,15 +941,15 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
        they bought: falling tails lost the fan its lift, and hooked tips folded
        the shapes back on themselves. Nine hand-drawn spines that all sweep up,
        each with its own S, is the version that read. */
-    { p: [[-12, 8], [-54, 8], [-86, -14], [-74, -46]], w: 30, d: 0 , s: 2.4, f: 2, t: 7.8 },
-    { p: [[-10, 2], [-48, -12], [-78, -46], [-48, -74]], w: 29, d: -0.8 , s: 5.5, f: 5, t: 6.6 },
-    { p: [[-8, -2], [-34, -28], [-54, -60], [-22, -82]], w: 28, d: -1.7 , s: 7, f: 6.5, t: 5.8 },
-    { p: [[-4, -6], [-16, -36], [-22, -72], [6, -96]], w: 27, d: -2.5 , s: 8, f: 7.5, t: 5.2 },
-    { p: [[0, -8], [6, -40], [24, -70], [6, -100]], w: 26, d: -3.3 , s: 8.5, f: 8, t: 6.2 },
-    { p: [[4, -6], [26, -34], [48, -62], [24, -90]], w: 27, d: -4.1 , s: 7.5, f: 7, t: 5.5 },
-    { p: [[8, -2], [36, -20], [66, -44], [42, -72]], w: 28, d: -4.9 , s: 6, f: 5.5, t: 6.9 },
-    { p: [[10, 2], [50, -4], [82, -20], [64, -52]], w: 29, d: -5.7 , s: 4.5, f: 4, t: 7.4 },
-    { p: [[12, 8], [52, 12], [86, 6], [78, -24]], w: 26, d: -6.5 , s: 3.2, f: 2.5, t: 8.3 },
+    { p: [[-12, 8], [-54, 8], [-86, -14], [-74, -46]], w: 30, d: 0 , s: 1.2, f: 1.0, t: 7.8, c: -11 },
+    { p: [[-10, 2], [-48, -12], [-78, -46], [-48, -74]], w: 29, d: -0.8 , s: 2.75, f: 2.5, t: 6.6, c: 8 },
+    { p: [[-8, -2], [-34, -28], [-54, -60], [-22, -82]], w: 28, d: -1.7 , s: 3.5, f: 3.25, t: 5.8, c: -12 },
+    { p: [[-4, -6], [-16, -36], [-22, -72], [6, -96]], w: 27, d: -2.5 , s: 4.0, f: 3.75, t: 5.2, c: 9 },
+    { p: [[0, -8], [6, -40], [24, -70], [6, -100]], w: 26, d: -3.3 , s: 4.25, f: 4.0, t: 6.2, c: -6 },
+    { p: [[4, -6], [26, -34], [48, -62], [24, -90]], w: 27, d: -4.1 , s: 3.75, f: 3.5, t: 5.5, c: 12 },
+    { p: [[8, -2], [36, -20], [66, -44], [42, -72]], w: 28, d: -4.9 , s: 3.0, f: 2.75, t: 6.9, c: -8 },
+    { p: [[10, 2], [50, -4], [82, -20], [64, -52]], w: 29, d: -5.7 , s: 2.25, f: 2.0, t: 7.4, c: 13 },
+    { p: [[12, 8], [52, 12], [86, 6], [78, -24]], w: 26, d: -6.5 , s: 1.6, f: 1.25, t: 8.3, c: -9 },
   ]
 
   return (
@@ -950,6 +994,7 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
             swing: t.s,
             flex: t.f,
             dur: t.t,
+            curl: t.c,
           }),
         )}
 
