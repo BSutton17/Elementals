@@ -25,10 +25,10 @@ const RARITY_LABEL: Record<string, string> = {
 
 /** What each rarity actually is, so the tier means something concrete. */
 const RARITY_BLURB: Record<string, string> = {
-  common: 'The standard look every kingdom starts with.',
-  uncommon: 'A recoloured castle with its own accent.',
-  rare: 'Reworked materials and a heavier silhouette.',
-  legendary: 'The most elaborate treatment a kingdom has.',
+  common: 'Standard but special.',
+  uncommon: 'Show off your favorite kingdom with a new look.',
+  rare: 'A prestigious look for a prestigious ruler.',
+  legendary: 'The most elaborate and exclusive treatment a kingdom can have.',
 }
 
 export function ItemDetail({

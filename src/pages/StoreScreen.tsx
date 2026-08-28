@@ -32,12 +32,12 @@ const TABS: { id: Tab; label: string; blurb: string }[] = [
   {
     id: 'featured',
     label: 'Featured',
-    blurb: 'Refreshes daily. The only place legendary skins appear.',
+    blurb: 'Daily legendary skins and exclusive rewards.',
   },
   {
     id: 'daily',
     label: 'Daily',
-    blurb: 'Every uncommon skin, plus one rare per kingdom. Rares rotate weekly.',
+    blurb: 'Everyday items and gear. Show off your kingdom with a new look.',
   },
 ]
 
