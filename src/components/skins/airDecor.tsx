@@ -697,19 +697,24 @@ function StormTitan({ eliminated, uid }: DecorProps) {
         { x: -74, y: 34, w: 7, r: -30, d: 2.7 },
         { x: 72, y: 30, w: 6, r: 24, d: 1.8 },
       ].map((g, i) => (
-        <rect
-          key={i}
-          x={g.x}
-          y={g.y}
-          width={g.w}
-          height={1.6}
-          rx={0.8}
-          fill={CLOUD}
-          opacity={0.5}
-          transform={`rotate(${g.r} ${g.x + g.w / 2} ${g.y})`}
-          className="skin__debris"
-          style={{ animationDelay: `${g.d}s` }}
-        />
+        /* ⚠️ THE ROTATION GOES ON A WRAPPER, NOT ON THE ANIMATED NODE. A CSS
+           `transform` beats the `transform` attribute on the same element, so
+           `.skin__debris` (which animates translateX) was quietly throwing this
+           rotation away and every scrap of debris lay flat. Invisible in a
+           still, because a static render applies no CSS. */
+        <g key={i} transform={`rotate(${g.r} ${g.x + g.w / 2} ${g.y})`}>
+          <rect
+            x={g.x}
+            y={g.y}
+            width={g.w}
+            height={1.6}
+            rx={0.8}
+            fill={CLOUD}
+            opacity={0.5}
+            className="skin__debris"
+            style={{ animationDelay: `${g.d}s` }}
+          />
+        </g>
       ))}
     </g>
   )

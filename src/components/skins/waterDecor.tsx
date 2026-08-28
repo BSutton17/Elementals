@@ -347,8 +347,16 @@ function Leviathan({ eliminated }: DecorProps) {
           fin that only touches at a point floats free of the castle and reads
           as a stray feather. An earlier version also curled its trailing edge
           back on itself with a notch, which read as a shrimp.                 */}
+      {/* ⚠️ THE MIRROR AND THE ANIMATION CANNOT SHARE AN ELEMENT. A CSS
+          `transform` beats the `transform` ATTRIBUTE on the same node, so once
+          `.skin__fin` starts animating, its `rotate(0deg)` REPLACES this
+          group's `scale(-1 1)` — and the left fin silently flips over onto the
+          right one. It looked perfect in every still, because a static render
+          has no CSS at all; in the game the leviathan had one fin. The mirror
+          lives on the outer group and the animated class on an inner one. */}
       {[-1, 1].map((side) => (
-        <g key={side} transform={`scale(${side} 1)`} className="skin__fin">
+        <g key={side} transform={`scale(${side} 1)`}>
+          <g className="skin__fin">
           <path
             d="M 48 -14 C 62 -28 78 -34 87 -28 C 80 -8 66 10 48 18 z"
             fill={DEEP}
@@ -373,6 +381,7 @@ function Leviathan({ eliminated }: DecorProps) {
             strokeLinecap="round"
             className="skin__fin-edge"
           />
+          </g>
         </g>
       ))}
 

@@ -379,6 +379,157 @@
   50% { opacity: 1; }
 }
 
+/* --- legendary: Cosmic Nexus ------------------------------------------------ */
+
+/* The galaxy turns. Very slowly — this is the widest moving thing in the set,
+   and at any speed you would call "visible" it drags the eye off the match. */
+.skin__galaxy {
+  transform-origin: 0px -8px;
+  animation: skin-galaxy 90s linear infinite;
+}
+
+@keyframes skin-galaxy {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Planets ride their orbits. The ring group turns and the planet counter-turns
+   at the same rate, so it travels the ellipse without tumbling — the same pair
+   of animations Ice's crown shards use. */
+.skin__orbit {
+  transform-origin: 0px -8px;
+  animation: skin-galaxy 34s linear infinite;
+}
+
+.skin__orbit-upright {
+  animation: skin-galaxy 34s linear infinite reverse;
+}
+
+/* The core breathes through the walls. */
+.skin__core-glow {
+  animation: skin-core-glow 5s ease-in-out infinite;
+}
+
+@keyframes skin-core-glow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.skin__core-vein {
+  animation: skin-core-vein 3.6s ease-in-out infinite;
+}
+
+@keyframes skin-core-vein {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+/* The star field drifts against the galaxy — slower, and the other way, so
+   the arms read as the nearer thing. */
+.skin__starfield {
+  transform-origin: 0px -8px;
+  animation: skin-galaxy 150s linear infinite reverse;
+}
+
+/* ⚠️ STARS TWINKLE ON THEIR OWN CLOCKS. One shared animation makes the whole
+   sky blink at once, which reads as a flicker bug rather than as stars — so
+   both the delay and the duration are offset per star. */
+.skin__twinkle {
+  animation: skin-twinkle 3.6s ease-in-out infinite;
+}
+
+@keyframes skin-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* --- legendary: Celestial Palace ------------------------------------------- */
+
+/* The wings beat. Slowly and through a small angle: at anything more it stops
+   reading as a palace held up by light and starts reading as a bird. The
+   mirrored wing shares this animation — its parent is flipped, so the same
+   rotation carries it the other way and the pair beats outward together. */
+.skin__wing {
+  animation: skin-wing 5.2s ease-in-out infinite;
+}
+
+@keyframes skin-wing {
+  0%, 100% { transform: rotate(-3.5deg); }
+  50% { transform: rotate(4deg); }
+}
+
+/* ⚠️ THE HALOS DO NOT TURN, THEIR DASHES DO. Same rule as Air's gale arcs:
+   a ring rigidly spinning about the castle eventually sweeps across the
+   sprite, and nothing may cover that silhouette. A marching dash on a static
+   ellipse cannot - the geometry never moves at all. */
+.skin__halo-march {
+  animation: skin-halo-march 6s linear infinite;
+}
+
+@keyframes skin-halo-march {
+  to { stroke-dashoffset: -72; }
+}
+
+/* The fan of beams turns behind the palace. It is clipped to everywhere except
+   the castle, so however far round it goes it cannot cross the walls. */
+.skin__beam-fan {
+  transform-origin: 0px -40px;
+  animation: skin-beam-fan 80s linear infinite;
+}
+
+@keyframes skin-beam-fan {
+  to { transform: rotate(360deg); }
+}
+
+/* Light breathing - the aura, the wall seams, the open gate. */
+.skin__aura {
+  animation: skin-aura 6s ease-in-out infinite;
+}
+
+@keyframes skin-aura {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
+}
+
+/* --- legendary: Mount Colossus -------------------------------------------- */
+
+/* The titan breathes. A hair over a second and a half of rise and the same
+   again down, and only two units of it - a stone giant that visibly heaves is
+   a bellows, and the whole read here is something enormous that is only just
+   alive. */
+.skin__titan {
+  animation: skin-titan 7s ease-in-out infinite;
+}
+
+@keyframes skin-titan {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* The eyes bank and flare. Offset per eye, because two lights pulsing in
+   perfect step read as a pair of indicator lamps. */
+.skin__titan-eye {
+  animation: skin-titan-eye 3.4s ease-in-out infinite;
+}
+
+@keyframes skin-titan-eye {
+  0%, 100% { opacity: 0.62; }
+  50% { opacity: 1; }
+}
+
+/* Dust shaken loose - falling, not rising. Rock does not float, and reusing
+   the rising-mote animation here would have been exactly that mistake. */
+.skin__dust {
+  animation: skin-dust 5.4s linear infinite;
+}
+
+@keyframes skin-dust {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.85; }
+  80% { opacity: 0.5; }
+  100% { transform: translateY(62px); opacity: 0; }
+}
+
 /* An eliminated castle goes still: the kingdom is dead, and a corpse that keeps
    breathing reads as a bug. */
 .castle[data-eliminated] .skin__skull,
@@ -409,6 +560,20 @@
 .castle[data-eliminated] .skin__sap-glow,
 .castle[data-eliminated] .skin__hand,
 .castle[data-eliminated] .skin__portal,
+.castle[data-eliminated] .skin__galaxy,
+.castle[data-eliminated] .skin__orbit,
+.castle[data-eliminated] .skin__orbit-upright,
+.castle[data-eliminated] .skin__core-glow,
+.castle[data-eliminated] .skin__core-vein,
+.castle[data-eliminated] .skin__starfield,
+.castle[data-eliminated] .skin__twinkle,
+.castle[data-eliminated] .skin__wing,
+.castle[data-eliminated] .skin__halo-march,
+.castle[data-eliminated] .skin__beam-fan,
+.castle[data-eliminated] .skin__aura,
+.castle[data-eliminated] .skin__titan,
+.castle[data-eliminated] .skin__titan-eye,
+.castle[data-eliminated] .skin__dust,
 .castle[data-eliminated] .skin__fin-edge {
   animation: none;
 }
@@ -442,6 +607,20 @@
   .skin__sap-glow,
   .skin__hand,
   .skin__portal,
+  .skin__galaxy,
+  .skin__orbit,
+  .skin__orbit-upright,
+  .skin__core-glow,
+  .skin__core-vein,
+  .skin__starfield,
+  .skin__twinkle,
+  .skin__wing,
+  .skin__halo-march,
+  .skin__beam-fan,
+  .skin__aura,
+  .skin__titan,
+  .skin__titan-eye,
+  .skin__dust,
   .skin__fin-edge {
     animation: none;
   }

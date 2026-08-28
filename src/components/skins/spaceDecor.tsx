@@ -335,7 +335,512 @@ function SpaceshipFortress({ eliminated, uid }: DecorProps) {
   )
 }
 
+/**
+ * Rare — Alien Planet Base.
+ *
+ * A holding on somebody else's world: crust underfoot that is the wrong colour,
+ * rock hanging in the air because the gravity here does not agree with ours,
+ * two moons up, and growth that is nobody's idea of a plant.
+ *
+ * ⚠️ IT MUST NOT BE SPACESHIP FORTRESS. That one is a vessel — engines, hull,
+ * docking bay, built to move. This is planted: it has ground, a horizon and
+ * weather, and nothing about it could leave. Same kingdom, opposite premise.
+ *
+ * ⚠️ AND THE PLANTS MUST NOT BE NATURE'S. Nature owns leaves, and a leaf here
+ * would just read as a green kingdom in purple. These are bulbs on bare stalks
+ * with no foliage at all — the silhouette is a pod, not a frond.
+ *
+ * ⚠️ RARE MAY REACH PAST THE WALLS BUT NOT PAST THE FRAME, and it does not move.
+ */
+function AlienPlanetBase({ eliminated, uid }: DecorProps) {
+  const CRUST = '#4a2f5e'
+  const CRUST_LIT = '#6d4a86'
+  const FLESH = '#c96fb0'
+  const BIO = '#7ff0a8'
+  const MOON = '#b9b0cf'
+
+  /** A bulb on a bare stalk. No leaves — that is Nature's, and it shows. */
+  const pod = (x: number, y: number, h: number, r: number, lean: number, key: number) => (
+    <g key={key}>
+      <path
+        d={`M ${x - 1.4} ${y} C ${x - 1.6} ${y - h * 0.5} ${x + lean - 1.8} ${y - h * 0.8} ${x + lean} ${y - h}
+            C ${x + lean + 1.8} ${y - h * 0.8} ${x + 1.6} ${y - h * 0.5} ${x + 1.4} ${y} z`}
+        fill={CRUST_LIT}
+        stroke={OUTLINE}
+        strokeWidth={1}
+        strokeLinejoin="round"
+      />
+      <ellipse
+        cx={x + lean}
+        cy={y - h - r * 0.5}
+        rx={r}
+        ry={r * 1.25}
+        fill={FLESH}
+        stroke={OUTLINE}
+        strokeWidth={1.1}
+      />
+      {/* Lit from inside, which is what makes it read as alive rather than as
+          a berry. */}
+      <ellipse cx={x + lean} cy={y - h - r * 0.5} rx={r * 0.42} ry={r * 0.62} fill={BIO} opacity={0.8} />
+      {[-0.5, 0.5].map((o, i) => (
+        <path
+          key={i}
+          d={`M ${x + lean} ${y - h - r * 1.6} q ${o * 4} -3 ${o * 6} -7`}
+          fill="none"
+          stroke={BIO}
+          strokeWidth={0.9}
+          opacity={0.75}
+          strokeLinecap="round"
+        />
+      ))}
+    </g>
+  )
+
+  /** Rock hanging in the air, with the ground-glow that explains why. */
+  const floater = (x: number, y: number, s: number, key: number) => (
+    <g key={key} transform={`translate(${x} ${y}) scale(${s})`}>
+      <ellipse cx={0} cy={9} rx={11} ry={2.6} fill={BIO} opacity={0.18} />
+      <path
+        d="M -11 2 L -6 -6 L 3 -8 L 10 -2 L 8 5 L -2 8 z"
+        fill={CRUST}
+        stroke={OUTLINE}
+        strokeWidth={1.3}
+        strokeLinejoin="round"
+      />
+      <path d="M -11 2 L -6 -6 L 3 -8 L 1 1 z" fill={CRUST_LIT} opacity={0.6} />
+      <path d="M -8 3 L 1 1 L 8 5" fill="none" stroke={BIO} strokeWidth={0.9} opacity={0.55} />
+    </g>
+  )
+
+  return (
+    <g className="skin skin--alienbase" opacity={eliminated ? 0.4 : 1} aria-hidden="true">
+      <clipPath id={`skin-alien-wall-${uid}`}>
+        <rect x={-52} y={-24} width={104} height={54} rx={4} />
+      </clipPath>
+
+      {/* Two moons, different sizes and phases — a matched pair reads as a
+          logo, and one moon is just Earth. */}
+      <g>
+        <circle cx={-64} cy={-84} r={13} fill={MOON} opacity={0.9} stroke={OUTLINE} strokeWidth={1.2} />
+        <path d="M -64 -97 A 13 13 0 0 1 -64 -71 A 8 13 0 0 0 -64 -97 z" fill={OUTLINE} opacity={0.35} />
+        {[
+          { x: -68, y: -88, r: 2.4 },
+          { x: -60, y: -80, r: 1.6 },
+          { x: -66, y: -78, r: 1.2 },
+        ].map((c, i) => (
+          <circle key={i} cx={c.x} cy={c.y} r={c.r} fill={OUTLINE} opacity={0.25} />
+        ))}
+      </g>
+      <g>
+        <circle cx={62} cy={-100} r={7} fill="#8fd8c0" opacity={0.85} stroke={OUTLINE} strokeWidth={1.1} />
+        <path d="M 62 -107 A 7 7 0 0 0 62 -93 A 4 7 0 0 1 62 -107 z" fill={OUTLINE} opacity={0.3} />
+      </g>
+
+      {/* Rock that has not come down. */}
+      {floater(-74, -34, 1.1, 0)}
+      {floater(70, -50, 0.85, 1)}
+      {floater(78, -12, 0.65, 2)}
+      {floater(-82, 4, 0.7, 3)}
+
+      {/* Monoliths: somebody else built these, and left. */}
+      {[-1, 1].map((side) => (
+        <g key={side} transform={`scale(${side} 1)`}>
+          <path
+            d="M 60 34 L 76 34 L 72 -22 L 63 -22 z"
+            fill={CRUST}
+            stroke={OUTLINE}
+            strokeWidth={1.5}
+            strokeLinejoin="round"
+          />
+          <path d="M 60 34 L 63 -22 L 67 -22 L 66 34 z" fill={CRUST_LIT} opacity={0.5} />
+          {/* Marks cut into it. Regular, because it is made, unlike the rock. */}
+          {[-12, 0, 12, 24].map((y, i) => (
+            <rect key={i} x={66} y={y} width={5} height={1.8} rx={0.9} fill={BIO} opacity={0.8} />
+          ))}
+          <circle cx={68} cy={-27} r={2.6} fill={BIO} />
+          <circle cx={68} cy={-27} r={6} fill={BIO} opacity={0.15} />
+        </g>
+      ))}
+
+      {/* The crust. Angular, because this is rock rather than soil. */}
+      <path
+        d="M -92 36 L -74 30 L -58 35 L -40 31 L -20 36 L 0 32 L 20 37 L 40 32 L 58 36 L 76 31 L 92 35
+           L 92 44 L -92 44 z"
+        fill={CRUST}
+        stroke={OUTLINE}
+        strokeWidth={1.4}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M -92 36 L -74 30 L -58 35 L -40 31 L -20 36 L 0 32 L 20 37 L 40 32 L 58 36 L 76 31 L 92 35"
+        fill="none"
+        stroke={BIO}
+        strokeWidth={1.1}
+        opacity={0.45}
+      />
+
+      {/* Growth. */}
+      {pod(-46, 34, 22, 5, -5, 0)}
+      {pod(-34, 33, 13, 3.6, 3, 1)}
+      {pod(38, 34, 26, 5.5, 6, 2)}
+      {pod(50, 33, 15, 4, -4, 3)}
+      {pod(-12, 36, 9, 2.8, 2, 4)}
+      {pod(16, 36, 11, 3.2, -3, 5)}
+
+      {/* The wall, colonised: ribbing and lit seams so the stone looks like it
+          has been grown over rather than painted. */}
+      <g clipPath={`url(#skin-alien-wall-${uid})`}>
+        <rect x={-52} y={-24} width={104} height={54} fill={CRUST} opacity={0.4} />
+        {[-44, -28, -12, 8, 24, 40].map((x, i) => (
+          <path
+            key={i}
+            d={`M ${x} 30 C ${x + 3} 16 ${x - 3} 4 ${x + 2} -10 C ${x + 4} -16 ${x + 1} -20 ${x + 3} -24`}
+            fill="none"
+            stroke={CRUST_LIT}
+            strokeWidth={3}
+            opacity={0.55}
+            strokeLinecap="round"
+          />
+        ))}
+        {[
+          { x: -38, y: 6 },
+          { x: -6, y: 18 },
+          { x: 18, y: -2 },
+          { x: 44, y: 14 },
+        ].map((g, i) => (
+          <g key={i}>
+            <circle cx={g.x} cy={g.y} r={5} fill={BIO} opacity={0.14} />
+            <circle cx={g.x} cy={g.y} r={1.6} fill={BIO} />
+          </g>
+        ))}
+      </g>
+    </g>
+  )
+}
+
+/**
+ * Legendary — Cosmic Nexus.
+ *
+ * The fortress at the middle of a small galaxy: arms of nebula turning around
+ * it, planets running their orbits, and a core burning inside the walls that
+ * the whole thing is built on.
+ *
+ * ⚠️ THE CASTLE IS THE CORE, WHICH IS HOW THIS AVOIDS BEING FIRE'S SUPERNOVA.
+ * That skin puts a star above the keep and hangs thin rings off it. Here the
+ * light comes from INSIDE the fortress — through the gate, up the seams, out of
+ * the battlements — and the galaxy is the thing around it. Two skins about
+ * space with rings on them is fine; two with a burning ball over the keep is
+ * not.
+ *
+ * ⚠️ THE ORBITS HAVE A FAR HALF AND A NEAR HALF. Clipping a whole ring behind
+ * the castle makes the castle sit on top of it like a model on a plinth — the
+ * error the Thunder God's rings were rebuilt for. Far halves are clipped and
+ * vanish behind; near halves are drawn unclipped, later, and cross in front.
+ *
+ * ⚠️ THE NEBULA IS GRADIENT-FILLED, NOT STROKED. A stroke has hard edges, and a
+ * hard-edged band of colour is a ribbon rather than gas — Ice's aurora took
+ * three attempts to learn that, and this is the same problem with the same fix.
+ */
+function CosmicNexus({ eliminated, uid }: DecorProps) {
+  const CORE = '#fff4d0'
+  const NEB_A = '#a86fff'
+  const NEB_B = '#3ad0ff'
+
+  /* Centred a little above the castle's middle, so the galaxy sits around the
+     keep rather than around the gate. */
+  const CY = -8
+
+  /**
+   * ⚠️ EVERY NUMBER HERE IS FRAME-BOUND. The sprite frame stops at x ±92 and
+   * y 44, and the clip cuts anything past it dead square — which is how the
+   * Spaceship's engine plumes came out sliced. The bound is NOT `ry`: tilting
+   * an ellipse by `rot` makes it reach further down than its own minor axis,
+   * so the real limit is `sqrt((rx·sin rot)² + (ry·cos rot)²) + pr <= 50`
+   * below the centre and the matching expression + the planet's ring across.
+   * The planets got their size from what was left after that, not the other
+   * way round.
+   *
+   * ⚠️ `phase` STAGGERS THE STARTS. Without it every planet begins at the same
+   * point on its ring — which is the first frame anyone sees, and a row of
+   * planets lined up on one side reads as a diagram of an orbit rather than as
+   * a system going round. Applied as a negative delay, so each starts partway
+   * through its own cycle. The six of them are spread across the six sixths of
+   * a lap rather than picked by eye, because the first pass put four of them
+   * down the same side and it read as a pile-up rather than as a system.
+   */
+  const ORBITS = [
+    {
+      rx: 76, ry: 36, rot: -14, w: 1.8, dur: 44,
+      planets: [
+        { c: '#6f5bd8', pr: 9, phase: 0.05, halo: true },
+        { c: '#9b7ae0', pr: 5, phase: 0.55 },
+      ],
+    },
+    {
+      rx: 68, ry: 31, rot: 9, w: 1.6, dur: 32,
+      planets: [{ c: '#3a8fbf', pr: 7.2, phase: 0.38 }],
+    },
+    {
+      rx: 54, ry: 23, rot: -5, w: 1.4, dur: 23,
+      planets: [
+        { c: '#b8724a', pr: 6, phase: 0.88 },
+        { c: '#d9a066', pr: 4, phase: 0.22 },
+      ],
+    },
+    {
+      rx: 40, ry: 15, rot: 15, w: 1.2, dur: 16,
+      planets: [{ c: '#4fc9c0', pr: 5, phase: 0.71 }],
+    },
+  ]
+
+  type Orbit = (typeof ORBITS)[number]
+
+  const arc = (o: Orbit, half: 'far' | 'near') =>
+    half === 'far'
+      ? `M ${-o.rx} ${CY} A ${o.rx} ${o.ry} 0 0 1 ${o.rx} ${CY}`
+      : `M ${o.rx} ${CY} A ${o.rx} ${o.ry} 0 0 1 ${-o.rx} ${CY}`
+
+  const ring = (o: Orbit, half: 'far' | 'near', key: number) => (
+    <g key={key} transform={`rotate(${o.rot} 0 ${CY})`}>
+      <path
+        d={arc(o, half)}
+        fill="none"
+        stroke={CYAN}
+        strokeWidth={o.w}
+        opacity={half === 'far' ? 0.3 : 0.55}
+        strokeLinecap="round"
+      />
+      {/* ⚠️ THE PLANETS RIDE THE NEAR PASS ONLY. Drawing them in both passes
+          renders each one twice — and since the near pass is unclipped, that
+          copy shows through the castle anyway, so the far copy buys nothing
+          but a second draw and a doubled edge. The rings carry the depth; the
+          planets stay in front. */}
+      {half === 'near' &&
+        o.planets.map((pl, i) => {
+          /* ⚠️ A ROTATION DRAWS A CIRCLE, AND THESE RINGS ARE ELLIPSES. Spun
+             on its own, a planet at radius `rx` leaves the ring it is supposed
+             to be on the moment it turns — the first build sent one straight
+             out through the bottom of the frame. So the whole orbit is built
+             inside a group squashed to `ry / rx`: the planet really does go
+             round a circle, the squash turns that circle into exactly the
+             ellipse that is drawn, and an equal-and-opposite squash on the
+             planet itself keeps it round. The rotate and its counter-rotate
+             cancel between the two, so nothing is left leaning.
+
+             ⚠️ AND THE START ANGLE IS A TRANSFORM, NOT ONLY A DELAY. A
+             negative animation-delay staggers them once the animation is
+             running, but anywhere it is not — a paused tab, a still, and above
+             all prefers-reduced-motion, where the orbit is switched off
+             entirely — every planet sits at its ring's start point and they
+             stack up in one heap on the right. */
+          const k = o.ry / o.rx
+          const a = pl.phase * 360
+          return (
+            <g key={i} transform={`translate(0 ${CY}) scale(1 ${k.toFixed(4)})`}>
+              <g transform={`rotate(${a})`}>
+                <g
+                  className="skin__orbit"
+                  style={{ transformOrigin: '0px 0px', animationDuration: `${o.dur}s` }}
+                >
+                  <g transform={`translate(${o.rx} 0)`}>
+                    <g className="skin__orbit-upright" style={{ animationDuration: `${o.dur}s` }}>
+                      <g transform={`rotate(${-a}) scale(1 ${(1 / k).toFixed(4)})`}>
+                        {/* The big one wears a ring of its own. One planet, not
+                            all of them — a system where everything has rings is
+                            a pattern. */}
+                        {'halo' in pl && pl.halo ? (
+                          <g transform="rotate(-18)">
+                            <ellipse
+                              rx={pl.pr * 1.85}
+                              ry={pl.pr * 0.42}
+                              fill="none"
+                              stroke={CYAN}
+                              strokeWidth={1.6}
+                              opacity={0.75}
+                            />
+                          </g>
+                        ) : null}
+                        <circle r={pl.pr} fill={pl.c} stroke={OUTLINE} strokeWidth={1} />
+                        {/* ⚠️ THE RETURN ARC SWEEPS THE SAME WAY AS THE FIRST.
+                            With the other flag it bulges back across the middle,
+                            so the shadow covers all but two thin crescents and
+                            the planet reads as a donut — which is exactly how it
+                            rendered the first time. */}
+                        <path
+                          d={`M 0 ${-pl.pr} A ${pl.pr} ${pl.pr} 0 0 1 0 ${pl.pr} A ${pl.pr * 0.75} ${pl.pr} 0 0 1 0 ${-pl.pr} z`}
+                          fill={OUTLINE}
+                          opacity={0.45}
+                        />
+                      </g>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </g>
+          )
+        })}
+    </g>
+  )
+
+  return (
+    <g className="skin skin--cosmicnexus" opacity={eliminated ? 0.4 : 1} aria-hidden="true">
+      <clipPath id={`skin-nexus-outside-${uid}`} clipRule="evenodd">
+        <path
+          d="M -92 -128 L 92 -128 L 92 44 L -92 44 z
+             M -53 -25 L 53 -25 L 53 31 L -53 31 z
+             M -21 -59 L 21 -59 L 21 -11 L -21 -11 z"
+          clipRule="evenodd"
+        />
+      </clipPath>
+      <clipPath id={`skin-nexus-wall-${uid}`}>
+        <rect x={-52} y={-24} width={104} height={54} rx={4} />
+      </clipPath>
+      <defs>
+        {/* ⚠️ THE FADE IS RADIAL FROM THE CORE, NOT LEFT-TO-RIGHT. A linear
+            gradient fades every arm along the same axis, so the arms running
+            up and down got a hard edge across them and read as fins rather
+            than as gas. In user space, centred on the galaxy, one gradient
+            thins every arm with distance from the middle whichever way it
+            points. */}
+        {[NEB_A, NEB_B].map((c, i) => (
+          <radialGradient
+            key={i}
+            id={`skin-neb-${uid}-${i}`}
+            gradientUnits="userSpaceOnUse"
+            cx={0}
+            cy={CY}
+            r={112}
+          >
+            <stop offset="0%" stopColor={c} stopOpacity="0.34" />
+            <stop offset="34%" stopColor={c} stopOpacity="0.24" />
+            <stop offset="68%" stopColor={c} stopOpacity="0.1" />
+            <stop offset="100%" stopColor={c} stopOpacity="0" />
+          </radialGradient>
+        ))}
+        <radialGradient
+          id={`skin-nexus-core-${uid}`}
+          gradientUnits="userSpaceOnUse"
+          cx={0}
+          cy={CY}
+          r={72}
+        >
+          <stop offset="0%" stopColor={CORE} stopOpacity="0.5" />
+          <stop offset="26%" stopColor="#c9a3ff" stopOpacity="0.26" />
+          <stop offset="62%" stopColor={NEB_A} stopOpacity="0.12" />
+          <stop offset="100%" stopColor={NEB_A} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <g clipPath={`url(#skin-nexus-outside-${uid})`}>
+        {/* The core, seen around the fortress. The arms all converge on a point
+            that is hidden behind the keep, so without this the middle of the
+            galaxy is the one part of it you cannot see — and the castle stops
+            reading as the thing at the centre. */}
+        <circle cx={0} cy={CY} r={72} fill={`url(#skin-nexus-core-${uid})`} />
+
+        {/* Nebula arms, sweeping out of the fortress.
+            ⚠️ EACH ARM IS DRAWN THREE TIMES, slightly turned and scaled, at a
+            third of the opacity. A single filled path has a crisp edge down
+            both sides no matter what its fill does, and a crisp-edged band of
+            colour is a ribbon. Overlapping copies is what softens the sides
+            — without a blur filter, which would have to re-render every frame
+            of a 90-second rotation on up to seven castles at once. */}
+        <g className="skin__galaxy">
+          {[
+            { d: 'M 0 -8 C 38 -34 82 -38 104 -20 C 108 -4 86 8 56 4 C 28 1 8 -2 0 -8 z', g: 0 },
+            { d: 'M 0 -8 C -38 16 -82 20 -104 4 C -108 -12 -86 -24 -56 -20 C -28 -17 -8 -14 0 -8 z', g: 1 },
+            { d: 'M 0 -8 C 22 -50 16 -92 -16 -116 C -36 -110 -34 -78 -20 -50 C -11 -30 -4 -14 0 -8 z', g: 1 },
+            { d: 'M 0 -8 C -20 32 -14 64 16 84 C 34 78 34 52 20 30 C 11 10 4 -2 0 -8 z', g: 0 },
+            { d: 'M 0 -8 C 40 -8 78 -46 84 -78 C 66 -88 42 -66 24 -40 C 12 -22 5 -12 0 -8 z', g: 0 },
+          ].flatMap((a, i) =>
+            [
+              { rot: -3.5, k: 1.07 },
+              { rot: 0, k: 1 },
+              { rot: 3.5, k: 0.93 },
+            ].map((c, j) => (
+              <g
+                key={`${i}-${j}`}
+                transform={`rotate(${c.rot} 0 ${CY}) translate(0 ${CY}) scale(${c.k}) translate(0 ${-CY})`}
+                opacity={0.42}
+              >
+                <path d={a.d} fill={`url(#skin-neb-${uid}-${a.g})`} />
+              </g>
+            )),
+          )}
+        </g>
+
+        {/* Field stars. The whole field turns the other way from the galaxy
+            and much slower, which is what makes the arms read as nearer than
+            the sky behind them — and each star breathes on its own offset, so
+            they never blink as a group. */}
+        <g className="skin__starfield">
+          {[
+            { x: -80, y: -60, r: 1.2 }, { x: -58, y: -92, r: 0.9 }, { x: -30, y: -114, r: 1.4 },
+            { x: 22, y: -104, r: 1 }, { x: 54, y: -78, r: 1.3 }, { x: 80, y: -52, r: 0.9 },
+            { x: 86, y: 14, r: 1.1 }, { x: -86, y: 22, r: 1 }, { x: 44, y: -118, r: 0.8 },
+            { x: -46, y: -70, r: 0.7 }, { x: 66, y: -34, r: 0.8 }, { x: -70, y: -12, r: 1 },
+            { x: 8, y: -122, r: 1.1 }, { x: -14, y: -84, r: 0.7 }, { x: 36, y: -60, r: 0.6 },
+            { x: -66, y: -40, r: 0.8 }, { x: 74, y: -100, r: 1 }, { x: -88, y: -86, r: 0.9 },
+            { x: 60, y: 6, r: 0.7 }, { x: -34, y: 30, r: 0.8 },
+          ].map((st, i) => (
+            <g
+              key={i}
+              className="skin__twinkle"
+              style={{ animationDelay: `-${(i * 0.83) % 4.6}s`, animationDuration: `${3.2 + (i % 5) * 0.7}s` }}
+            >
+              {star(st.x, st.y, st.r, 0.9, i)}
+            </g>
+          ))}
+        </g>
+
+        {/* The far halves of the orbits. */}
+        {ORBITS.map((o, i) => ring(o, 'far', 100 + i))}
+      </g>
+
+      {/* ---- the core, burning inside the walls ------------------------- */}
+      <g clipPath={`url(#skin-nexus-wall-${uid})`}>
+        {[
+          'M -40 30 C -37 18 -41 8 -38 -4 C -36 -12 -39 -18 -37 -24',
+          'M -14 30 C -12 20 -16 10 -13 -2 C -11 -12 -14 -18 -12 -24',
+          'M 14 30 C 16 19 12 9 15 -3 C 17 -13 14 -19 16 -24',
+          'M 40 30 C 43 18 39 8 42 -4 C 44 -12 41 -18 43 -24',
+        ].map((d, i) => (
+          <g key={i} className="skin__core-vein" style={{ animationDelay: `${i * 0.7}s` }}>
+            <path d={d} fill="none" stroke={CORE} strokeWidth={5} opacity={0.16} strokeLinecap="round" />
+            <path d={d} fill="none" stroke={CORE} strokeWidth={1.4} opacity={0.85} strokeLinecap="round" />
+          </g>
+        ))}
+      </g>
+
+      {/* Out through the gate: the fortress is lit from within. */}
+      <g className="skin__core-glow">
+        <path d="M -15 30 L -15 8 C -15 -3 15 -3 15 8 L 15 30 z" fill={CORE} opacity={0.22} />
+        <path
+          d="M -12 30 L -12 8 C -12 0 12 0 12 8 L 12 30"
+          fill="none"
+          stroke={CORE}
+          strokeWidth={2.4}
+          opacity={0.9}
+        />
+      </g>
+
+      {/* And out of the battlements. */}
+      {[-46, -30, 30, 46].map((x, i) => (
+        <g key={i} className="skin__core-vein" style={{ animationDelay: `${i * 0.55}s` }}>
+          <circle cx={x} cy={-26} r={5} fill={CORE} opacity={0.18} />
+          <circle cx={x} cy={-26} r={1.8} fill={CORE} />
+        </g>
+      ))}
+
+      {/* The near halves, in front of the fortress. */}
+      {ORBITS.map((o, i) => ring(o, 'near', 200 + i))}
+    </g>
+  )
+}
+
 export const SpaceDecor = {
   'space.starpattern': StarPatternCastle,
   'space.spaceship': SpaceshipFortress,
+  'space.alienbase': AlienPlanetBase,
+  'space.nexus': CosmicNexus,
 }
