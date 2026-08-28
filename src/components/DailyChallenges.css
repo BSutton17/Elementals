@@ -1,0 +1,164 @@
+/* The day's challenges, on the main menu.
+   Sized to sit under the buttons in the menu's 26rem column without pushing
+   Create Room off a short screen — see the short-screen rule at the bottom. */
+
+.menu-quests {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.35rem;
+  padding: 0.7rem 0.85rem 0.75rem;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 0.75rem;
+}
+
+.menu-quests__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.menu-quests__title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #aab3c5;
+}
+
+.menu-quests__count {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: #e8ecf5;
+  white-space: nowrap;
+}
+
+.menu-quests__reset {
+  color: #6b7385;
+}
+
+.menu-quests__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.62rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-quest__line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  /* The description is the flexible one: the tier chip and the count are both
+     fixed-size facts, and squeezing either of those to fit a long quest name is
+     how a row ends up unreadable. */
+  min-width: 0;
+}
+
+.menu-quest__tier {
+  flex: none;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.menu-quest__tier--easy {
+  color: #5fa77b;
+}
+
+.menu-quest__tier--medium {
+  color: #5b8def;
+}
+
+.menu-quest__tier--hard {
+  color: #d9a441;
+}
+
+.menu-quest__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: #e8ecf5;
+  /* One line. A menu panel that changes height as quests come and go makes the
+     buttons above it move, and buttons that move get mis-tapped. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-quest__num {
+  flex: none;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: #aab3c5;
+}
+
+.menu-quest__track {
+  height: 3px;
+  /* Enough air that the bar reads as its row's meter rather than as an
+     underline of the text above it. */
+  margin-top: 0.38rem;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.menu-quest__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6bb8ff, #b79bff);
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.menu-quest--done .menu-quest__text {
+  color: #6b7385;
+  text-decoration: line-through;
+}
+
+.menu-quest--done .menu-quest__num {
+  color: #4ade80;
+}
+
+.menu-quest--done .menu-quest__fill {
+  background: #4ade80;
+}
+
+.menu-quests__reward {
+  margin: 0.6rem 0 0;
+  font-size: 0.72rem;
+  color: #6b7385;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-quest__fill {
+    transition: none;
+  }
+}
+
+/* Short screens — a phone held sideways, mostly.
+   ⚠️ THE PANEL BECOMES ONE LINE HERE, and that is a deliberate trade. There is
+   about 330px of column on a sideways phone and the menu already fills it; the
+   full panel is 120px more, which is exactly enough to start the menu
+   scrolling. The header alone still answers the question the panel exists for
+   — are there challenges, how many are left, when do they change — and the
+   detail is a tap away in the profile. */
+@media (max-height: 640px) {
+  .menu-quests {
+    padding: 0.45rem 0.7rem;
+  }
+
+  .menu-quests__head {
+    margin-bottom: 0;
+  }
+
+  .menu-quests__list,
+  .menu-quests__reward {
+    display: none;
+  }
+}

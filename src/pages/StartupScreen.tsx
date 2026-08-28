@@ -6,8 +6,15 @@ import { HowToPlay } from './HowToPlay'
 import { hasSeenTutorial } from '../game/tutorial'
 import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { CgProfile } from 'react-icons/cg'
-import { signInWithGoogle, getSignedInName, fetchProfile, isSignedIn } from '../game/auth'
+import {
+  signInWithGoogle,
+  getSignedInName,
+  fetchProfile,
+  isSignedIn,
+  type DailyQuest,
+} from '../game/auth'
 import { Link } from 'react-router-dom'
+import { DailyChallenges } from '../components/DailyChallenges'
 import { UsernameDialog } from '../components/profile/UsernameDialog'
 import { AgeGate } from '../components/profile/AgeGate'
 import './StartupScreen.css'
@@ -39,6 +46,11 @@ export function StartupScreen({ name, onName, onJoin, onJoinPublic }: StartupScr
   // A first-ever sign-in has no username yet; the picker is not optional.
   const [needsUsername, setNeedsUsername] = useState(false)
   const [needsAge, setNeedsAge] = useState(false)
+  // The day's challenges, once the profile lands. Held here rather than fetched
+  // by the panel itself: the menu already asks the server who you are on every
+  // boot, and a second request for data that arrived with the first is waste.
+  const [quests, setQuests] = useState<DailyQuest[]>([])
+  const [questsResetAt, setQuestsResetAt] = useState<string | null>(null)
 
   // The stored name is a convenience, not the truth. Re-read the profile on
   // mount so a name changed on another device shows up, and so a token that has
@@ -69,6 +81,8 @@ export function StartupScreen({ name, onName, onJoin, onJoinPublic }: StartupScr
       // next time; someone who finished is never asked twice.
       setNeedsUsername(profile.needsUsername)
       setNeedsAge(profile.needsAge)
+      setQuests(profile.quests)
+      setQuestsResetAt(profile.questsResetAt)
     })
     return () => {
       live = false
@@ -108,6 +122,15 @@ export function StartupScreen({ name, onName, onJoin, onJoinPublic }: StartupScr
                   // away.
                   setNeedsAge(user.needsAge)
                   setNeedsUsername(user.needsUsername)
+                  // The sign-in response carries identity, not progress, so
+                  // the challenges come from a profile read — otherwise the
+                  // panel only appears on the NEXT visit, which reads as it
+                  // being broken.
+                  void fetchProfile().then((p) => {
+                    if (!p) return
+                    setQuests(p.quests)
+                    setQuestsResetAt(p.questsResetAt)
+                  })
                 })
               }}
             />
@@ -146,6 +169,11 @@ export function StartupScreen({ name, onName, onJoin, onJoinPublic }: StartupScr
         <button type="button" className="startup__secondary" onClick={onJoin}>
           Join Private
         </button>
+
+        {/* Below the buttons on purpose: the menu's job is to get you into a
+            match, and the challenges are what you might do while you are in
+            one. Absent entirely for a guest — see DailyChallenges. */}
+        <DailyChallenges quests={quests} resetsAt={questsResetAt} />
 
         {error && <p className="startup__error">{error}</p>}
 

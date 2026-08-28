@@ -290,17 +290,17 @@
 
 .kingdom-site__shield-shape {
   animation: shield-breathe 2.6s ease-in-out infinite;
-  /* ⚠️ THE BREATH IS OPACITY ONLY — THE SHIELD NEVER MOVES. It used to
-     scale by 1.5%, pivoting on `transform-origin: center`, and where that
-     centre lands is not the same everywhere: Chrome resolves it to the circle's
-     own middle (measured: zero drift), while a browser that resolves it against
-     the SVG viewport instead pivots the shield around a point hundreds of user
-     units away — and a 1.5% scale about a far pivot is a translation. That is
-     what made shields visibly swim on phones while looking perfectly still on a
-     desktop.
-     `transform-box: fill-box` would pin the reference box, but a shield that
-     cannot move under ANY engine is better than one that depends on getting the
-     reference box right; brightness reads as "alive" just as well as size. */
+  /* ⚠️ THE BREATH IS OPACITY ONLY — THE SHIELD NEVER MOVES. It used to scale
+     by 1.5% about `transform-origin: center`, and with no `transform-box` the
+     reference box is the SVG VIEWPORT, not the circle: the pivot landed at the
+     middle of the 1000-unit arena, hundreds of units from a castle sitting out
+     on the ring. A scale about a far pivot is a translation, so every breath
+     slid the shield — measured at ~9 user units, which is 3-4px on a phone and
+     about 8px on a desktop.
+     `transform-box: fill-box` would pin the box (and it is what the overlays
+     nearby now use), but a shield that cannot move under ANY engine is better
+     than one that depends on getting the reference box right; brightness reads
+     as "alive" just as well as size does. */
 }
 
 .kingdom-site__shield-cracks {

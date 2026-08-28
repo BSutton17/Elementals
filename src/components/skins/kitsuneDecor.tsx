@@ -60,7 +60,18 @@ function tail(
   p3: [number, number],
   w: number,
   key: number,
-  opts: { tip?: string; body?: string; className?: string; delay?: number } = {},
+  opts: {
+    tip?: string
+    body?: string
+    className?: string
+    delay?: number
+    /** Degrees the whole tail swings about its root. */
+    swing?: number
+    /** Degrees of shear along its length — this is the part that BENDS it. */
+    flex?: number
+    /** Seconds for one full sweep out and back. */
+    dur?: number
+  } = {},
 ) {
   const N = 40
   const at = (t: number): [number, number] => {
@@ -120,7 +131,19 @@ function tail(
     <g
       key={key}
       className={opts.className}
-      style={opts.className ? { animationDelay: `${opts.delay ?? 0}s` } : undefined}
+      style={
+        opts.className
+          ? ({
+              animationDelay: `${opts.delay ?? 0}s`,
+              // Per-tail motion, read by the keyframes. Absent values fall back
+              // to the gentle default, so the tails that are meant to sit still
+              // are unaffected by any of this.
+              ...(opts.swing !== undefined ? { '--tail-swing': `${opts.swing}deg` } : {}),
+              ...(opts.flex !== undefined ? { '--tail-flex': `${opts.flex}deg` } : {}),
+              ...(opts.dur !== undefined ? { '--tail-dur': `${opts.dur}s` } : {}),
+            } as React.CSSProperties)
+          : undefined
+      }
     >
       {/* The mass, then the light along its upper edge, then the shade beneath:
           three bands and the tail has a round section. */}
@@ -825,10 +848,36 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
    * four to the right, two barely at all. Uniform curl is just a different kind
    * of stiffness — it reads as a pattern, which is what a fan is.
    */
+  /**
+   * ⚠️ THE MOTION IS PER TAIL, AND IT IS A BEND RATHER THAN A ROTATION.
+   *
+   * All nine used to rock ±1.6° on one clock, which at castle size is nothing
+   * — the fan may as well have been a still. Two things fix that. Each tail now
+   * has its OWN amplitude, period and phase, so the group ripples instead of
+   * sweeping like one comb; and the transform is a rotation about the root
+   * COMPOSED WITH A SHEAR along the tail's length, which displaces a point in
+   * proportion to how far it is from the root. That is what a tail does: the
+   * base barely moves, the middle leans, the tip travels furthest. A rotation
+   * on its own moves a rigid blade, however far you turn it.
+   *
+   * The tips travel roughly fifty units peak to peak — a quarter of the frame's
+   * width. A literal 180° swing is the one thing that cannot happen here: it
+   * would carry every tail down across the palace and out of the frame, and the
+   * clip would cut them in half on the way. This reads as a big lazy sweep
+   * BECAUSE the far end moves so much further than the near end, which is the
+   * effect a bigger angle was reaching for.
+   *
+   * The outer two run smallest on purpose — they already reach x ±86 and the
+   * frame stops at ±92, so a wide swing there would be sliced at the edge.
+   */
   const TAILS: {
     p: [[number, number], [number, number], [number, number], [number, number]]
     w: number
     d: number
+    /** Swing, shear, seconds. */
+    s: number
+    f: number
+    t: number
   }[] = [
     /* ⚠️ NOT ALL OF THEM CURL UP. Nine tails all hooking the same way is the
        stiffness again in its last form — the group sweeps like a single comb.
@@ -848,15 +897,15 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
        they bought: falling tails lost the fan its lift, and hooked tips folded
        the shapes back on themselves. Nine hand-drawn spines that all sweep up,
        each with its own S, is the version that read. */
-    { p: [[-12, 8], [-54, 8], [-86, -14], [-74, -46]], w: 30, d: 0 },
-    { p: [[-10, 2], [-48, -12], [-78, -46], [-48, -74]], w: 29, d: -0.8 },
-    { p: [[-8, -2], [-34, -28], [-54, -60], [-22, -82]], w: 28, d: -1.7 },
-    { p: [[-4, -6], [-16, -36], [-22, -72], [6, -96]], w: 27, d: -2.5 },
-    { p: [[0, -8], [6, -40], [24, -70], [6, -100]], w: 26, d: -3.3 },
-    { p: [[4, -6], [26, -34], [48, -62], [24, -90]], w: 27, d: -4.1 },
-    { p: [[8, -2], [36, -20], [66, -44], [42, -72]], w: 28, d: -4.9 },
-    { p: [[10, 2], [50, -4], [82, -20], [64, -52]], w: 29, d: -5.7 },
-    { p: [[12, 8], [52, 12], [86, 6], [78, -24]], w: 26, d: -6.5 },
+    { p: [[-12, 8], [-54, 8], [-86, -14], [-74, -46]], w: 30, d: 0 , s: 2.4, f: 2, t: 7.8 },
+    { p: [[-10, 2], [-48, -12], [-78, -46], [-48, -74]], w: 29, d: -0.8 , s: 5.5, f: 5, t: 6.6 },
+    { p: [[-8, -2], [-34, -28], [-54, -60], [-22, -82]], w: 28, d: -1.7 , s: 7, f: 6.5, t: 5.8 },
+    { p: [[-4, -6], [-16, -36], [-22, -72], [6, -96]], w: 27, d: -2.5 , s: 8, f: 7.5, t: 5.2 },
+    { p: [[0, -8], [6, -40], [24, -70], [6, -100]], w: 26, d: -3.3 , s: 8.5, f: 8, t: 6.2 },
+    { p: [[4, -6], [26, -34], [48, -62], [24, -90]], w: 27, d: -4.1 , s: 7.5, f: 7, t: 5.5 },
+    { p: [[8, -2], [36, -20], [66, -44], [42, -72]], w: 28, d: -4.9 , s: 6, f: 5.5, t: 6.9 },
+    { p: [[10, 2], [50, -4], [82, -20], [64, -52]], w: 29, d: -5.7 , s: 4.5, f: 4, t: 7.4 },
+    { p: [[12, 8], [52, 12], [86, 6], [78, -24]], w: 26, d: -6.5 , s: 3.2, f: 2.5, t: 8.3 },
   ]
 
   return (
@@ -883,11 +932,6 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
           <stop offset="45%" stopColor={FOX_FIRE} stopOpacity="0.35" />
           <stop offset="100%" stopColor={SAPPHIRE} stopOpacity="0" />
         </radialGradient>
-        <linearGradient id={`skin-sp-body-${uid}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="55%" stopColor={FUR} />
-          <stop offset="100%" stopColor={FUR_SHADE} />
-        </linearGradient>
       </defs>
 
       <g clipPath={`url(#skin-sp-outside-${uid})`}>
@@ -903,19 +947,22 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
           tail(t.p[0], t.p[1], t.p[2], t.p[3], t.w, i, {
             className: 'skin__tail',
             delay: t.d,
+            swing: t.s,
+            flex: t.f,
+            dur: t.t,
           }),
         )}
 
-        {/* The body, curling round the right shoulder and down behind. */}
-        <path
-          d="M 12 34 C 50 32 74 12 73 -16 C 72 -40 56 -54 36 -56
-             L 33 -43 C 48 -41 58 -32 59 -15 C 60 6 42 21 10 23 z"
-          fill={`url(#skin-sp-body-${uid})`}
-          stroke={OUTLINE}
-          strokeWidth={1.3}
-          strokeLinejoin="round"
-        />
-        <path d="M 14 31 C 48 29 70 10 69 -15" fill="none" stroke={FOX_FIRE} strokeWidth={1.3} opacity={0.55} />
+        {/* ⚠️ NO BODY. A pale crescent used to curl round the right shoulder
+            and down behind the palace, meant to read as the spirit's neck and
+            flank. It did not: the wall and keep are punched out of this layer,
+            so all that survived of it was the slice OUTSIDE the silhouette — a
+            white hook hanging off the bottom right with no visible join to the
+            head, which is why it read as a stray tail rather than as an animal.
+            A body only works when you can see enough of it to follow; this one
+            had one end behind the castle and the other behind a mask.
+            The spirit is a mask and nine tails now, which is both cleaner and
+            the more traditional reading of the thing. */}
 
         {/* The head.
             ⚠️ IT IS THE KINGDOM'S OWN MASK, SCALED UP. Hand-drawing a second
@@ -925,16 +972,11 @@ function NineTailedSpiritPalace({ eliminated, uid }: DecorProps) {
             proportions that make it read: a long snout, tall red-lined ears,
             open almond eyes, and flowing red curves rather than slashes. */}
         <g transform="translate(50 -60) rotate(-10)">
-          {/* The ruff the face sits in. */}
-          <path
-            d="M -24 -8 C -28 10 -16 28 2 32 C 20 28 30 10 26 -8
-               C 20 6 12 14 1 14 C -10 14 -19 6 -24 -8 z"
-            fill={`url(#skin-sp-body-${uid})`}
-            stroke={OUTLINE}
-            strokeWidth={1.2}
-            strokeLinejoin="round"
-            opacity={0.95}
-          />
+          {/* ⚠️ NO RUFF. A pale bowl was drawn under the face to seat it, and
+              at this size it read as exactly what it was — a white half-circle
+              parked under the mask, with its own hard edge, belonging to
+              nothing. The body already curls up behind the head and gives the
+              face something to sit against; the foxfire below does the rest. */}
           <g className="skin__foxfire">
             <circle cx={0} cy={0} r={26} fill={FOX_FIRE} opacity={0.16} />
           </g>

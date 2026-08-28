@@ -701,14 +701,42 @@
 /* The nine tails sway. Each turns about the point where it leaves the body, and
    only by a couple of degrees: nine tails moving far enough to notice
    individually is a hedge in a gale. */
+/* ⚠️ ROTATION AND SHEAR TOGETHER, WHICH IS WHAT MAKES IT BEND. Rotating a
+   tail about its root moves a rigid blade — every point travels the same
+   angle, so the shape never changes and no amount of angle makes it look
+   alive. `skewX` displaces a point in proportion to its distance from the
+   root, so the base holds, the middle leans and the tip swings furthest: the
+   two composed give a tail that flexes along its length.
+   Amplitude, shear and period all come from the element (see the TAILS table
+   in kitsuneDecor), so the nine of them ripple instead of moving as one comb.
+   The defaults are the old gentle sway, for any tail that sets nothing.
+   ⚠️ AND transform-origin STAYS AS IS — no `transform-box`. It is a point in
+   the decor's own user space, just below where the tails are rooted; pinning
+   the reference box to each tail's bounding box would move every pivot to a
+   different place. */
 .skin__tail {
   transform-origin: 0px 20px;
-  animation: skin-tail 6.4s ease-in-out infinite;
+  animation: skin-tail var(--tail-dur, 6.4s) ease-in-out infinite;
 }
 
 @keyframes skin-tail {
-  0%, 100% { transform: rotate(-1.6deg); }
-  50% { transform: rotate(1.6deg); }
+  /* ⚠️ THE SHEAR RUNS AGAINST THE ROTATION, AND THE SIGN IS THE WHOLE
+     TRICK. Turned the same way, the two very nearly cancel for any point
+     standing straight above the pivot — which is where the tips are. The first
+     build did exactly that: the matrix came out with a horizontal term of
+     -0.008 and nine tails rotating eight degrees moved their tips ONE unit.
+     Opposed, the terms add, and the same eight degrees sweep a tip about
+     forty units. */
+  0%, 100% {
+    transform: rotate(calc(-1 * var(--tail-swing, 1.6deg)))
+      skewX(var(--tail-flex, 0deg));
+  }
+  /* Not at the halfway mark: a sway that arrives dead centre is a metronome.
+     Out fast, back slow, the way weight actually settles. */
+  45% {
+    transform: rotate(var(--tail-swing, 1.6deg))
+      skewX(calc(-1 * var(--tail-flex, 0deg)));
+  }
 }
 
 /* --- Magma: smoke ---------------------------------------------------------- */
