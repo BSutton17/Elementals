@@ -98,7 +98,11 @@ function tail(
        BANANA — which is what the first volume-first pass came out as. In the
        reference every tail keeps its bulk through the middle and then draws
        down into a soft feathered point over the final stretch. */
-    const close = t > 0.78 ? 1 - ((t - 0.78) / 0.22) ** 1.7 * 0.82 : 1
+    /* ⚠️ AND IT CLOSES ALMOST ALL THE WAY NOW. It used to stop at 18% of
+       full width, because three strands ran on past the end and hid the blunt
+       finish; with those gone an 18%-wide stop is a cut cable. 4% is a point
+       the stroke's own round join finishes cleanly. */
+    const close = t > 0.78 ? 1 - ((t - 0.78) / 0.22) ** 1.7 * 0.96 : 1
     return w * (0.2 + 0.8 * swell) * wave * close
   }
 
@@ -193,36 +197,12 @@ function tail(
       <path d={band(0.5, -0.4)} fill="#ffffff" opacity={0.85} />
       {/* Foxfire at the tip, where a spirit fox carries it. */}
       <path d={band(0.94, 0, 0.78)} fill={opts.tip ?? FOX_FIRE_LIT} opacity={0.4} />
-      {/* Strand tips escaping past the end: the feathering that stops the point
-          from looking cut. */}
-      {[-0.5, 0, 0.5].map((k, i) => {
-        const e = pts[pts.length - 1]!
-        const b = pts.find((q) => q.t >= 0.82)!
-        const sx = b.x + b.nx * b.half * k
-        const sy = b.y + b.ny * b.half * k
-        /* ⚠️ A HOOKED TIP CANNOT WEAR A WIDE SPRAY OF STRANDS. These three
-           hairs escape past the end and read as feathering only while the mass
-           behind them is going the same way; once the tail curls, the mass
-           turns off and leaves them standing apart — three separated spikes on
-           the end of a hook, which is a FINGER. Shorter and gathered when there
-           is a curl, untouched when there is not, so the tails on the other two
-           skins are exactly as they were. */
-        const len = w * (0.55 + i * 0.18) * (curl ? 0.58 : 1)
-        const splay = curl ? 0.4 : 1
-        return (
-          <path
-            key={`t${i}`}
-            d={`M ${sx.toFixed(1)} ${sy.toFixed(1)}
-                Q ${(sx + e.dx * len * 0.6 + e.nx * len * 0.28 * k * splay).toFixed(1)} ${(sy + e.dy * len * 0.6 + e.ny * len * 0.28 * k * splay).toFixed(1)}
-                  ${(sx + e.dx * len + e.nx * len * 0.5 * k * splay).toFixed(1)} ${(sy + e.dy * len + e.ny * len * 0.5 * k * splay).toFixed(1)}`}
-            fill="none"
-            stroke={i === 1 ? '#ffffff' : FUR}
-            strokeWidth={w * 0.16}
-            strokeLinecap="round"
-            opacity={0.9}
-          />
-        )
-      })}
+      {/* ⚠️ NO STRANDS ESCAPING PAST THE END. Three hairs used to run out
+          beyond each tip — meant as feathering, so the point would not look
+          cut. They never read that way at any size: as separate strokes with
+          gaps between them they came out as prongs, and nine tails wearing
+          three prongs each is a row of hands. The tail closes on its own taper
+          now, which is what the taper is for. */}
       {[-0.62, -0.24, 0.2, 0.58].map((k, i) => (
         <path
           key={i}
@@ -747,12 +727,18 @@ function NineTailPalace({ eliminated, uid }: DecorProps) {
           /* Two of the five fall rather than rise: a fan where everything
              sweeps upward has no weight to it. */
           /* Rising spines with the tips hooked over, same as the legendary. */
-          /* The upward-curling fan, restored — see the legendary's note. */
-          { p: [[-14, -6], [-56, -16], [-84, -44], [-58, -74]], w: 30 },
-          { p: [[-8, -10], [-38, -34], [-52, -70], [-20, -92]], w: 28 },
-          { p: [[0, -12], [-2, -44], [22, -74], [6, -106]], w: 26 },
-          { p: [[8, -10], [38, -32], [52, -68], [20, -90]], w: 28 },
-          { p: [[14, -6], [58, -16], [86, -42], [62, -72]], w: 30 },
+          /* The upward-curling fan, restored — see the legendary's note.
+             `c` hooks the last fifth of each tip, alternating direction.
+             ⚠️ THESE TAILS NEEDED THE HOOK ONCE THE FEATHERING WENT. Five pale
+             blades tapering to clean points, all sweeping the same way, are
+             TUSKS — which is exactly what they came out as the moment the
+             escaping strands were removed. A hooked tip is the difference
+             between a horn and a tail, and it costs nothing but an angle. */
+          { p: [[-14, -6], [-56, -16], [-84, -44], [-58, -74]], w: 30, c: -12 },
+          { p: [[-8, -10], [-38, -34], [-52, -70], [-20, -92]], w: 28, c: 9 },
+          { p: [[0, -12], [-2, -44], [22, -74], [6, -106]], w: 26, c: -8 },
+          { p: [[8, -10], [38, -32], [52, -68], [20, -90]], w: 28, c: 11 },
+          { p: [[14, -6], [58, -16], [86, -42], [62, -72]], w: 30, c: -10 },
         ].map((t, i) =>
           tail(
             t.p[0] as [number, number],
@@ -761,6 +747,7 @@ function NineTailPalace({ eliminated, uid }: DecorProps) {
             t.p[3] as [number, number],
             t.w,
             i,
+            { curl: t.c },
           ),
         )}
       </g>
