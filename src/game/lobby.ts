@@ -98,6 +98,10 @@ export interface MatchConfig {
   tickRate: number
   startingCitizens: number
   startingCastleHp: number
+  /** Seats the match was built for. The server scales starting health, shields
+   *  and Better Construction's bonus by it, so the HUD reads it from here
+   *  rather than counting the roster and hoping the two agree. */
+  playerCount?: number
   /** Damage Dark must absorb to fill the Unlimited Rage meter (server-owned). */
   rageFull?: number
   /** What a full Ancient Memory meter is worth (Kitsune, server-owned). */

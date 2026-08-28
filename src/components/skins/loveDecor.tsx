@@ -687,7 +687,7 @@ function CupidsCastle({ eliminated, uid }: DecorProps) {
         <path
           d="M -92 -128 L 92 -128 L 92 44 L -92 44 z
              M -53 -25 L 53 -25 L 53 31 L -53 31 z
-             M -21 -59 L 21 -59 L 21 -11 L -21 -11 z"
+             M -21 -59 L 21 -59 L 21 -25 L -21 -25 z"
           clipRule="evenodd"
         />
       </clipPath>
@@ -807,7 +807,7 @@ function EternalLovePalace({ eliminated, uid }: DecorProps) {
         <path
           d="M -92 -128 L 92 -128 L 92 44 L -92 44 z
              M -53 -25 L 53 -25 L 53 31 L -53 31 z
-             M -21 -59 L 21 -59 L 21 -11 L -21 -11 z"
+             M -21 -59 L 21 -59 L 21 -25 L -21 -25 z"
           clipRule="evenodd"
         />
       </clipPath>

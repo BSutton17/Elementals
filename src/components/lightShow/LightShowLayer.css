@@ -130,6 +130,13 @@
 }
 
 .lightshow__impact {
+  /* ⚠️ `center` NEEDS A BOX TO BE THE CENTRE OF. Without `transform-box`
+     the reference box is the whole SVG viewport, so a browser that follows
+     that literally pivots this element around a point hundreds of user
+     units away and any scale turns into a slide. Chrome happens to give
+     the element's own box; not every engine does, which is why overlays
+     that sat still on a desktop swam about on a phone. */
+  transform-box: fill-box;
   transform-origin: center;
   animation: lightshow-impact 0.85s ease-out forwards;
   animation-delay: var(--delay);

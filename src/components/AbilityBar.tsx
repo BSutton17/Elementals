@@ -78,6 +78,9 @@ interface AbilityBarProps {
   /** The two perks this player locked in at the lobby, shown on the bar so
    *  their always-on bonuses aren't invisible for the whole match. */
   perks?: readonly string[]
+  /** Seats in this match, from the server's config — Better Construction is
+   *  worth more at a bigger table, and the chip's tooltip should say so. */
+  seats?: number
   /** Time's Half Past 12: the whole bar wobbles, jitters, and leaves temporal
    *  afterimages while the victim's UI is scrambled (purely cosmetic; buttons
    *  stay clickable). */
@@ -132,6 +135,7 @@ export function AbilityBar({
   memoryMeter = null,
   memoryFull,
   perks,
+  seats,
   scrambled = false,
   scramble = null,
   fatherTimeMarked = false,
@@ -281,7 +285,7 @@ export function AbilityBar({
         <div className="ability-bar__stats">
           {/* The perks you're playing with, pinned top-left. They change the
               numbers on this very bar, so they belong beside them. */}
-          <PerkChips perks={perks} />
+          <PerkChips perks={perks} seats={seats} />
           {/* Gold Stats — the income readout goes toxic while citizens are poisoned. */}
           <div className="ability-bar__stat-group" title="Gold & Income">
             <span className="ability-bar__stat-icon"><GiReceiveMoney /></span>

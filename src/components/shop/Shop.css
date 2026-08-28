@@ -136,6 +136,10 @@
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background 0.14s ease, border-color 0.14s ease;
+  /* Belt and braces behind the wrap above: whatever ends up in a tile, it is
+     clipped at the tile's own edge rather than painted over its neighbour and
+     scrolling the page sideways. */
+  overflow: hidden;
 }
 
 .item:hover {
@@ -181,6 +185,23 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.4rem;
+  /* ⚠️ THIS ROW MUST BE ABLE TO BECOME TWO. On a 390px phone the grid gives
+     three tiles of about 115px, and "LEGENDARY" beside "Equipped" needs 130 —
+     so the status ran out past the edge of the card and took the page's
+     horizontal scrollbar with it. Wrapping puts the status on its own line in
+     the tiles that are too narrow for both and changes nothing in the ones that
+     are not, which beats truncating a word the player is reading to find out
+     whether they own the thing. */
+  flex-wrap: wrap;
+  row-gap: 0.1rem;
+}
+
+/* Neither half may refuse to shrink: a flex item's automatic minimum is its
+   content, which is what let this row push past its container in the first
+   place. */
+.item__rarity,
+.item__status {
+  min-width: 0;
 }
 
 .item__rarity {

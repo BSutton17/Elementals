@@ -248,7 +248,7 @@ function GiantHive({ eliminated, uid }: DecorProps) {
         <path
           d="M -92 -128 L 92 -128 L 92 44 L -92 44 z
              M -53 -25 L 53 -25 L 53 31 L -53 31 z
-             M -21 -59 L 21 -59 L 21 -11 L -21 -11 z"
+             M -21 -59 L 21 -59 L 21 -25 L -21 -25 z"
           clipRule="evenodd"
         />
       </clipPath>
@@ -746,6 +746,25 @@ function TheWeaver({ eliminated, uid }: DecorProps) {
             stroke={SILK}
             strokeWidth={0.9}
             opacity={0.55}
+            fill="none"
+          />
+        ))}
+        {/* ⚠️ THE ANIMATION THIS SKIN NEEDED, AND WHY IT IS A DASH. The first
+            pass breathed the whole web's opacity and shifted the spider by a
+            unit and a half — true to how a real web behaves and completely
+            invisible at the size a castle is actually seen. This runs a short
+            bright segment down each radial instead: only `stroke-dashoffset`
+            changes, so not one strand ever moves and the web still cannot
+            sweep across the castle it is drawn over. Staggered, because eight
+            pulses leaving the hub together is a starburst. */}
+        {ANCHORS.map(([ax, ay], i) => (
+          <path
+            key={`p${i}`}
+            className="skin__silk-pulse"
+            style={{ animationDelay: `${-(i * 0.42).toFixed(2)}s` }}
+            d={`M ${HUB[0]} ${HUB[1]} L ${ax} ${ay}`}
+            stroke={SILK}
+            strokeWidth={1.5}
             fill="none"
           />
         ))}

@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
+  PERKS,
   PERKS_PER_PLAYER,
+  perkDescription,
+  shieldBonusFor,
   perksAllowedFor,
   hasFullPerkSelection,
   togglePerk,
@@ -37,5 +40,31 @@ describe('per-kingdom perk allowance', () => {
       'sharperSwords',
       'deepPockets',
     ])
+  })
+})
+
+describe('Better Construction reads its real value for the table', () => {
+  // The server scales the shield bonus by seats; a fixed "+500" was right only
+  // in a duel, and the perk is chosen in a lobby that can hold seven.
+  it('is 500 in a duel and 625 at a full table', () => {
+    expect(shieldBonusFor(2)).toBe(500)
+    expect(shieldBonusFor(7)).toBe(625)
+  })
+
+  it('never goes below the duel value, whatever it is handed', () => {
+    // A one-seat lobby is a state the picker can render mid-join.
+    expect(shieldBonusFor(1)).toBe(500)
+    expect(shieldBonusFor(0)).toBe(500)
+    expect(shieldBonusFor(Number.NaN)).toBe(500)
+  })
+
+  it('rewrites only Better Construction, and only when seats are known', () => {
+    const bc = PERKS.find((p) => p.id === 'betterConstruction')!
+    const swords = PERKS.find((p) => p.id === 'sharperSwords')!
+    expect(perkDescription(bc, 7)).toBe('+625 shield health')
+    // Percentages do not move with the table.
+    expect(perkDescription(swords, 7)).toBe(swords.description)
+    // No lobby to ask: fall back to the copy rather than inventing a number.
+    expect(perkDescription(bc)).toBe('+500 shield health')
   })
 })

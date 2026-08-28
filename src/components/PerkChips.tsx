@@ -1,4 +1,4 @@
-import { resolvePerks } from '../game/perks'
+import { perkDescription, resolvePerks } from '../game/perks'
 import './PerkChips.css'
 
 // The perks you locked in at the lobby, pinned to the top-left of the HUD.
@@ -9,7 +9,15 @@ import './PerkChips.css'
 // you picked Sharper Swords or Extra Guards changes how a trade will go. So
 // they sit next to the numbers they alter rather than in a menu.
 
-export function PerkChips({ perks }: { perks?: readonly string[] }) {
+export function PerkChips({
+  perks,
+  seats,
+}: {
+  perks?: readonly string[]
+  /** Seats in the match, so Better Construction's tooltip shows what the perk
+   *  is actually worth at this table rather than its duel value. */
+  seats?: number
+}) {
   const resolved = resolvePerks(perks as string[] | undefined)
   if (resolved.length === 0) return null
 
@@ -21,7 +29,7 @@ export function PerkChips({ perks }: { perks?: readonly string[] }) {
           className="perk-chips__chip"
           style={{ '--perk': perk.color } as React.CSSProperties}
           // Hover for the full effect; the icon alone carries it at a glance.
-          title={`${perk.name} — ${perk.description}`}
+          title={`${perk.name} — ${perkDescription(perk, seats)}`}
           data-testid={`perk-chip-${perk.id}`}
         >
           <span className="perk-chips__icon" aria-hidden="true">

@@ -614,6 +614,7 @@ export function BattlefieldView({
       {!spectator && you && (
         <AbilityBar
           kingdomId={you.kingdomId}
+          seats={match.config?.playerCount ?? match.players.length}
           theme={yourTheme}
           currency={you.economy.currency}
           citizens={you.economy.citizens}

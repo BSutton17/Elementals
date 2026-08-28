@@ -405,6 +405,41 @@
   animation: skin-galaxy 34s linear infinite reverse;
 }
 
+/* Which half of its lap a planet is on.
+   ⚠️ STEP-END, NOT A FADE. Each planet is drawn twice — once clipped behind the
+   castle, once in front — and exactly one copy is visible at a time; the swap
+   happens at the two points where its ring crosses the silhouette, which is
+   where the castle's own edge hides the cut. Interpolating opacity instead
+   would cross-fade the two copies through a half-transparent planet in the
+   middle of open sky.
+   Duration and delay are set per planet from its own orbit, so both copies
+   flip on the same frame however that orbit is tuned. */
+.skin__planet-front,
+.skin__planet-back {
+  animation-timing-function: step-end;
+  animation-iteration-count: infinite;
+}
+
+.skin__planet-front {
+  animation-name: skin-planet-front;
+}
+
+.skin__planet-back {
+  animation-name: skin-planet-back;
+}
+
+@keyframes skin-planet-front {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes skin-planet-back {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* The core breathes through the walls. */
 .skin__core-glow {
   animation: skin-core-glow 5s ease-in-out infinite;
@@ -736,16 +771,18 @@
 
 /* --- legendary: The Weaver ------------------------------------------------- */
 
-/* The spider shifts its weight. Two units, over seven seconds: a spider at rest
-   is almost perfectly still, and anything faster reads as scuttling - which is
-   the wrong feeling for something that has already won. */
+/* The spider shifts its weight. Slow, because a spider at rest is almost
+   perfectly still and anything faster reads as scuttling — but not INVISIBLE,
+   which the first version was: a unit and a half of travel is nothing once the
+   castle is drawn at 60%. Three units, and it settles heavier on one side than
+   the other rather than sliding evenly to and fro. */
 .skin__spider {
-  animation: skin-spider 7s ease-in-out infinite;
+  animation: skin-spider 6s ease-in-out infinite;
 }
 
 @keyframes skin-spider {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(1.5px, 1px); }
+  0%, 100% { transform: translate(-1px, 0); }
+  45% { transform: translate(2px, 1.6px); }
 }
 
 /* ⚠️ THE WEB SHIMMERS; IT DOES NOT MOVE. A web that sways is a net being
@@ -761,14 +798,29 @@
   50% { opacity: 1; }
 }
 
+/* Light running down a strand. The pulse is short and the gap is long, so what
+   you see is one travelling glint per radial rather than a marching dotted
+   line; `stroke-dashoffset` is the ONLY thing that changes, which is what keeps
+   a moving highlight off a silhouette it must not cross. */
+.skin__silk-pulse {
+  stroke-dasharray: 9 63;
+  animation: skin-silk 3.6s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes skin-silk {
+  from { stroke-dashoffset: 72; }
+  to { stroke-dashoffset: 0; }
+}
+
 /* Wrapped bundles swing, barely. */
 .skin__dangle {
   animation: skin-dangle 6.2s ease-in-out infinite;
 }
 
 @keyframes skin-dangle {
-  0%, 100% { transform: rotate(-1.6deg); }
-  50% { transform: rotate(1.6deg); }
+  0%, 100% { transform: rotate(-3.2deg); }
+  50% { transform: rotate(3.2deg); }
 }
 
 /* An eliminated castle goes still: the kingdom is dead, and a corpse that keeps
@@ -804,6 +856,8 @@
 .castle[data-eliminated] .skin__galaxy,
 .castle[data-eliminated] .skin__orbit,
 .castle[data-eliminated] .skin__orbit-upright,
+.castle[data-eliminated] .skin__planet-front,
+.castle[data-eliminated] .skin__planet-back,
 .castle[data-eliminated] .skin__core-glow,
 .castle[data-eliminated] .skin__core-vein,
 .castle[data-eliminated] .skin__starfield,
@@ -831,6 +885,7 @@
 .castle[data-eliminated] .skin__lava,
 .castle[data-eliminated] .skin__erupt,
 .castle[data-eliminated] .skin__bee,
+.castle[data-eliminated] .skin__silk-pulse,
 .castle[data-eliminated] .skin__spider,
 .castle[data-eliminated] .skin__web,
 .castle[data-eliminated] .skin__dangle,
@@ -869,6 +924,8 @@
   .skin__portal,
   .skin__galaxy,
   .skin__orbit,
+  .skin__planet-front,
+  .skin__planet-back,
   .skin__orbit-upright,
   .skin__core-glow,
   .skin__core-vein,
@@ -897,6 +954,7 @@
   .skin__lava,
   .skin__erupt,
   .skin__bee,
+  .skin__silk-pulse,
   .skin__spider,
   .skin__web,
   .skin__dangle,

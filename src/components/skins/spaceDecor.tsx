@@ -610,13 +610,20 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
         opacity={half === 'far' ? 0.3 : 0.55}
         strokeLinecap="round"
       />
-      {/* ⚠️ THE PLANETS RIDE THE NEAR PASS ONLY. Drawing them in both passes
-          renders each one twice — and since the near pass is unclipped, that
-          copy shows through the castle anyway, so the far copy buys nothing
-          but a second draw and a doubled edge. The rings carry the depth; the
-          planets stay in front. */}
-      {half === 'near' &&
-        o.planets.map((pl, i) => {
+      {/* ⚠️ EACH PLANET IS DRAWN TWICE, AND ONLY ONE COPY IS VISIBLE AT A TIME.
+          The rings alone used to carry the depth: the planets rode the near
+          pass, unclipped, and sailed straight THROUGH the keep on the half of
+          the lap they should have been hidden for.
+          The far copy is clipped (the castle covers it) and the near copy is
+          not, and a step-end opacity animation hands the planet from one to the
+          other at the two points where its ring crosses the castle. Both copies
+          run the ORBIT'S OWN duration and are offset by its phase, so the
+          hand-off happens at the same instant for both however the orbit is
+          tuned — see `skin-planet-front` / `skin-planet-back`.
+          Which half is which: the far arc sweeps over the TOP, and rotate() in
+          a y-down space turns clockwise, so angle 0→180 is the front (right,
+          bottom, left) and 180→360 is the back. */}
+      {o.planets.map((pl, i) => {
           /* ⚠️ A ROTATION DRAWS A CIRCLE, AND THESE RINGS ARE ELLIPSES. Spun
              on its own, a planet at radius `rx` leaves the ring it is supposed
              to be on the moment it turns — the first build sent one straight
@@ -635,8 +642,24 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
              stack up in one heap on the right. */
           const k = o.ry / o.rx
           const a = pl.phase * 360
+          /* ⚠️ THE BASE OPACITY IS THE STILL FRAME. With animation off — a
+             paused tab, a thumbnail, prefers-reduced-motion — the keyframes
+             never run, so each copy has to already be showing the right half:
+             a planet parked on the back of its lap is the clipped one. */
+          const onFarHalf = pl.phase >= 0.5
+          const visible =
+            half === 'far' ? (onFarHalf ? 1 : 0) : onFarHalf ? 0 : 1
           return (
-            <g key={i} transform={`translate(0 ${CY}) scale(1 ${k.toFixed(4)})`}>
+            <g
+              key={i}
+              className={half === 'far' ? 'skin__planet-back' : 'skin__planet-front'}
+              style={{
+                opacity: visible,
+                animationDuration: `${o.dur}s`,
+                animationDelay: `${-pl.phase * o.dur}s`,
+              }}
+            >
+            <g transform={`translate(0 ${CY}) scale(1 ${k.toFixed(4)})`}>
               <g transform={`rotate(${a})`}>
                 <g
                   className="skin__orbit"
@@ -677,6 +700,7 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
                 </g>
               </g>
             </g>
+            </g>
           )
         })}
     </g>
@@ -684,16 +708,29 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
 
   return (
     <g className="skin skin--cosmicnexus" opacity={eliminated ? 0.4 : 1} aria-hidden="true">
+      {/* "Everywhere except the castle": the frame, with the wall and the keep
+          punched out of it.
+          ⚠️ THE TWO HOLES MUST NOT OVERLAP. Under even-odd, a point inside all
+          three rectangles has crossed three edges — an ODD number — so it fills
+          again: the keep hole used to run to y −11 while the wall hole starts at
+          −25, and that 42×14 band where they crossed re-appeared as a pale
+          rectangle sitting on the castle, right under the keep. It is the same
+          fault that put a translucent rectangle on Mad Jester, and it was in
+          twenty-three skins. The keep hole now stops exactly where the wall
+          hole begins; the band is still excluded, by the wall. */}
       <clipPath id={`skin-nexus-outside-${uid}`} clipRule="evenodd">
         <path
           d="M -92 -128 L 92 -128 L 92 44 L -92 44 z
              M -53 -25 L 53 -25 L 53 31 L -53 31 z
-             M -21 -59 L 21 -59 L 21 -11 L -21 -11 z"
+             M -21 -59 L 21 -59 L 21 -25 L -21 -25 z"
           clipRule="evenodd"
         />
       </clipPath>
       <clipPath id={`skin-nexus-wall-${uid}`}>
         <rect x={-52} y={-24} width={104} height={54} rx={4} />
+      </clipPath>
+      <clipPath id={`skin-nexus-keep-${uid}`}>
+        <rect x={-20} y={-58} width={40} height={46} rx={3} />
       </clipPath>
       <defs>
         {/* ⚠️ THE FADE IS RADIAL FROM THE CORE, NOT LEFT-TO-RIGHT. A linear
@@ -717,6 +754,13 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
             <stop offset="100%" stopColor={c} stopOpacity="0" />
           </radialGradient>
         ))}
+        {/* The pool of light under a top edge: strongest at the stone's face
+            and gone within a dozen units, which is how a surface lit from just
+            above it falls off. */}
+        <linearGradient id={`skin-nexus-rim-${uid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={CORE} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={CORE} stopOpacity="0" />
+        </linearGradient>
         <radialGradient
           id={`skin-nexus-core-${uid}`}
           gradientUnits="userSpaceOnUse"
@@ -797,19 +841,97 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
         {ORBITS.map((o, i) => ring(o, 'far', 100 + i))}
       </g>
 
-      {/* ---- the core, burning inside the walls ------------------------- */}
+      {/* ---- the fortress itself ----------------------------------------
+          ⚠️ THE CASTLE HAD TO EARN ITS PLACE AT THE MIDDLE OF THIS. Everything
+          around it was a galaxy and the castle was four cream blocks on a flat
+          purple slab — the eye went to the orbits and slid off the thing they
+          were orbiting. A skin may draw OVER the sprite (decor layers last), so
+          this is where the fortress gets its stonework: courses cut into the
+          wall, a lit edge along every top, glow escaping from behind the
+          merlons, and fissures with the core showing through them. */}
+
+      {/* Wall: coursed stone. The seams are DARK, not light — a joint is a
+          shadow, and drawing them bright turns a wall into a grid. */}
       <g clipPath={`url(#skin-nexus-wall-${uid})`}>
+        {[-10, 4, 18].map((y, i) => (
+          <path
+            key={`c${i}`}
+            d={`M -52 ${y} L 52 ${y}`}
+            stroke="#0b0620"
+            strokeWidth={1.1}
+            opacity={0.55}
+            fill="none"
+          />
+        ))}
+        {/* Verticals, offset course to course the way stone is actually laid:
+            joints that line up read as tiling rather than as masonry. */}
         {[
-          'M -40 30 C -37 18 -41 8 -38 -4 C -36 -12 -39 -18 -37 -24',
-          'M -14 30 C -12 20 -16 10 -13 -2 C -11 -12 -14 -18 -12 -24',
-          'M 14 30 C 16 19 12 9 15 -3 C 17 -13 14 -19 16 -24',
-          'M 40 30 C 43 18 39 8 42 -4 C 44 -12 41 -18 43 -24',
+          [-38, -24, -10], [-12, -10, 4], [14, 4, 18], [-24, 18, 30],
+          [12, -24, -10], [36, -10, 4], [-40, 4, 18], [26, 18, 30],
+          [40, -24, -10], [-36, 18, 30],
+        ].map(([x, y0, y1], i) => (
+          <path
+            key={`v${i}`}
+            d={`M ${x} ${y0} L ${x} ${y1}`}
+            stroke="#0b0620"
+            strokeWidth={1}
+            opacity={0.45}
+            fill="none"
+          />
+        ))}
+        {/* The core showing through seams it has split open. They spread down
+            and OUT from under the keep, because that is where the light is;
+            the first pass ran four identical ribbons straight down the wall and
+            they read as candle wax. */}
+        {[
+          'M -8 -24 L -12 -13 L -7 -3 L -12 7',
+          'M 9 -24 L 13 -12 L 8 -1',
+          'M -33 -6 L -29 4 L -34 15',
+          'M 34 -10 L 30 1 L 35 12',
         ].map((d, i) => (
-          <g key={i} className="skin__core-vein" style={{ animationDelay: `${i * 0.7}s` }}>
-            <path d={d} fill="none" stroke={CORE} strokeWidth={5} opacity={0.16} strokeLinecap="round" />
-            <path d={d} fill="none" stroke={CORE} strokeWidth={1.4} opacity={0.85} strokeLinecap="round" />
+          <g key={`f${i}`} className="skin__core-vein" style={{ animationDelay: `${i * 0.55}s` }}>
+            <path d={d} fill="none" stroke={CORE} strokeWidth={3.4} opacity={0.1} strokeLinejoin="round" />
+            <path d={d} fill="none" stroke={CORE} strokeWidth={0.9} opacity={0.62} strokeLinejoin="round" />
           </g>
         ))}
+        {/* Brightest just under the battlements, falling away to shadow at the
+            foot — so the wall is a surface with a light above it rather than a
+            flat fill. */}
+        <rect x={-52} y={-24} width={104} height={13} fill={`url(#skin-nexus-rim-${uid})`} />
+        <rect x={-52} y={16} width={104} height={14} fill="#050212" opacity={0.4} />
+      </g>
+
+      {/* Keep: the same stone, fewer courses — a full grid on a block this
+          small turns to noise at 60%. */}
+      <g clipPath={`url(#skin-nexus-keep-${uid})`}>
+        {[-40, -24].map((y, i) => (
+          <path key={i} d={`M -20 ${y} L 20 ${y}`} stroke="#0b0620" strokeWidth={1} opacity={0.5} fill="none" />
+        ))}
+        {[[-7, -58, -40], [8, -40, -24], [-9, -24, -12]].map(([x, y0, y1], i) => (
+          <path
+            key={`kv${i}`}
+            d={`M ${x} ${y0} L ${x} ${y1}`}
+            stroke="#0b0620"
+            strokeWidth={0.9}
+            opacity={0.4}
+            fill="none"
+          />
+        ))}
+        {/* One crack, and it stops halfway. A fissure that runs the full height
+            of a face splits it in two and the block stops reading as solid. */}
+        <g className="skin__core-vein">
+          <path d="M -4 -52 L -7 -43 L -2 -34" fill="none" stroke={CORE} strokeWidth={3.2} opacity={0.1} strokeLinejoin="round" />
+          <path d="M -4 -52 L -7 -43 L -2 -34" fill="none" stroke={CORE} strokeWidth={0.85} opacity={0.6} strokeLinejoin="round" />
+        </g>
+        <rect x={-20} y={-58} width={40} height={11} fill={`url(#skin-nexus-rim-${uid})`} />
+      </g>
+
+      {/* ⚠️ A LIT EDGE, ON THE TOP FACES ONLY. One hairline of core colour
+          along each top turns a flat slab into a lit surface, and it is the
+          cheapest depth cue there is. Carried round the sides it is a border. */}
+      <g fill="none" stroke={CORE} opacity={0.5}>
+        <path d="M -50 -23.2 L 50 -23.2" strokeWidth={1.1} />
+        <path d="M -18.5 -57.2 L 18.5 -57.2" strokeWidth={1} />
       </g>
 
       {/* Out through the gate: the fortress is lit from within. */}
@@ -824,11 +946,23 @@ function CosmicNexus({ eliminated, uid }: DecorProps) {
         />
       </g>
 
-      {/* And out of the battlements. */}
-      {[-46, -30, 30, 46].map((x, i) => (
-        <g key={i} className="skin__core-vein" style={{ animationDelay: `${i * 0.55}s` }}>
-          <circle cx={x} cy={-26} r={5} fill={CORE} opacity={0.18} />
-          <circle cx={x} cy={-26} r={1.8} fill={CORE} />
+      {/* And out from behind the battlements.
+          ⚠️ MERLON CENTRES COME FROM THE SPRITE, NOT FROM THE EYE. The wall's
+          sit at −46, −24, 24 and 46 and the keep's at −15, 0 and 15; two of
+          these used to be at ±30, which is half a merlon out — close enough to
+          read as a mistake rather than as a decision. */}
+      {[
+        { x: -46, y: -26, s: 1 }, { x: -24, y: -26, s: 1 }, { x: 24, y: -26, s: 1 },
+        { x: 46, y: -26, s: 1 }, { x: -15, y: -59, s: 0.8 }, { x: 0, y: -59, s: 0.8 },
+        { x: 15, y: -59, s: 0.8 },
+      ].map((m, i) => (
+        <g key={i} className="skin__core-vein" style={{ animationDelay: `${i * 0.45}s` }}>
+          {/* ⚠️ TIGHT AND BRIGHT, NOT BROAD AND FAINT. A wide ellipse of pale
+              cream at low opacity over a dark wall is grey, and seven of them
+              sat on the battlements like caps of smoke. Small and bright reads
+              as light; large and dim reads as dirt. */}
+          <ellipse cx={m.x} cy={m.y - 4.5 * m.s} rx={4.4 * m.s} ry={2.6 * m.s} fill={CORE} opacity={0.3} />
+          <ellipse cx={m.x} cy={m.y - 4.5 * m.s} rx={2 * m.s} ry={1.2 * m.s} fill={CORE} opacity={0.75} />
         </g>
       ))}
 

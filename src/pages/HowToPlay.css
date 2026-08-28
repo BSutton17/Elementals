@@ -296,7 +296,13 @@
 
 .howto-orbit {
   position: relative;
-  width: min(300px, 66vw);
+  /* ⚠️ ONE VARIABLE, BECAUSE TWO PLACES NEED THE SAME NUMBER. The ring's
+     width and the distance each orb is thrown from the middle have to agree;
+     they were written out separately, so the short-screen rule below shrank the
+     ring to 133px while the orbs kept orbiting at a 150px radius — on a phone
+     held sideways they flew clean off the ring and landed on the text. */
+  --orbit-size: min(300px, 66vw);
+  width: var(--orbit-size);
   aspect-ratio: 1;
   margin: 0.75rem auto;
 }
@@ -340,7 +346,7 @@
   color: var(--orb-ink, #0b0e17);
   background: var(--orb-color);
   box-shadow: 0 0 18px color-mix(in srgb, var(--orb-color) 70%, transparent);
-  transform: rotate(var(--orb-angle)) translateY(calc(min(300px, 66vw) / -2 + 6px))
+  transform: rotate(var(--orb-angle)) translateY(calc(var(--orbit-size) / -2 + 6px))
     rotate(calc(-1 * var(--orb-angle)));
   /* The cycle is set on the ring (see ThroneStep): the orb pulses for the first
      part of it and rests for the remainder, so the wave fires in passes rather
@@ -819,7 +825,9 @@
   }
 
   .howto-orbit {
-    width: min(180px, 34vh);
+    /* Setting the variable moves the orbs with the ring; setting `width` alone
+       is what broke them. */
+    --orbit-size: min(180px, 34vh);
   }
 
   .howto-stage,

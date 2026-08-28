@@ -19,6 +19,7 @@ import {
   PERKS_PER_PLAYER,
   perksAllowedFor,
   hasFullPerkSelection,
+  perkDescription,
   resolvePerks,
   togglePerk,
 } from '../game/perks'
@@ -42,7 +43,15 @@ interface LobbyViewProps {
 }
 
 /** A player's chosen perks, as icon chips beside their name in the roster. */
-function PerkChips({ perks }: { perks: string[] | undefined }) {
+function PerkChips({
+  perks,
+  seats,
+}: {
+  perks: string[] | undefined
+  /** Seats at this table, so a hovered Better Construction shows what it is
+   *  actually worth here rather than its duel value. */
+  seats?: number
+}) {
   const chosen = resolvePerks(perks)
   if (chosen.length === 0) return null
   return (
@@ -54,7 +63,7 @@ function PerkChips({ perks }: { perks: string[] | undefined }) {
             key={p.id}
             className="lobby__perk-chip"
             style={{ '--p': p.color } as CSSProperties}
-            title={`${p.name} — ${p.description}`}
+            title={`${p.name} — ${perkDescription(p, seats)}`}
             aria-label={p.name}
           >
             <Icon aria-hidden />
@@ -197,6 +206,11 @@ export function LobbyView({
   // The kingdom-playing seats are capped; once full, only spectating is left.
   const maxActive = match.maxActivePlayers ?? 7
   const activeCount = match.players.filter((p) => !p.spectator && p.kingdomId !== null).length
+  // ⚠️ EVERY SEAT, SPECTATORS INCLUDED — because that is what the server counts
+  // when it builds the match config (`matchConfig.playerCount` is
+  // `match.getPlayers().length`). Showing the scaled perk bonus off a different
+  // count would be a prettier number and the wrong one.
+  const seatedForScaling = match.players.length
   const spectatorCount = match.players.filter((p) => p.spectator).length
   // A bot needs a kingdom seat like anyone else, so the button goes dead once
   // the playing seats are gone — the server refuses anyway, but a disabled
@@ -256,7 +270,7 @@ export function LobbyView({
                 {p.id === match.hostId && <span className="lobby__tag lobby__tag--host">Host</span>}
               </span>
               <span className="lobby__meta">
-                <PerkChips perks={p.perks} />
+                <PerkChips perks={p.perks} seats={seatedForScaling} />
                 {kingdomLabel(p.kingdomId) && (
                   <span className="lobby__kingdom">{kingdomLabel(p.kingdomId)}</span>
                 )}
@@ -462,7 +476,14 @@ export function LobbyView({
                     <Icon className="lobby__perk-icon" aria-hidden />
                     <span className="lobby__perk-text">
                       <span className="lobby__perk-name">{perk.name}</span>
-                      <span className="lobby__perk-desc">{perk.description}</span>
+                      {/* The real number for THIS table: Better Construction's
+                          shield bonus grows with the lobby (500 in a duel, 625
+                          at seven), and the picker is where that decision gets
+                          made. Every other perk is a percentage and reads the
+                          same at any size. */}
+                      <span className="lobby__perk-desc">
+                        {perkDescription(perk, seatedForScaling)}
+                      </span>
                     </span>
                   </button>
                 )

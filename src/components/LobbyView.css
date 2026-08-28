@@ -457,9 +457,15 @@
 
 .lobby__kingdom-name {
   display: block;
-  /* Long names (Electricity) shrink to fit rather than wrapping the tile to a
-     different height than its neighbours and breaking the grid's rhythm. */
   max-width: 100%;
+  /* ⚠️ `overflow-wrap: anywhere` WAS BREAKING THE WORD, not shrinking it —
+     "Electricity" came out as "Electricit" over "y", which reads as a rendering
+     fault. The longest name is eleven characters, so the fix is to make eleven
+     characters fit: a slightly smaller size for this label with the letters
+     drawn a touch tighter. The break rule stays as a last resort for anything
+     longer that gets added later, where two lines beats a clipped word. */
+  font-size: 0.66rem;
+  letter-spacing: -0.015em;
   overflow-wrap: anywhere;
 }
 

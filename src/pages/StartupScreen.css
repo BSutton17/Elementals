@@ -32,6 +32,12 @@
      the background and the dock fixed while the controls stay reachable. */
   max-height: 100%;
   overflow-y: auto;
+  /* ⚠️ AND EXPLICITLY NOT SIDEWAYS. Setting one axis to `auto` silently
+     promotes the other from `visible` to `auto`, so anything a pixel too wide
+     in here — a long room code, a translated label, a title — turns into a
+     horizontal scrollbar rather than being visibly wrong. Nothing in this
+     column is meant to be scrolled across. */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   width: 100%;
   max-width: 26rem;
@@ -66,7 +72,15 @@
 
 .startup__title {
   margin: 0;
-  font-size: clamp(3rem, 12vw, 7rem);
+  /* ⚠️ THE CAP IS SET BY THE COLUMN, NOT BY TASTE. "Elementals" measures
+     5.53 × its font-size in this stack (measured, not guessed), and the column
+     it sits in is 26rem wide less its own padding — 408px. At the old 7rem cap
+     the word came out 619px, so on any desktop it overflowed by 211px; because
+     `.startup__content` sets `overflow-y: auto`, the other axis computes to
+     `auto` too, and the title got a horizontal scrollbar of its own. 4.5rem is
+     the largest size that fits (398px), and nothing below 600px viewport width
+     changes at all — 12vw still governs there. */
+  font-size: clamp(3rem, 12vw, 4.5rem);
   font-weight: 800;
   letter-spacing: 0.02em;
   line-height: 1;
@@ -197,6 +211,7 @@
 }
 
 .startup__title--sm {
+  /* Same arithmetic, and this one is already inside the fit. */
   font-size: clamp(2.5rem, 10vw, 4rem);
 }
 
