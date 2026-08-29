@@ -257,6 +257,72 @@ describe('BattlefieldView — Air multi-select targeting', () => {
     expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['b', 'c'], undefined, undefined)
   })
 
+  it('gives the slot back when one of the selected kingdoms dies', () => {
+    // ⚠️ THE BUG THIS EXISTS FOR, AND IT ONLY BITES AT THE CAP. A dead pick
+    // used to go on occupying one of Air's three slots: casting and the rings
+    // both filtered it out, so it LOOKED right, but the cap was measured
+    // against the raw list — and an eliminated castle has no click handler, so
+    // there was no way to hand the slot back. Kill one of three targets and the
+    // player was stuck at the limit for the rest of the match, every new pick
+    // silently ignored. Fewer than three selected and nothing goes wrong, which
+    // is why this fills all three before killing one.
+    const five: LobbyMatch = {
+      ...airMatch,
+      players: [
+        ...airMatch.players,
+        { id: 'd', name: 'Dane', kingdomId: 'fire', ready: true, connected: true, socketId: 's4' },
+        { id: 'e', name: 'Elle', kingdomId: 'ice', ready: true, connected: true, socketId: 's5' },
+      ],
+    }
+    const extra = (id: string, name: string, kingdomId: string): GamePlayer => ({
+      id,
+      name,
+      kingdomId,
+      castle: { hp: 10_000, maxHp: 10_000, shield: 0 },
+      economy: { citizens: 10, currency: 0, incomePerTick: 2 },
+      target: null,
+      eliminated: false,
+    })
+    const players = [...airGame(), extra('d', 'Dane', 'fire'), extra('e', 'Elle', 'ice')]
+
+    const { container, rerender } = render(
+      <BattlefieldView match={five} youId="a" players={players} />,
+    )
+    // Fill the limit: Air takes three.
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    fireEvent.click(screen.getByLabelText('Target Cleo'))
+    fireEvent.click(screen.getByLabelText('Target Dane'))
+    // A fourth is refused while all three are alive — the cap still holds.
+    fireEvent.click(screen.getByLabelText('Target Elle'))
+    expect(site(container, 'e').querySelector('[data-testid="target-ring"]')).toBeNull()
+
+    // Bob dies, which should free his slot.
+    const dead = players.map((p) =>
+      p.id === 'b' ? { ...p, eliminated: true, castle: { ...p.castle, hp: 0 } } : p,
+    )
+    rerender(<BattlefieldView match={five} youId="a" players={dead} />)
+    expect(site(container, 'b').querySelector('[data-testid="target-ring"]')).toBeNull()
+
+    fireEvent.click(screen.getByLabelText('Target Elle'))
+    expect(site(container, 'e').querySelector('[data-testid="target-ring"]')).toBeTruthy()
+    expect(site(container, 'c').querySelector('[data-testid="target-ring"]')).toBeTruthy()
+    expect(site(container, 'd').querySelector('[data-testid="target-ring"]')).toBeTruthy()
+  })
+
+  it('casts at the survivors only, never at a kingdom that has died', () => {
+    const players = airGame()
+    const { rerender } = render(
+      <BattlefieldView match={airMatch} youId="a" players={players} />,
+    )
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    fireEvent.click(screen.getByLabelText('Target Cleo'))
+
+    const dead = players.map((p) => (p.id === 'b' ? { ...p, eliminated: true, castle: { ...p.castle, hp: 0 } } : p))
+    rerender(<BattlefieldView match={airMatch} youId="a" players={dead} />)
+    fireEvent.click(screen.getByLabelText('Cast A Light Breeze'))
+    expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['c'], undefined, undefined)
+  })
+
   it('non-multi kingdoms keep single, server-tracked targeting', () => {
     // Alice is Fire — clicking sets one server target, not a local set.
     render(<BattlefieldView match={match} youId="a" players={game()} />)

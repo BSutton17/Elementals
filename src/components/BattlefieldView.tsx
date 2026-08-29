@@ -219,20 +219,40 @@ export function BattlefieldView({
   const localSelect = usesLocalTargeting(you.kingdomId) || grantedLimit > 1
   const selectLimit = Math.max(localSelectLimit(you.kingdomId), grantedLimit)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const activeSelected = selectedIds.filter((id) =>
-    roster.some((p) => p.id === id && p.id !== youId && !p.eliminated),
-  )
+  /**
+   * Whether a selected id is still worth holding a slot: a living opponent, or
+   * the volcano while it stands.
+   *
+   * ⚠️ THE VOLCANO COUNTS. It is not on the roster — it is not a kingdom —
+   * so a roster-only test silently dropped it from the selection the moment it
+   * was picked, which meant Air and a Dark player holding Infinitum Tenebrae
+   * could not attack "The End of the World" at all.
+   */
+  const stillTargetable = (id: string) =>
+    id === VOLCANO_TARGET_ID
+      ? !!volcano && volcano.hp > 0
+      : roster.some((p) => p.id === id && p.id !== youId && !p.eliminated)
+  const activeSelected = selectedIds.filter(stillTargetable)
   const isTargeted = (id: string) =>
     localSelect ? activeSelected.includes(id) : you?.target === id
   const toggleTarget = (id: string) => {
     if (localSelect) {
-      setSelectedIds((prev) =>
-        prev.includes(id)
-          ? prev.filter((x) => x !== id)
-          : prev.length >= selectLimit // cap (Air 3, Love 2)
-            ? prev
-            : [...prev, id],
-      )
+      setSelectedIds((prev) => {
+        /* ⚠️ THE CAP COUNTS LIVING TARGETS ONLY, AND THIS IS WHY. The stored
+           list kept ids of kingdoms that had since been eliminated. Casting and
+           the target rings both filtered them out, so everything LOOKED right
+           — but the cap was measured against the raw list, so a dead pick went
+           on occupying one of the three slots, and an eliminated castle has no
+           click handler, so there was no way to give the slot back. Kill one of
+           an Air player's three targets and they were stuck at the limit for
+           the rest of the match, with new picks silently ignored.
+           Pruning here rather than in an effect keeps it a pure function of the
+           click: no extra render, and the stored list repairs itself the next
+           time it is touched. */
+        const live = prev.filter(stillTargetable)
+        if (live.includes(id)) return live.filter((x) => x !== id)
+        return live.length >= selectLimit ? live : [...live, id] // cap (Air 3, Love 2)
+      })
     } else {
       void changeTarget(id)
     }
