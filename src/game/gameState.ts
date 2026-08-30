@@ -1,4 +1,5 @@
 import { socket } from '../sockets/socket'
+import type { MonsterKind } from '../components/monster/monsters'
 
 // Client mirror of the server's `state:sync` broadcast (gameSync.ts): each
 // player's live castle, economy, and targeting state. This is the data source
@@ -187,6 +188,33 @@ export interface VolcanoSnapshot {
 }
 
 /**
+ * The monster standing in the middle of the field.
+ *
+ * It belongs to nobody and it has no clock: `ticksUntilAttack` counts down to
+ * its NEXT swing, not to its departure, and it starts again every time one
+ * lands. The only way it leaves is dead.
+ */
+export interface MonsterSnapshot {
+  hp: number
+  maxHp: number
+  /** What its next successful swing costs every kingdom — it climbs. */
+  attackDamage: number
+  /** Ticks until that swing. Reset on every cycle, never runs out. */
+  ticksUntilAttack: number
+  /**
+   * Which creature it is.
+   *
+   * ⚠️ OPTIONAL, AND THE SERVER OWNS IT. Every client has to see the same
+   * monster, so the choice cannot be made on this side: two players looking at
+   * different creatures in the same match is worse than everyone seeing the
+   * same placeholder. Absent, the layer falls back to one look and still draws
+   * the health bar and the hit area, so a client one release behind stays
+   * playable.
+   */
+  kind?: MonsterKind
+}
+
+/**
  * Insects' "Caprice", as everyone sees it. Synced to the whole table: the
  * butterfly is everybody's problem, and the client needs to know when to stop
  * offering a targeting UI the server is about to overrule anyway.
@@ -204,6 +232,8 @@ export interface GameState {
   /** The volcano standing in the middle of the field, or null when there
    *  isn't one. */
   volcano: VolcanoSnapshot | null
+  /** The monster in the middle of the field, or null when there is none. */
+  monster: MonsterSnapshot | null
   /** The butterfly holding the field, or null when there is none. */
   caprice: CapriceSnapshot | null
   /** The NAME of whatever holds the middle of the battlefield, or null when it
@@ -218,6 +248,7 @@ let state: GameState = {
   serverTime: null,
   players: [],
   volcano: null,
+  monster: null,
   caprice: null,
   centrepiece: null,
 }
@@ -279,6 +310,7 @@ export function applyStateSync(payload: {
   serverTime: number
   players: GamePlayer[]
   volcano?: VolcanoSnapshot | null
+  monster?: MonsterSnapshot | null
   caprice?: CapriceSnapshot | null
   centrepiece?: string | null
 }): void {
@@ -287,6 +319,7 @@ export function applyStateSync(payload: {
     serverTime: payload.serverTime,
     players: withPaint(payload.players),
     volcano: payload.volcano ?? null,
+    monster: payload.monster ?? null,
     caprice: payload.caprice ?? null,
     centrepiece: payload.centrepiece ?? null,
   }
@@ -301,6 +334,7 @@ export function clearGameState(): void {
     serverTime: null,
     players: [],
     volcano: null,
+  monster: null,
     caprice: null,
     centrepiece: null,
   }

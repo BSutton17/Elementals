@@ -876,7 +876,7 @@ export const ABILITY_METADATA: Record<string, ClientAbilityMetadata> = {
   floorIsLava: {
     id: 'floorIsLava',
     name: 'Floor is Lava',
-    description: 'Set the whole battlefield alight: while active, all burn damage has increased damage for EVERY kingdom, and the ground itself burns every other kingdom for 1 a tick. While it burns you also deal 10% more damage with every attack.',
+    description: 'Set the whole battlefield alight: while active, all burn damage has increased globally and the ground itself burns every other kingdom as well. While it burns you also deal 10% more damage with every attack.',
     hotkey: 'F',
     kind: 'utility',
     element: 'magma',

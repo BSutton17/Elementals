@@ -1,0 +1,213 @@
+/* The monster in the middle of the arena.
+   Sizes are in SVG user units (the 1000×1000 arena viewBox). */
+
+.monster-layer__shadow {
+  fill: rgba(0, 0, 0, 0.5);
+}
+
+/* ⚠️ THE WHOLE CREATURE BREATHES, AND THAT IS ALL IT DOES BY DEFAULT. This
+   thing stands in the middle of the board for a minute or more while seven
+   castles fight around it, so anything faster than a slow swell competes with
+   the actual game for attention. Each species then gets ONE motion of its own
+   below — the wings, the legs, the blade — which is what makes them read as
+   different animals rather than different drawings. */
+.monster-layer__body {
+  animation: monster-breathe 4.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+@keyframes monster-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.014, 0.988); }
+}
+
+/* Anything glowing — eyes, veins, embers — pulses on its own slower clock, so
+   the light never lines up with the breath and read as one mechanical beat. */
+.monster__glow {
+  animation: monster-glow 3.1s ease-in-out infinite;
+}
+
+@keyframes monster-glow {
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
+}
+
+/* The bat's wings beat — slowly, and by SHORTENING across their span rather
+   than flapping, because a wing seen from the front foreshortens. The mirror
+   lives on the wing's own group and this animation on the wrapper: a CSS
+   transform beats a transform attribute on the same element, which is the bug
+   that once left a leviathan with both fins on one side. */
+.monster__wing--left,
+.monster__wing--right {
+  transform-box: fill-box;
+  animation: monster-wing 3.6s ease-in-out infinite;
+}
+
+.monster__wing--left {
+  transform-origin: right bottom;
+}
+
+.monster__wing--right {
+  transform-origin: left bottom;
+}
+
+@keyframes monster-wing {
+  0%, 100% { transform: scaleX(1) rotate(0deg); }
+  50% { transform: scaleX(0.9) rotate(-2.5deg); }
+}
+
+/* The dragon's folded wing shifts its weight rather than beating: it is not
+   flying, it is deciding whether to. */
+.monster__wing--furled {
+  transform-box: fill-box;
+  transform-origin: right bottom;
+  animation: monster-furled 6.2s ease-in-out infinite;
+}
+
+@keyframes monster-furled {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-2deg); }
+}
+
+/* The spider's raised front pair saws slowly up and down — the threat display
+   a real one makes. The six planted legs never move: feet that slide are a
+   creature skating, and the braced stance is what makes it look heavy. */
+.monster__legs--raised {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: monster-saw 2.8s ease-in-out infinite;
+}
+
+@keyframes monster-saw {
+  0%, 100% { transform: rotate(-1.8deg) translateY(0); }
+  50% { transform: rotate(1.8deg) translateY(-6px); }
+}
+
+/* The goblin's cleaver rocks in its grip, so the one straight edge on the
+   creature is never quite still. */
+.monster__blade {
+  transform-box: fill-box;
+  transform-origin: left bottom;
+  animation: monster-blade 3.4s ease-in-out infinite;
+}
+
+@keyframes monster-blade {
+  0%, 100% { transform: rotate(-2.4deg); }
+  50% { transform: rotate(3.2deg); }
+}
+
+/* --- the HUD --------------------------------------------------------------- */
+
+.monster-layer__name {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: #e8ecf5;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.65);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.monster-layer__bar-bg {
+  fill: rgba(0, 0, 0, 0.55);
+  stroke: rgba(255, 255, 255, 0.22);
+  stroke-width: 2;
+}
+
+/* Not a kingdom colour: this thing is nobody's, and a bar in somebody's colour
+   would suggest it belonged to whoever was nearest. */
+.monster-layer__bar-fill {
+  fill: #c3402f;
+}
+
+.monster-layer__hp {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: #f2f5fb;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.7);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.monster-layer__threat {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: #ffb9a8;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.7);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+/* The three seconds where a shield still helps. */
+.monster-layer__threat--imminent {
+  fill: #ff6a4d;
+  animation: monster-threat 0.7s ease-in-out infinite;
+}
+
+@keyframes monster-threat {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.monster-layer__hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.monster-layer__reticle {
+  fill: none;
+  stroke: #ff6a4d;
+  stroke-width: 3;
+  stroke-dasharray: 16 12;
+  animation: monster-reticle 1.4s linear infinite;
+}
+
+@keyframes monster-reticle {
+  to { stroke-dashoffset: -28; }
+}
+
+/* --- death ---------------------------------------------------------------- */
+
+/* It falls forward and fades. ⚠️ IT DOES NOT SHRINK: something that scales to
+   nothing reads as a UI element closing, and this is the one moment in the
+   match the table has been working towards together. */
+.monster-layer--dying {
+  animation: monster-die 2.2s ease-in forwards;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+
+@keyframes monster-die {
+  0% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  35% { transform: rotate(-4deg) translateY(0); }
+  100% { opacity: 0; transform: rotate(16deg) translateY(26px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monster-layer__body,
+  .monster__glow,
+  .monster__wing--left,
+  .monster__wing--right,
+  .monster__wing--furled,
+  .monster__legs--raised,
+  .monster__blade,
+  .monster-layer__threat--imminent,
+  .monster-layer__reticle,
+  .monster-layer--dying {
+    animation: none;
+  }
+
+  /* The corpse still has to leave, it just leaves without theatre. */
+  .monster-layer--dying {
+    opacity: 0;
+    transition: opacity 0.4s linear;
+  }
+}

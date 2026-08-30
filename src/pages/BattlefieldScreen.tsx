@@ -67,6 +67,7 @@ export function BattlefieldScreen() {
           players={game.players}
           tick={game.tick}
           volcano={game.volcano}
+          monster={game.monster}
           caprice={game.caprice}
           centrepiece={game.centrepiece}
           spectator

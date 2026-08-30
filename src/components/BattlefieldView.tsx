@@ -17,6 +17,7 @@ import {
   MULTI_SELECT_ABILITIES,
 } from '../game/kingdoms'
 import { placeKingdoms, VOLCANO_TARGET_ID } from '../game/placement'
+import { MONSTER_TARGET_ID } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
 // import { TargetIndicator } from './TargetIndicator'
@@ -25,6 +26,7 @@ import { LightShowLayer } from './lightShow/LightShowLayer'
 import { WagerResultLayer } from './wager/WagerResultLayer'
 import { HotAshLayer } from './hotAsh/HotAshLayer'
 import { VolcanoLayer } from './volcano/VolcanoLayer'
+import { MonsterLayer } from './monster/MonsterLayer'
 import { CapriceButterfly } from './caprice/CapriceButterfly'
 import { BlackHoleAccumulator } from './BlackHoleAccumulator'
 import { FloatingNumbers } from './FloatingNumbers'
@@ -37,7 +39,12 @@ import { LuckyDrawOverlay } from './cards/LuckyDrawOverlay'
 import { useScrambleValues } from './scramble/useScrambleValues'
 import { getAbilitiesForKingdom } from '../game/abilities'
 import { castAbility, buyItem, buyUpgrade, changeTarget } from '../game/matchStore'
-import type { CapriceSnapshot, GamePlayer, VolcanoSnapshot } from '../game/gameState'
+import type {
+  CapriceSnapshot,
+  GamePlayer,
+  MonsterSnapshot,
+  VolcanoSnapshot,
+} from '../game/gameState'
 import type { LobbyMatch } from '../game/lobby'
 import './BattlefieldView.css'
 
@@ -90,6 +97,7 @@ export function BattlefieldView({
   tick = 0,
   spectator = false,
   volcano = null,
+  monster = null,
   caprice = null,
   centrepiece = null,
 }: {
@@ -102,6 +110,8 @@ export function BattlefieldView({
   spectator?: boolean
   /** Magma's volcano, when one is standing. Shown to everyone. */
   volcano?: VolcanoSnapshot | null
+  /** The monster, when one is standing. Shown to everyone. */
+  monster?: MonsterSnapshot | null
   /** Insects' butterfly, when one is out. Shown to everyone. */
   caprice?: CapriceSnapshot | null
   /** The NAME of whatever holds the middle of the field, or null when clear.
@@ -437,6 +447,21 @@ export function BattlefieldView({
             field. Over the arena furniture but under the kingdoms, so it never
             hides a castle it is not supposed to be hiding. */}
         <CapriceButterfly active={caprice !== null} />
+
+        {/* Layer: the monster — nobody's, everybody's problem. Same place in
+            the stack as the volcano and for the same reasons: over the arena
+            furniture so it reads as standing ON the field, under the kingdoms
+            so it can never hide a castle, and visible to spectators too. */}
+        <MonsterLayer
+          monster={monster ?? null}
+          tickRate={tickRate}
+          targeted={you?.target === MONSTER_TARGET_ID}
+          onTarget={
+            !spectator && you && !you.eliminated
+              ? () => toggleTarget(MONSTER_TARGET_ID)
+              : undefined
+          }
+        />
 
         {/* Layer: Magma's volcano — the mountain in the middle of the field.
             Under the kingdoms so the castles are never hidden behind it, but

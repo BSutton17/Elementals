@@ -41,3 +41,9 @@ export function placeKingdoms(
  * "The End of the World"). Must match the server's `VOLCANO_TARGET_ID`.
  */
 export const VOLCANO_TARGET_ID = '__volcano__'
+
+/**
+ * The same idea for the monster, which is also a target and also not a kingdom.
+ * Must match the server's `MONSTER_TARGET_ID`.
+ */
+export const MONSTER_TARGET_ID = '__monster__'
