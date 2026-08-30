@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { connectSocket, disconnectSocket, socket } from './sockets/socket'
-import { identify } from './sockets/session'
+import { authenticate, identify } from './sockets/session'
 import { useLobby } from './game/useLobby'
 import { resumeMatch } from './game/lobbyStore'
+import { getToken } from './game/auth'
+import { setAdmin } from './game/adminStore'
 import { StartupScreen } from './pages/StartupScreen'
 import { JoinScreen } from './pages/JoinScreen'
 import { SearchingScreen } from './pages/SearchingScreen'
@@ -40,13 +42,28 @@ function App() {
     const onConnect = () => {
       // Identify our session, then resume a persisted match if there is one.
       void identify(socket).then(() => resumeMatch())
+      // And, separately, say which account is on this socket. Signed out is a
+      // fine answer — it just means the admin-only controls stay hidden.
+      //
+      // The handshake already carried this token, so the server usually knows
+      // us before we ask and pushes the answer back as `conn:you` (below).
+      // Asking as well covers the case that push cannot: signing in WITHOUT
+      // reconnecting, where the handshake happened while we were still a guest.
+      void authenticate(socket, getToken()).then(({ admin }) => setAdmin(admin))
     }
+    // Pushed by the server once it has resolved the account behind the
+    // handshake token — a database read it deliberately does not make the
+    // connection wait for.
+    const onWhoami = (you: { admin?: boolean }) => setAdmin(you?.admin === true)
+
     socket.on('connect', onConnect)
+    socket.on('conn:you', onWhoami)
     connectSocket()
     if (socket.connected) onConnect()
 
     return () => {
       socket.off('connect', onConnect)
+      socket.off('conn:you', onWhoami)
       disconnectSocket()
     }
   }, [])

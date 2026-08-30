@@ -1,5 +1,6 @@
 import { LobbyView } from '../components/LobbyView'
 import { useLobby } from '../game/useLobby'
+import { useIsAdmin } from '../game/adminStore'
 import {
   addBot,
   leaveRoom,
@@ -7,7 +8,7 @@ import {
   setBotDifficulty,
   selectKingdom,
   selectPerks,
-  setEliminatedSeeAllHealth,
+  setRoomRules,
   spectate,
   startMatch,
   toggleReady,
@@ -19,6 +20,7 @@ import {
  */
 export function LobbyScreen() {
   const { match, youId } = useLobby()
+  const isAdmin = useIsAdmin()
   if (!match) return null
 
   return (
@@ -28,7 +30,8 @@ export function LobbyScreen() {
       onToggleReady={() => void toggleReady()}
       onSelectKingdom={(k) => void selectKingdom(k)}
       onSelectPerks={(p) => void selectPerks(p)}
-      onSetEliminatedSeeAllHealth={(on) => void setEliminatedSeeAllHealth(on)}
+      onSetRules={(rules) => void setRoomRules(rules)}
+      isAdmin={isAdmin}
       onSpectate={() => void spectate()}
       onStart={() => void startMatch()}
       onLeave={() => void leaveRoom()}

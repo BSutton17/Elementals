@@ -9,6 +9,10 @@
  * This module never decides anything about identity. It carries envelopes.
  */
 
+import { socket } from '../sockets/socket'
+import { authenticate } from '../sockets/session'
+import { setAdmin } from './adminStore'
+
 /** Same resolution rule as the socket: explicit env wins, else dev/prod default. */
 const PROD_SERVER_URL = 'https://elementals-c1937bd8ae33.herokuapp.com'
 const DEV_SERVER_URL = 'http://localhost:3001'
@@ -100,6 +104,10 @@ export async function signInWithGoogle(idToken: string): Promise<SignedInUser | 
       // Storage unavailable: the sign-in still worked for this page load, it
       // just will not be remembered. Not worth failing over.
     }
+    // The live socket still thinks we are a guest — it was authenticated at
+    // connect time, before this token existed. Re-present it so account-gated
+    // controls appear without a reload.
+    void refreshSocketAccount()
     return { username, needsUsername, suggestedName, needsAge: needsAge ?? false }
   } catch (error) {
     // Server down, offline, CORS. All the same to the player: not signed in.
@@ -487,5 +495,23 @@ export function signOut(): void {
     localStorage.removeItem(NAME_KEY)
   } catch {
     // Nothing stored, nothing to clear.
+  }
+  // Drop the account from the socket as well. Leaving it attached would keep a
+  // signed-out tab holding admin rights on the server until it reconnects.
+  void refreshSocketAccount()
+}
+
+/**
+ * Re-presents whatever token we now hold to the live socket.
+ *
+ * Sign-in and sign-out both change who we are mid-connection, and the socket
+ * learned our account once, at connect. This is how it finds out.
+ */
+async function refreshSocketAccount(): Promise<void> {
+  try {
+    const { admin } = await authenticate(socket, getToken())
+    setAdmin(admin)
+  } catch {
+    // Socket down: it authenticates again on its next connect anyway.
   }
 }

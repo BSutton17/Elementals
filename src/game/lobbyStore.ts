@@ -198,14 +198,18 @@ export async function selectPerks(perks: readonly string[]): Promise<void> {
 }
 
 /**
- * Host-only room rule: whether an eliminated player keeps seeing every
- * surviving kingdom's health. Rejected by the server for anyone else, and once
- * the match has started.
+ * Admin-only: change one or both of the room's optional rules.
+ *
+ * Each field is optional and only what is passed changes, so the options panel
+ * can send a single switch without having to restate the other one. The server
+ * re-checks the account on every call and refuses in public rooms — hiding the
+ * panel is presentation, not the permission.
  */
-export async function setEliminatedSeeAllHealth(on: boolean): Promise<void> {
-  const res = (await socket.emitWithAck('lobby:setRules', {
-    eliminatedSeeAllHealth: on,
-  })) as Ack
+export async function setRoomRules(rules: {
+  eliminatedSeeAllHealth?: boolean
+  monstersEnabled?: boolean
+}): Promise<void> {
+  const res = (await socket.emitWithAck('lobby:setRules', rules)) as Ack
   if (!res.ok) setState({ error: res.error?.message ?? 'Cannot change that rule' })
 }
 

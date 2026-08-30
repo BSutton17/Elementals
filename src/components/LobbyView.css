@@ -18,11 +18,20 @@
 }
 
 /* Small "How to Play" pill pinned to the lobby's top-right corner. */
-.lobby__howto {
+/* Top-right cluster: How to Play, and the admin gear when there is one. They
+   share a corner, so they share a container rather than each claiming the same
+   absolute coordinates and overlapping. */
+.lobby__corner {
   position: absolute;
   top: 0.9rem;
   right: 0.9rem;
-  z-index: 5;
+  z-index: 20;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.lobby__howto {
   padding: 0.35rem 0.85rem;
   font-size: 0.82rem;
   font-weight: 600;
@@ -806,49 +815,30 @@
   cursor: pointer;
 }
 
-/* Host-only room rules. Visible to everyone so the table knows the game they
-   have agreed to; the checkbox is disabled for anyone but the host. */
+/* A read-only line of the optional rules this room has switched on, so the
+   table knows the game they have agreed to. The switches themselves live in the
+   admin gear in the corner (see RoomOptions.css). */
 .lobby__rules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.6rem;
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.lobby__rule {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.55rem;
-  cursor: pointer;
-}
-
-.lobby__rule:has(.lobby__rule-box:disabled) {
-  cursor: default;
-  opacity: 0.72;
-}
-
-.lobby__rule-box {
-  margin-top: 0.15rem;
-  width: 1rem;
-  height: 1rem;
-  accent-color: #4aa3ff;
-  flex: 0 0 auto;
-}
-
-.lobby__rule-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.lobby__rule-name {
-  font-size: 0.86rem;
-  font-weight: 600;
-  color: #e8ecf5;
-}
-
-.lobby__rule-desc {
-  font-size: 0.74rem;
+.lobby__rules-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: #8b93a7;
+}
+
+.lobby__rules-list {
+  font-size: 0.82rem;
+  color: #cbd3e1;
 }
 
 /* ---- Bots in the roster ------------------------------------------------ */

@@ -24,6 +24,7 @@ import {
   togglePerk,
 } from '../game/perks'
 import './LobbyView.css'
+import { RoomOptions } from './lobby/RoomOptions'
 
 interface LobbyViewProps {
   match: LobbyMatch
@@ -31,8 +32,10 @@ interface LobbyViewProps {
   onToggleReady: () => void
   onSelectKingdom: (kingdom: KingdomId) => void
   onSelectPerks: (perks: string[]) => void
-  /** Host-only: toggle whether eliminated players keep seeing health bars. */
-  onSetEliminatedSeeAllHealth?: (on: boolean) => void
+  /** Admin-only: change one or both of the room's optional rules. */
+  onSetRules?: (rules: { eliminatedSeeAllHealth?: boolean; monstersEnabled?: boolean }) => void
+  /** Whether to draw the admin gear. The server re-checks before it acts. */
+  isAdmin?: boolean
   onSpectate: () => void
   onStart: () => void
   onLeave: () => void
@@ -162,7 +165,8 @@ export function LobbyView({
   onToggleReady,
   onSelectKingdom,
   onSelectPerks,
-  onSetEliminatedSeeAllHealth,
+  onSetRules,
+  isAdmin = false,
   onSpectate,
   onStart,
   onLeave,
@@ -171,6 +175,7 @@ export function LobbyView({
   onRemoveBot,
 }: LobbyViewProps) {
   const [showHowTo, setShowHowTo] = useState(false)
+  const [showOptions, setShowOptions] = useState(false)
   const me = match.players.find((p) => p.id === youId)
   const isReady = me?.ready ?? false
   const isSpectator = me?.spectator === true
@@ -228,20 +233,44 @@ export function LobbyView({
         : !allHavePerks
           ? 'Everyone must pick a full set of perks'
           : 'Everyone must ready up'
+  // Only what is ON. "Monsters off" in a list of rules reads like a feature the
+  // room is missing; the interesting information is what has been switched on.
+  const activeRules: string[] = []
+  if (match.eliminatedSeeAllHealth === true) activeRules.push('Elimination vision')
+  if (match.monstersEnabled !== false) activeRules.push('Monsters')
+
   const kingdomLabel = (id: string | null) =>
     KINGDOMS.find((k) => k.id === id)?.label ?? null
 
   return (
     <main className="lobby">
       <RoomCode code={match.roomCode} />
-      <button
-        type="button"
-        className="lobby__howto"
-        onClick={() => setShowHowTo(true)}
-        aria-label="How to play"
-      >
-        ? How to Play
-      </button>
+      <div className="lobby__corner">
+        <button
+          type="button"
+          className="lobby__howto"
+          onClick={() => setShowHowTo(true)}
+          aria-label="How to play"
+        >
+          ? How to Play
+        </button>
+        {/* ⚠️ ADMIN AND PRIVATE ONLY. These two switches change what a match
+            IS, so while they are being tuned they belong to the account that
+            owns the game rather than to whoever clicked Create Room — and
+            neither is something a stranger in matchmaking should be able to
+            turn on for you. The server refuses both cases as well; this only
+            keeps the UI honest. */}
+        {isAdmin && !isPublic && (
+          <RoomOptions
+            open={showOptions}
+            onOpenChange={setShowOptions}
+            eliminatedSeeAllHealth={match.eliminatedSeeAllHealth ?? false}
+            monstersEnabled={match.monstersEnabled ?? true}
+            onChange={(rules) => onSetRules?.(rules)}
+            disabled={match.phase !== 'lobby'}
+          />
+        )}
+      </div>
       {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
 
       <div className="lobby__body">
@@ -377,36 +406,14 @@ export function LobbyView({
           })}
         </div>
 
-        {/* Host-only room rules. Shown to everyone so the table knows what
-            game they've agreed to, but only the host can change them.
-
-            ⚠️ HIDDEN ENTIRELY IN A PUBLIC ROOM, not just disabled. Seeing every
-            surviving kingdom's health after dying is an advantage handed to
-            someone who can no longer be punished for it, and among friends it
-            is also a coaching channel — both are fine when a table agrees to
-            them and neither is something a stranger should switch on for you.
-            The server refuses it as well; this only keeps the UI honest. */}
-        {!isPublic && (
-        <div className="lobby__rules">
-          <label className="lobby__rule">
-            <input
-              type="checkbox"
-              className="lobby__rule-box"
-              checked={match.eliminatedSeeAllHealth ?? false}
-              disabled={!isHost}
-              onChange={(e) => onSetEliminatedSeeAllHealth?.(e.target.checked)}
-              data-testid="rule-eliminated-see-all"
-            />
-            <span className="lobby__rule-text">
-              <span className="lobby__rule-name">Eliminated players see all health</span>
-              <span className="lobby__rule-desc">
-                {isHost
-                  ? 'Once knocked out, a player can watch every surviving kingdom’s health.'
-                  : 'Set by the host.'}
-              </span>
-            </span>
-          </label>
-        </div>
+        {/* What the table has agreed to, for everyone to see. Read-only: the
+            switches themselves live behind the admin gear in the corner, and a
+            room with nothing switched on shows nothing at all. */}
+        {!isPublic && activeRules.length > 0 && (
+          <div className="lobby__rules" data-testid="lobby-rules">
+            <span className="lobby__rules-label">Room options</span>
+            <span className="lobby__rules-list">{activeRules.join(' · ')}</span>
+          </div>
         )}
 
         <div className="lobby__spectate-row">

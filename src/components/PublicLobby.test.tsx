@@ -59,18 +59,57 @@ describe('a public lobby', () => {
     expect(screen.queryByRole('button', { name: /start match/i })).toBeNull()
   })
 
-  it('hides the see-all-health rule entirely rather than disabling it', () => {
-    // ⚠️ HIDDEN, NOT GREYED OUT. It is an advantage handed to a player who can
-    // no longer be punished for having it, and a stranger should not be able to
-    // switch it on for you. The server refuses it too — this keeps the UI
-    // honest rather than being the check itself.
-    renderPublic(publicMatch())
-    expect(screen.queryByTestId('rule-eliminated-see-all')).toBeNull()
-    expect(screen.queryByText(/eliminated players see all health/i)).toBeNull()
+  it('hides the options gear entirely, even from an admin', () => {
+    // ⚠️ HIDDEN, NOT GREYED OUT, AND NOT EVEN FOR THE ADMIN. Elimination vision
+    // is an advantage handed to a player who can no longer be punished for
+    // having it, and a monster is a shared emergency that costs everyone gold
+    // and attention. A stranger in matchmaking queued for neither. The server
+    // refuses both in a public room too — this keeps the UI honest rather than
+    // being the check itself.
+    render(
+      <LobbyView
+        match={publicMatch()}
+        youId="b"
+        isAdmin
+        onToggleReady={noop}
+        onSelectKingdom={noop}
+        onSelectPerks={noop}
+        onSpectate={noop}
+        onStart={noop}
+        onLeave={noop}
+      />,
+    )
+    expect(screen.queryByTestId('room-options-gear')).toBeNull()
   })
 
-  it('still shows that rule in a private room', () => {
-    // The control belongs to a table of friends who agreed to it.
+  it('does not advertise the rules a public room cannot have', () => {
+    // `monstersEnabled` is forced off server-side for a public match, so the
+    // summary line has nothing to list — and it must not appear regardless.
+    renderPublic(publicMatch())
+    expect(screen.queryByTestId('lobby-rules')).toBeNull()
+  })
+
+  it('shows the gear to an admin in a private room', () => {
+    // The controls belong to a table of friends who agreed to them.
+    render(
+      <LobbyView
+        match={publicMatch({ visibility: 'private', hostId: 'b' })}
+        youId="b"
+        isAdmin
+        onToggleReady={noop}
+        onSelectKingdom={noop}
+        onSelectPerks={noop}
+        onSpectate={noop}
+        onStart={noop}
+        onLeave={noop}
+      />,
+    )
+    expect(screen.getByTestId('room-options-gear')).toBeTruthy()
+  })
+
+  it('hides it from a private room’s non-admin host', () => {
+    // Anyone can be a host: you create a room and you are one. These switches
+    // are not a host power.
     render(
       <LobbyView
         match={publicMatch({ visibility: 'private', hostId: 'b' })}
@@ -83,7 +122,7 @@ describe('a public lobby', () => {
         onLeave={noop}
       />,
     )
-    expect(screen.getByTestId('rule-eliminated-see-all')).toBeTruthy()
+    expect(screen.queryByTestId('room-options-gear')).toBeNull()
   })
 
   it('counts down from the deadline the server set', () => {

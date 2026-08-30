@@ -117,9 +117,12 @@ export interface LobbyMatch {
   maxPlayers: number
   /** Max kingdom-playing participants (7); seats beyond this must spectate. */
   maxActivePlayers?: number
-  /** Host rule: an eliminated player keeps seeing every surviving kingdom's
-   *  health bar. Off unless the host turned it on. */
+  /** Admin rule: an eliminated player keeps seeing every surviving kingdom's
+   *  health bar. Off unless it was turned on. */
   eliminatedSeeAllHealth?: boolean
+  /** Admin rule: whether a monster can take the field at all. Always off in
+   *  public matches; defaults on in private ones. */
+  monstersEnabled?: boolean
   /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
   visibility?: 'private' | 'public'
   /**
@@ -145,9 +148,12 @@ export interface MatchSnapshot {
   winnerId: string | null
   maxPlayers: number
   maxActivePlayers?: number
-  /** Host rule: an eliminated player keeps seeing every surviving kingdom's
-   *  health bar. Off unless the host turned it on. */
+  /** Admin rule: an eliminated player keeps seeing every surviving kingdom's
+   *  health bar. Off unless it was turned on. */
   eliminatedSeeAllHealth?: boolean
+  /** Admin rule: whether a monster can take the field at all. Always off in
+   *  public matches; defaults on in private ones. */
+  monstersEnabled?: boolean
   /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
   visibility?: 'private' | 'public'
   /**

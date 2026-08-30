@@ -871,10 +871,16 @@ function SpiderMonster({ uid }: { uid: string }) {
  * so it is always leaning at you.
  *
  * ⚠️ THE WEAPON IS PART OF THE SILHOUETTE, WHICH MEANS IT IS PART OF THE BOX.
- * Given a bare fist this reads as an ape; the notched cleaver held out to one
- * side is what makes the shape unmistakable — and the first build let it hang
- * seventy units outside the declared box, so the arena cropped it out of the
- * hit area and the reticle.
+ * Given a bare fist this reads as an ape; the chipped axe is what makes the
+ * shape unmistakable — and the first build let it hang seventy units outside
+ * the declared box, so the arena cropped it out of the hit area and the
+ * reticle.
+ *
+ * ⚠️ AND IT HAS TO BE HELD, NOT PLACED. A blade on the end of a stick beside a
+ * closed fist is the shape everybody draws first, and it reads as a paddle:
+ * the haft has to run THROUGH the hand to a pommel below it, with fingers
+ * crossing in front of it, and the head has to be socketed — a poll behind it,
+ * langets pinning it down — rather than balanced on the tip.
  *
  * ⚠️ AND FLAT GREEN IS A FROG. What makes it skin is the mottling: darker
  * blotches over the chest and shoulders, a lighter plane high on the ribs,
@@ -959,30 +965,91 @@ function GoblinMonster({ uid }: { uid: string }) {
       <path d="M -66 -30 l 2 8 M -56 -28 l 2 8" stroke={EDGE} strokeWidth={2} strokeLinecap="round" fill="none" opacity={0.5} />
       {rim('M -54 -124 C -76 -106, -82 -76, -72 -46', 2, 0.13)}
 
-      {/* Right arm, out and up, holding the cleaver. */}
+      {/* Right arm, down and out, hand closed around the haft. */}
       <path d="M 52 -128 C 80 -118, 96 -96, 94 -70 L 70 -66 C 72 -88, 62 -102, 42 -112 z" fill={g('limb')} stroke={EDGE} strokeWidth={3.2} strokeLinejoin="round" />
+      {/* The palm, drawn BEFORE the haft so the haft passes in front of it and
+          the fingers below close over the front. Three layers is what a grip
+          costs; a hand beside a stick is what one layer looks like. */}
       <path d="M 94 -70 q 16 8 8 22 q -18 8 -30 -4 l 4 -20 z" fill={g('skin')} stroke={EDGE} strokeWidth={3} strokeLinejoin="round" />
       {rim('M 52 -128 C 78 -118, 94 -98, 93 -72', 2, 0.15)}
 
       <g className="monster__blade">
-        {/* Haft, then a heavy chipped blade. A clean edge is a prop; a chipped
-            one has been used. */}
-        <path d="M 88 -58 L 122 -150" stroke={RUST} strokeWidth={9} strokeLinecap="round" fill="none" />
-        <path d="M 90 -62 L 122 -148" stroke="#a86038" strokeWidth={2.6} strokeLinecap="round" fill="none" opacity={0.45} />
-        <path d="M 92 -70 l 24 8 l -4 12 l -24 -8 z" fill={g('iron')} stroke={EDGE} strokeWidth={2} strokeLinejoin="round" />
+        {/* A forged cleaver, socketed on the haft the way a real head is: a poll
+            behind it, langets binding it down, and the haft running on through
+            the fist to a pommel. The first pass hung a flat plate off the top of
+            a stick, which is why it read as a paddle. */}
+        <defs>
+          <clipPath id={`mon-gb-blade-${uid}`}>
+            <path d="M 150 -192 C 166 -184, 174 -176, 176 -166 L 168 -156 L 162 -150 L 173 -145 C 174 -128, 158 -110, 140 -100 L 117 -126 L 132 -168 z" />
+          </clipPath>
+        </defs>
+
+        {/* Haft: pommel below the fist, head at the top. */}
+        {/* Stops UNDER the poll, not past it: a haft whose end pokes out above
+            the head is a brown sliver nobody can name. */}
+        <path d="M 82 -30 L 126 -150" stroke={RUST} strokeWidth={10} strokeLinecap="round" fill="none" />
+        <path d="M 84 -34 L 124 -146" stroke="#a86038" strokeWidth={2.6} strokeLinecap="round" fill="none" opacity={0.45} />
+        <path d="M 86 -30 L 128 -146" stroke={EDGE} strokeWidth={2.6} strokeLinecap="round" fill="none" opacity={0.22} />
+        {/* Pommel: a knob and a collar. A haft that just stops is a stick. */}
+        <path d="M 75 -38 L 90 -43" stroke={EDGE} strokeWidth={9} strokeLinecap="round" fill="none" />
+        <path d="M 75 -38 L 90 -43" stroke={IRON_LIT} strokeWidth={5.5} strokeLinecap="round" fill="none" />
+        <circle cx={82} cy={-29} r={6.6} fill={g('iron')} stroke={EDGE} strokeWidth={2.4} />
+
+        {/* Poll: the counterweight behind the socket, so the head has a back. */}
+        <path d="M 126 -130 L 103 -138 L 110 -163 L 132 -163 z" fill={g('iron')} stroke={EDGE} strokeWidth={2.8} strokeLinejoin="round" />
+        <path d="M 110 -163 L 132 -163 L 128 -156 L 108 -157 z" fill={IRON_LIT} opacity={0.45} />
+
+        {/* The head. The chip is cut OUT of the outline rather than painted on
+            top of it: at the size this is actually seen, a chip that does not
+            break the silhouette is not a chip. */}
         <path
-          d="M 112 -144 L 150 -190 L 172 -178 L 160 -166 L 172 -156 L 152 -148 L 160 -134 L 126 -122 z"
+          d="M 150 -192 C 166 -184, 174 -176, 176 -166 L 168 -156 L 162 -150 L 173 -145
+             C 174 -128, 158 -110, 140 -100 L 117 -126 L 132 -168 z"
           fill={g('iron')}
           stroke={EDGE}
-          strokeWidth={3.2}
+          strokeWidth={3.4}
           strokeLinejoin="round"
         />
-        {/* The bevel: one bright line down the cutting edge, grime at the
-            spine. */}
-        <path d="M 118 -140 L 152 -180" stroke="#ffffff" strokeWidth={4} strokeLinecap="round" fill="none" opacity={0.4} />
-        <path d="M 128 -128 L 158 -160" stroke={EDGE} strokeWidth={3} strokeLinecap="round" fill="none" opacity={0.22} />
-        <path d="M 150 -190 l 8 -10 l 6 12 z" fill={IRON_LIT} stroke={EDGE} strokeWidth={1.8} strokeLinejoin="round" />
+        {/* Bevel and grime, both CLIPPED to the head. A stroke laid along an
+            edge spills half its width outside the shape, which is what turned
+            the last bevel into two white scratches floating past the blade. */}
+        <g clipPath={`url(#mon-gb-blade-${uid})`}>
+          <path d="M 150 -192 C 166 -184, 174 -176, 176 -166 L 168 -156 L 162 -150 L 173 -145 C 174 -128, 158 -110, 140 -100" stroke="#ffffff" strokeWidth={13} fill="none" opacity={0.3} />
+          <path d="M 150 -192 C 166 -184, 174 -176, 176 -166 L 168 -156 L 162 -150 L 173 -145 C 174 -128, 158 -110, 140 -100" stroke="#ffffff" strokeWidth={4.5} fill="none" opacity={0.45} />
+          <path d="M 117 -126 L 132 -168" stroke={EDGE} strokeWidth={11} fill="none" opacity={0.22} />
+          {/* Hammered pitting, rusted. */}
+          <path d="M 140 -170 q 9 3 11 11 M 143 -132 q 8 -2 12 5 M 152 -152 q 6 4 6 10" stroke={RUST} strokeWidth={2.6} strokeLinecap="round" fill="none" opacity={0.5} />
+        </g>
+
+        {/* Langets: two straps and their rivets, pinning the head to the haft. */}
+        {[
+          [104, -119, 119, -113],
+          [96, -97, 111, -91],
+        ].map(([x1, y1, x2, y2], i) => (
+          <g key={i}>
+            <path d={`M ${x1} ${y1} L ${x2} ${y2}`} stroke={EDGE} strokeWidth={8.5} strokeLinecap="round" fill="none" />
+            <path d={`M ${x1} ${y1} L ${x2} ${y2}`} stroke={g('iron')} strokeWidth={5.5} strokeLinecap="round" fill="none" />
+            <circle cx={(x1! + x2!) / 2} cy={(y1! + y2!) / 2} r={2.2} fill={IRON_LIT} stroke={EDGE} strokeWidth={1.1} />
+          </g>
+        ))}
       </g>
+
+      {/* Fingers, over the haft. Perpendicular to it, which is the whole tell:
+          a band that runs along the shaft is a stripe, one that crosses it is a
+          finger. */}
+      {[
+        [80, -51.5, 97, -45],
+        [84, -61, 101, -54.5],
+        [87.5, -70.5, 104.5, -64],
+      ].map(([x1, y1, x2, y2], i) => (
+        <g key={i}>
+          <path d={`M ${x1} ${y1} L ${x2} ${y2}`} stroke={EDGE} strokeWidth={10.5} strokeLinecap="round" fill="none" />
+          <path d={`M ${x1} ${y1} L ${x2} ${y2}`} stroke="#6d8a41" strokeWidth={7} strokeLinecap="round" fill="none" />
+          <path d={`M ${x1! + 1} ${y1! - 2.2} L ${x2! - 2} ${y2! - 2.6}`} stroke={SKIN_LIT} strokeWidth={2} strokeLinecap="round" fill="none" opacity={0.5} />
+        </g>
+      ))}
+      {/* Thumb, crossing back over the top of the fist. */}
+      <path d="M 78 -70 q 12 -8 20 -2 q -8 8 -20 2 z" fill={g('skin')} stroke={EDGE} strokeWidth={2.6} strokeLinejoin="round" />
 
       {/* Head: thrust forward, low between the shoulders, brow you cannot see
           past. */}
