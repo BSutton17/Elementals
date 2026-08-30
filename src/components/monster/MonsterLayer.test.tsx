@@ -36,28 +36,20 @@ describe('MonsterLayer', () => {
     expect(screen.getByText('6000 / 10000')).toBeTruthy()
   })
 
-  it('reports what the next swing costs, and NOT when it lands', () => {
-    // ⚠️ NO COUNTDOWN, DELIBERATELY. A visible timer turns every cycle into a
-    // solved problem — shield on the last second, ignore it the rest of the
-    // time. The damage still shows, because that is what decides whether the
-    // table can afford to leave it standing.
+  it('says nothing about the swing — not its damage, not its timing', () => {
+    // ⚠️ BOTH NUMBERS ARE DELIBERATELY ABSENT. A countdown turns every cycle
+    // into a solved problem (shield on the last second, ignore it otherwise),
+    // and a damage figure beside it just makes that arithmetic easier. Both
+    // still arrive on the wire and the monster still swings on its own clock;
+    // the player is shown the health bar and nothing else.
     const { container } = svg(
       <MonsterLayer monster={monster({ attackDamage: 900, ticksUntilAttack: 80 })} tickRate={20} />,
     )
-    expect(screen.getByText('900 a swing')).toBeTruthy()
-    expect(container.textContent).not.toMatch(/\d+s/)
-  })
-
-  it('marks the last seconds before a swing, when a shield still helps', () => {
-    const { container } = svg(
-      <MonsterLayer monster={monster({ ticksUntilAttack: 40 })} tickRate={20} />,
-    )
-    expect(container.querySelector('.monster-layer__threat--imminent')).toBeTruthy()
-
-    const { container: calm } = svg(
-      <MonsterLayer monster={monster({ ticksUntilAttack: 200 })} tickRate={20} />,
-    )
-    expect(calm.querySelector('.monster-layer__threat--imminent')).toBeNull()
+    const hud = container.querySelector('[data-testid="monster-hud"]')!
+    expect(hud.textContent).not.toMatch(/\d+s/)
+    expect(hud.textContent).not.toContain('900')
+    // The health bar is still there — this is a removal, not a blanking.
+    expect(hud.textContent).toContain('6000 / 10000')
   })
 
   it('is clickable, and says what clicking it does', () => {

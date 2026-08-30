@@ -30,11 +30,18 @@ const DEATH_MS = 2200
 
 export function MonsterLayer({
   monster,
-  tickRate,
   onTarget,
   targeted = false,
 }: {
   monster: MonsterSnapshot | null
+  /**
+   * Ticks per second.
+   *
+   * ⚠️ ACCEPTED AND NOT USED, ON PURPOSE. Nothing in the HUD is timed any more
+   * (see below), but every call site passes it and this layer is where any
+   * tick-based reading would live if one comes back. Keeping it costs a line
+   * and saves threading it through again.
+   */
   tickRate: number
   /** Clicking it aims at it. Omitted for spectators. */
   onTarget?: () => void
@@ -73,15 +80,13 @@ export function MonsterLayer({
   const kind: MonsterKind = shown.kind ?? 'rock'
   const box = MONSTER_BOX[kind] ?? MONSTER_BOX.rock
   const hpFraction = Math.max(0, Math.min(1, shown.hp / Math.max(1, shown.maxHp)))
-  // ⚠️ NO COUNTDOWN. `ticksUntilAttack` is still on the wire and the monster
-  // still swings on its own clock — the HUD simply does not display the timer.
-  // A visible countdown turns every cycle into a solved problem: shield on the
-  // last second, ignore it the rest of the time. Without it the swing is a
-  // thing that happens TO the table, which is the point of the mechanic.
-  const seconds = Math.max(0, Math.ceil(shown.ticksUntilAttack / Math.max(1, tickRate)))
-  // The last breath before a swing lands. Kept as a styling cue only: the
-  // threat line pulses, it does not count.
-  const imminent = !isDying && seconds <= 3
+  // ⚠️ THE HUD SAYS NOTHING ABOUT THE SWING — not when it lands, not what it
+  // costs. `ticksUntilAttack` and `attackDamage` are both still on the wire and
+  // the monster still swings on its own clock; the player simply is not shown
+  // the numbers. A countdown turns every cycle into a solved problem (shield on
+  // the last second, ignore it the rest of the time), which is precisely the
+  // behaviour this mechanic exists to punish. What is left is the only thing
+  // that should drive the decision: how much health it has left.
 
   const halfWidth = box.halfWidth * SCALE
   const height = box.height * SCALE
@@ -162,15 +167,6 @@ export function MonsterLayer({
           <text className="monster-layer__hp" x={CX} y={top - 47} textAnchor="middle">
             {Math.max(0, Math.round(shown.hp))} / {Math.round(shown.maxHp)}
           </text>
-          {/* What the next swing costs. NOT when it lands — see above. */}
-          {/* <text
-            className={`monster-layer__threat${imminent ? ' monster-layer__threat--imminent' : ''}`}
-            x={CX}
-            y={top - 24}
-            textAnchor="middle"
-          >
-            {Math.round(shown.attackDamage)} a swing
-          </text> */}
         </g>
       )}
     </g>

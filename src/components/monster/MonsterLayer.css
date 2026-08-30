@@ -134,28 +134,6 @@
   stroke-linejoin: round;
 }
 
-.monster-layer__threat {
-  font-size: 20px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  fill: #ffb9a8;
-  paint-order: stroke;
-  stroke: rgba(0, 0, 0, 0.7);
-  stroke-width: 4px;
-  stroke-linejoin: round;
-}
-
-/* The three seconds where a shield still helps. */
-.monster-layer__threat--imminent {
-  fill: #ff6a4d;
-  animation: monster-threat 0.7s ease-in-out infinite;
-}
-
-@keyframes monster-threat {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
-}
-
 .monster-layer__hit {
   fill: transparent;
   cursor: pointer;
@@ -199,7 +177,6 @@
   .monster__wing--furled,
   .monster__legs--raised,
   .monster__blade,
-  .monster-layer__threat--imminent,
   .monster-layer__reticle,
   .monster-layer--dying {
     animation: none;
