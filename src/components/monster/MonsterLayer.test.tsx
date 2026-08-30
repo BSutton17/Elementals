@@ -36,11 +36,16 @@ describe('MonsterLayer', () => {
     expect(screen.getByText('6000 / 10000')).toBeTruthy()
   })
 
-  it('reports the next hit and when it lands, together', () => {
-    // ⚠️ THE TWO NUMBERS ONLY MEAN SOMETHING SIDE BY SIDE. "900" is a fact;
-    // "900 in 4s" is a decision about whether to buy a shield.
-    svg(<MonsterLayer monster={monster({ attackDamage: 900, ticksUntilAttack: 80 })} tickRate={20} />)
-    expect(screen.getByText('900 in 4s')).toBeTruthy()
+  it('reports what the next swing costs, and NOT when it lands', () => {
+    // ⚠️ NO COUNTDOWN, DELIBERATELY. A visible timer turns every cycle into a
+    // solved problem — shield on the last second, ignore it the rest of the
+    // time. The damage still shows, because that is what decides whether the
+    // table can afford to leave it standing.
+    const { container } = svg(
+      <MonsterLayer monster={monster({ attackDamage: 900, ticksUntilAttack: 80 })} tickRate={20} />,
+    )
+    expect(screen.getByText('900 a swing')).toBeTruthy()
+    expect(container.textContent).not.toMatch(/\d+s/)
   })
 
   it('marks the last seconds before a swing, when a shield still helps', () => {

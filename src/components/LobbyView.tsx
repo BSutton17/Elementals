@@ -237,7 +237,9 @@ export function LobbyView({
   // room is missing; the interesting information is what has been switched on.
   const activeRules: string[] = []
   if (match.eliminatedSeeAllHealth === true) activeRules.push('Elimination vision')
-  if (match.monstersEnabled !== false) activeRules.push('Monsters')
+  // Named to match the switch in the options panel — a room that lists a rule
+  // under one name and toggles it under another reads as two settings.
+  if (match.monstersEnabled !== false) activeRules.push('Monster Mayhem')
 
   const kingdomLabel = (id: string | null) =>
     KINGDOMS.find((k) => k.id === id)?.label ?? null

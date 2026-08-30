@@ -30,6 +30,7 @@ import { MonsterLayer } from './monster/MonsterLayer'
 import { CapriceButterfly } from './caprice/CapriceButterfly'
 import { BlackHoleAccumulator } from './BlackHoleAccumulator'
 import { FloatingNumbers } from './FloatingNumbers'
+import { MonsterSpoils } from './monster/MonsterSpoils'
 import { EmpathyReaction } from './EmpathyReaction'
 import { BffsLinkLayer } from './BffsLinkLayer'
 import { DustBunniesLayer } from './DustBunniesLayer'
@@ -616,6 +617,10 @@ export function BattlefieldView({
           colorOf={colorOf}
           youId={youId}
         />
+
+        {/* Who got paid for killing the monster — a trophy for most damage, a
+            tick for the finishing blow, over the winning castle(s). */}
+        <MonsterSpoils positionOf={positionOf} />
 
         {/* Dust Bunnies (#… Nature ultimate): hopping bunnies + brawl clouds. */}
         <DustBunniesLayer positionOf={positionOf} />

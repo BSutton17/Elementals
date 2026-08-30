@@ -93,7 +93,7 @@ export function RoomOptions({
               data-testid="option-monsters"
             />
             <span>
-              <span className="room-options__name">Monsters</span>
+              <span className="room-options__name">Monster Mayhem</span>
               <span className="room-options__desc">
                 A monster can take the middle of the field and start hitting the whole table.
               </span>
@@ -101,8 +101,7 @@ export function RoomOptions({
           </label>
 
           <p className="room-options__note">
-            Both are always off in public matches — a stranger queued for a free-for-all, not
-            for these.
+            Both are always off in public matches
           </p>
         </div>
       )}

@@ -1,0 +1,99 @@
+/* The two marks paid out for killing the monster, over the winner's castle.
+   Sizes are SVG user units (the 1000×1000 viewBox), so they scale with the
+   arena. Both animations run exactly 3.5s and the component removes the mark
+   from the DOM at the same moment. */
+
+.monster-spoil {
+  pointer-events: none;
+  /* Nested <svg> from react-icons: the transform has to resolve against the
+     icon's own box, not the arena's viewport. */
+  transform-box: fill-box;
+  transform-origin: center;
+  /* A dark drop shadow, since green over a green castle is green on green. */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85));
+}
+
+/* Most damage: the long game. It arrives and STAYS put — a trophy that drifts
+   off reads as a hit number, and this one is a standing, not an event. */
+.monster-spoil--trophy {
+  animation: monster-spoil-hold 3.5s ease-out forwards;
+}
+
+/* The finishing blow: a moment. Rises and fades like a damage indicator,
+   because that is what it is marking — the swing that just landed. */
+.monster-spoil--blow {
+  animation: monster-spoil-rise 3.5s ease-out forwards;
+}
+
+@keyframes monster-spoil-hold {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  /* Overshoots slightly on the way in, so it lands rather than appears. */
+  12% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  20% {
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes monster-spoil-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+  22% {
+    transform: translateY(-6px) scale(1);
+  }
+  /* Most of the drift happens early, then it holds and fades — the same shape
+     as the floating combat numbers. */
+  55% {
+    transform: translateY(-30px);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-34px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+/* Reduced motion: no travel and no bounce, but they still appear and go — the
+   marks carry information, so removing them entirely would remove the payout
+   from the screen. */
+@media (prefers-reduced-motion: reduce) {
+  .monster-spoil--trophy,
+  .monster-spoil--blow {
+    animation: monster-spoil-fade 3.5s ease-out forwards;
+  }
+}
+
+@keyframes monster-spoil-fade {
+  0% {
+    opacity: 0;
+  }
+  10%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

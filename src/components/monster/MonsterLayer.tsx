@@ -73,8 +73,14 @@ export function MonsterLayer({
   const kind: MonsterKind = shown.kind ?? 'rock'
   const box = MONSTER_BOX[kind] ?? MONSTER_BOX.rock
   const hpFraction = Math.max(0, Math.min(1, shown.hp / Math.max(1, shown.maxHp)))
+  // ⚠️ NO COUNTDOWN. `ticksUntilAttack` is still on the wire and the monster
+  // still swings on its own clock — the HUD simply does not display the timer.
+  // A visible countdown turns every cycle into a solved problem: shield on the
+  // last second, ignore it the rest of the time. Without it the swing is a
+  // thing that happens TO the table, which is the point of the mechanic.
   const seconds = Math.max(0, Math.ceil(shown.ticksUntilAttack / Math.max(1, tickRate)))
-  // The last breath before a swing lands is when a shield still helps.
+  // The last breath before a swing lands. Kept as a styling cue only: the
+  // threat line pulses, it does not count.
   const imminent = !isDying && seconds <= 3
 
   const halfWidth = box.halfWidth * SCALE
@@ -156,16 +162,15 @@ export function MonsterLayer({
           <text className="monster-layer__hp" x={CX} y={top - 47} textAnchor="middle">
             {Math.max(0, Math.round(shown.hp))} / {Math.round(shown.maxHp)}
           </text>
-          {/* The two numbers that decide what you do next, together: what the
-              next swing costs and how long until it lands. */}
-          <text
+          {/* What the next swing costs. NOT when it lands — see above. */}
+          {/* <text
             className={`monster-layer__threat${imminent ? ' monster-layer__threat--imminent' : ''}`}
             x={CX}
             y={top - 24}
             textAnchor="middle"
           >
-            {Math.round(shown.attackDamage)} in {seconds}s
-          </text>
+            {Math.round(shown.attackDamage)} a swing
+          </text> */}
         </g>
       )}
     </g>
