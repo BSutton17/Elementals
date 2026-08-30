@@ -88,7 +88,7 @@ export const PERKS: readonly Perk[] = [
   {
     id: 'extraMedics',
     name: 'Extra Medics',
-    description: '+15% damage reduction to damage-over-time effects',
+    description: '+50% damage reduction to damage-over-time effects',
     icon: GiHealthCapsule,
     color: '#6bd88a',
   },
@@ -109,7 +109,7 @@ export const PERKS: readonly Perk[] = [
   {
     id: 'greatMerchants',
     name: 'Great Merchants',
-    description: '-15% unlock price',
+    description: '-75% unlock price',
     icon: TbMoneybagMinus,
     color: '#c9a56b',
   },
