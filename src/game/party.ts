@@ -140,25 +140,40 @@ export async function partyAct(action: Record<string, unknown>): Promise<boolean
   }
 }
 
-/** Development only, and the server enforces that — see `partyHandlers.ts`. */
-export async function partyDebugStart(gameId: PartyGameId): Promise<boolean> {
+/**
+ * Host only, and the server enforces that — see `partyHandlers.ts`.
+ *
+ * The refusal message is carried back rather than swallowed: this is a testing
+ * tool, and "Needs an eliminated kingdom to raise" is the whole answer to why
+ * a button appeared to do nothing.
+ */
+export async function partyDebugStart(
+  gameId: PartyGameId,
+): Promise<{ ok: boolean; error: string | null }> {
   try {
     const res = (await socket.timeout(8000).emitWithAck('party:debug', { gameId })) as Ack
-    return res.ok === true
+    return { ok: res.ok === true, error: res.error?.message ?? null }
   } catch {
-    return false
+    return { ok: false, error: 'The server did not answer' }
   }
 }
 
+export interface PartyDebugGame {
+  id: PartyGameId
+  description: string
+  /** Why it will not start right now, or null when it will. */
+  reason: string | null
+}
+
 export async function partyDebugAvailable(): Promise<
-  { available: boolean; games: { id: PartyGameId; description: string }[] }
+  { available: boolean; games: PartyDebugGame[] }
 > {
   try {
     const res = (await socket
       .timeout(8000)
       .emitWithAck('party:debugList', {})) as Ack<{
       available: boolean
-      games: { id: PartyGameId; description: string }[]
+      games: PartyDebugGame[]
     }>
     if (!res.ok || !res.data) return { available: false, games: [] }
     return res.data

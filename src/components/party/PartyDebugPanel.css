@@ -39,6 +39,13 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: #131020;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  /* Sixteen entries is taller than a phone. Anchored to the bottom, an
+     unscrolled list runs off the TOP of the screen, so the games at the end of
+     the registry — which are the newest, and the ones most in need of a
+     look — are the ones that cannot be reached. */
+  max-height: min(62vh, 28rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .party-debug__note {
@@ -67,6 +74,20 @@
 .party-debug__game:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* One the server says will not start right now. Dimmed rather than disabled —
+   it is still pressable, and pressing it says why. */
+.party-debug__game--blocked {
+  border-color: rgba(255, 154, 154, 0.28);
+}
+
+.party-debug__game--blocked .party-debug__game-id {
+  color: #b9b0d8;
+}
+
+.party-debug__game--blocked .party-debug__game-desc {
+  color: #ff9a9a;
 }
 
 .party-debug__game-id {

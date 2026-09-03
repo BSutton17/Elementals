@@ -193,7 +193,8 @@ export function BattlefieldScreen() {
       {/* Clean Up's spill: its own layer over the board, because the mess has
           to be in the way of the match rather than inside a dialog. */}
       <CleanUpOverlay party={game.party} youId={youId} />
-      {/* Local development only; the server refuses it anywhere else. */}
+      {/* Draws nothing unless the server says this seat may launch minigames —
+          a dev build over loopback, or (for now) an admin hosting the room. */}
       <PartyDebugPanel />
       {/* Full-screen "you've been hacked" flash for the local victim. */}
       <HackOverlay youId={youId} />
