@@ -10,6 +10,9 @@ import { QuickMathGame } from './QuickMathGame'
 import { ButtonMashGame } from './ButtonMashGame'
 import { KingdomThiefGame } from './KingdomThiefGame'
 import { PickAChestGame } from './PickAChestGame'
+import { DontMoveGame } from './DontMoveGame'
+import { GoldPartyGame } from './GoldPartyGame'
+import { KingdomSwapNote } from './KingdomSwapNote'
 import './PartyStage.css'
 
 /**
@@ -37,6 +40,9 @@ const GAMES = {
   buttonMash: ButtonMashGame,
   kingdomThief: KingdomThiefGame,
   pickAChest: PickAChestGame,
+  dontMove: DontMoveGame,
+  goldParty: GoldPartyGame,
+  kingdomSwap: KingdomSwapNote,
 } as const
 
 /**
@@ -48,7 +54,15 @@ const GAMES = {
  * (`BombHud`) and this component stands aside — which is why an unknown game id
  * and a field game both render nothing here, but for opposite reasons.
  */
-const FIELD_GAMES = new Set(['bombAttack'])
+const FIELD_GAMES = new Set([
+  'bombAttack',
+  // Clean Up is its own full-screen layer (`CleanUpOverlay`): the mess has to
+  // be IN THE WAY of the match, and a panel would make it a chore in a box.
+  'cleanUp',
+  // Haunted happens to the board, not in a dialog — the living carry on and the
+  // dead get their kit back. The banner says everything there is to say.
+  'haunted',
+])
 
 /**
  * Games that get out of the way the instant you finish them.
@@ -64,6 +78,16 @@ const FIELD_GAMES = new Set(['bombAttack'])
  * that lands the instant you tap, and there is nothing after that to look at.
  */
 const DISMISS_ON_FINISH = new Set(['spotTheDifference', 'quickMath', 'pickAChest'])
+
+/**
+ * Games whose panel closes on a timer rather than on the player finishing.
+ *
+ * ⚠️ KINGDOM SWAP IS THIRTY SECONDS LONG AND MEANT TO BE PLAYED. Holding a card
+ * over the board for its whole duration would be the exact opposite of what the
+ * swap is for: it hands you a new kit and then hides the battlefield you would
+ * use it on. The note says whose abilities you have, and gets out of the way.
+ */
+const ANNOUNCEMENTS: Record<string, number> = { kingdomSwap: 3500 }
 
 export function PartyStage({
   party,
@@ -90,6 +114,9 @@ export function PartyStage({
 
   if (FIELD_GAMES.has(party.gameId)) return null
   if (mine.done && DISMISS_ON_FINISH.has(party.gameId)) return null
+
+  const announcement = ANNOUNCEMENTS[party.gameId]
+  if (announcement !== undefined && party.elapsedTicks * 50 > announcement) return null
 
   const Game = GAMES[party.gameId as keyof typeof GAMES]
   if (!Game) return null

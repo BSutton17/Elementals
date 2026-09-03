@@ -24,6 +24,11 @@ export type PartyGameId =
   | 'bombAttack'
   | 'kingdomThief'
   | 'pickAChest'
+  | 'dontMove'
+  | 'kingdomSwap'
+  | 'haunted'
+  | 'goldParty'
+  | 'cleanUp'
 
 export interface PartyPlayerWire {
   done: boolean

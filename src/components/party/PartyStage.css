@@ -1318,3 +1318,216 @@
     display: none;
   }
 }
+
+/* ---- don't move ------------------------------------------------------------- */
+
+.party-still {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.party-still__face {
+  width: min(46vw, 9rem);
+  height: auto;
+}
+
+/* Black and white, deliberately: every other clock in this game belongs to Time
+   and is gold. This one is nobody's. */
+.party-still__rim {
+  fill: #f4f4f6;
+  stroke: #14121f;
+  stroke-width: 4;
+}
+
+.party-still__tick {
+  stroke: #14121f;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.party-still__hub {
+  fill: #14121f;
+}
+
+.party-still__hand {
+  stroke: #14121f;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  /* The hand pivots on the hub, which sits at the centre of the FACE — not of
+     the hand's own box, which is why the origin is given in explicit units
+     rather than as `center`. */
+  transform-origin: 50% 100%;
+  animation: party-still-sweep 6s linear forwards;
+}
+
+@keyframes party-still-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.party-still__line {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ece7fb;
+}
+
+.party-still--caught .party-still__line {
+  color: #ff8f8f;
+}
+
+.party-still--caught .party-still__rim {
+  fill: #ffd9d9;
+}
+
+.party-still__count {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ffd76a;
+}
+
+.party-still__cost {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ff8f8f;
+}
+
+/* ---- gold party ------------------------------------------------------------- */
+
+.party-coins {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.party-coins__earned {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ffd76a;
+}
+
+.party-coins__sky {
+  position: relative;
+  width: 100%;
+  height: min(52vh, 22rem);
+  overflow: hidden;
+  border-radius: 0.8rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+}
+
+.party-coins__coin {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-weight: 900;
+  font-size: 0.82rem;
+  color: #3a2708;
+  cursor: pointer;
+  touch-action: manipulation;
+  /* ⚠️ THE FALL IS A TRANSITION, NOT AN ANIMATION. `top` is recomputed on every
+     state sync (twenty a second) and the transition carries the coin smoothly
+     between those steps — so the position on screen never drifts from the one
+     the server will score a catch against. A keyframe animation would run on
+     its own clock and slowly disagree. */
+  transition: top 55ms linear;
+  /* Centred on its own coordinates rather than hanging off them. */
+  margin-left: -1.45rem;
+  margin-top: -1.45rem;
+}
+
+.party-coins__coin--bronze {
+  background: radial-gradient(circle at 35% 30%, #e8b184, #9a5a2b);
+  box-shadow: 0 0 10px rgba(190, 120, 60, 0.5);
+}
+
+.party-coins__coin--silver {
+  background: radial-gradient(circle at 35% 30%, #f2f4f8, #9aa4b4);
+  box-shadow: 0 0 12px rgba(200, 215, 235, 0.55);
+}
+
+.party-coins__coin--gold {
+  background: radial-gradient(circle at 35% 30%, #ffe9a0, #e0a01f);
+  box-shadow: 0 0 18px rgba(255, 200, 80, 0.75);
+  /* The rare one announces itself: at a glance, brightness is what separates a
+     hundred from twenty-five. */
+  animation: party-coin-shine 1.2s ease-in-out infinite;
+}
+
+@keyframes party-coin-shine {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 200, 80, 0.6); }
+  50% { box-shadow: 0 0 26px rgba(255, 220, 130, 0.95); }
+}
+
+.party-coins__hint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #9b93b8;
+}
+
+/* ---- kingdom swap ----------------------------------------------------------- */
+
+.party-swap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.party-swap__lead,
+.party-swap__line {
+  margin: 0;
+  font-size: 1rem;
+  color: #cfc7e8;
+}
+
+.party-swap__crest {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.3rem 0;
+}
+
+.party-swap__icon {
+  width: 2.6rem;
+  height: 2.6rem;
+}
+
+.party-swap__kingdom {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.party-swap__note {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: #9b93b8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .party-still__hand,
+  .party-coins__coin--gold {
+    animation: none;
+  }
+
+  /* The coins still fall — they are the game — they just stop easing. */
+  .party-coins__coin {
+    transition: none;
+  }
+}

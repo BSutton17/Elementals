@@ -20,6 +20,7 @@ import { useLobby } from '../game/useLobby'
 import { useGameState } from '../game/useGameState'
 import { PartyBanner } from '../components/party/PartyBanner'
 import { PartyStage } from '../components/party/PartyStage'
+import { CleanUpOverlay } from '../components/party/CleanUpOverlay'
 import { PartyDebugPanel } from '../components/party/PartyDebugPanel'
 
 /** How long a finished wheel stays on Joker's side-screen before clearing. */
@@ -189,6 +190,9 @@ export function BattlefieldScreen() {
           Flash Bang is still a Flash Bang while you are in a maze. */}
       <PartyBanner party={game.party} />
       <PartyStage party={game.party} youId={youId} />
+      {/* Clean Up's spill: its own layer over the board, because the mess has
+          to be in the way of the match rather than inside a dialog. */}
+      <CleanUpOverlay party={game.party} youId={youId} />
       {/* Local development only; the server refuses it anywhere else. */}
       <PartyDebugPanel />
       {/* Full-screen "you've been hacked" flash for the local victim. */}
