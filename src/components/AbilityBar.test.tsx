@@ -604,3 +604,58 @@ describe('ability tooltip dismissal (mobile)', () => {
     expect(container.querySelector('.ability-tooltip')).toBeNull()
   })
 })
+
+describe('production debuffs on the citizens readout', () => {
+  const bar = (extra: Record<string, unknown> = {}) =>
+    render(
+      <AbilityBar
+        kingdomId="fire"
+        theme={null}
+        currency={500}
+        citizens={12}
+        castleHp={8500}
+        maxCastleHp={10000}
+        shieldHp={0}
+        nextCitizenCost={15}
+        nextRepairCost={1000}
+        shieldCost={50}
+        repairsUsed={0}
+        maxRepairs={3}
+        incomePerSecond={24}
+        abilities={mockAbilities}
+        tickRate={20}
+        onCastAbility={() => {}}
+        onUpgradeAbility={() => {}}
+        onBuyItem={() => {}}
+        {...extra}
+      />,
+    )
+
+  it('says nothing when production is untouched', () => {
+    // ⚠️ THE DEFAULT MATTERS. These marks only mean something if their absence
+    // means "your income is fine".
+    const { container } = bar()
+    expect(container.querySelector('[data-testid="citizens-frostbitten"]')).toBeNull()
+    expect(container.querySelector('.ability-bar__stat-group--frostbitten')).toBeNull()
+    expect(screen.getByTitle('Citizens')).toBeTruthy()
+  })
+
+  it('frosts the citizens while Ice\u2019s Frostbite is slowing them', () => {
+    // Without this the victim sees a smaller number per second and never learns
+    // what did it — the passive fires on THEIR attack, seconds earlier, and
+    // names nothing.
+    const { container } = bar({ citizensFrostbitten: true })
+    expect(container.querySelector('[data-testid="citizens-frostbitten"]')).toBeTruthy()
+    expect(container.querySelector('.ability-bar__stat-group--frostbitten')).toBeTruthy()
+    expect(container.querySelector('.ability-bar__stat-label--frostbitten')).toBeTruthy()
+    expect(screen.getByTitle('Frostbite — income reduced')).toBeTruthy()
+  })
+
+  it('keeps poison and frost visually apart', () => {
+    // Two production debuffs from two kingdoms. Sharing a mark would make the
+    // victim think Nature hit them when Ice did.
+    const { container } = bar({ citizensPoisoned: true })
+    expect(container.querySelector('.ability-bar__stat-group--poisoned')).toBeTruthy()
+    expect(container.querySelector('[data-testid="citizens-frostbitten"]')).toBeNull()
+  })
+})

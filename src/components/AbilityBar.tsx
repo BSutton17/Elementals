@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { GiReceiveMoney, GiPoisonGas } from 'react-icons/gi'
+import { FaSnowflake } from 'react-icons/fa'
 import { IoMdPeople } from 'react-icons/io'
 import { FaAngleDoubleUp, FaHeart, FaShieldAlt, FaTools } from 'react-icons/fa'
 import { getAbilitiesForKingdom } from '../game/abilities'
@@ -55,6 +56,15 @@ interface AbilityBarProps {
   lockedOut?: boolean
   /** Gastro Acid poisoned the citizens — income is sapped for the duration. */
   citizensPoisoned?: boolean
+  /**
+   * Ice's "Frostbite" is slowing income (its retaliation passive).
+   *
+   * Same treatment as Nature's Poisoned Citizens and for the same reason: a
+   * production debuff that shows up only as a smaller number is a debuff the
+   * victim never learns the name of. Frost rather than contamination, so the
+   * two can never be mistaken for each other.
+   */
+  citizensFrostbitten?: boolean
   /** Ice's Frozen: every action button ices over and the shop is sealed shut. */
   frozen?: boolean
   /** Dark's Never-ending Nightmare: the caster may use ONLY their basic attack.
@@ -127,6 +137,7 @@ export function AbilityBar({
   maxRepairs,
   lockedOut = false,
   citizensPoisoned = false,
+  citizensFrostbitten = false,
   frozen = false,
   nightmared = false,
   fieldOccupiedBy = null,
@@ -294,7 +305,7 @@ export function AbilityBar({
                 {formattedCurrency}g
               </span>
               <span
-                className={`ability-bar__stat-label ${citizensPoisoned ? 'ability-bar__stat-label--poisoned' : ''}`}
+                className={`ability-bar__stat-label ${citizensPoisoned ? 'ability-bar__stat-label--poisoned' : ''}${citizensFrostbitten ? ' ability-bar__stat-label--frostbitten' : ''}`}
               >
                 +{formattedIncome}/s
                 {besieged && (
@@ -311,16 +322,33 @@ export function AbilityBar({
           </div>
 
           {/* Citizen Stats — a green contamination film + drifting toxic wisps
-              while Gastro Acid's Poisoned Citizens saps their income. */}
+              while Gastro Acid's Poisoned Citizens saps their income, or a blue
+              frost film + falling flakes while Ice's Frostbite does. Both are
+              production debuffs and both are otherwise invisible: without a
+              mark on the citizens the victim just sees a smaller number and
+              never learns why. */}
           <div
-            className={`ability-bar__stat-group ${citizensPoisoned ? 'ability-bar__stat-group--poisoned' : ''}`}
-            title={citizensPoisoned ? 'Citizens poisoned — income reduced' : 'Citizens'}
+            className={`ability-bar__stat-group ${citizensPoisoned ? 'ability-bar__stat-group--poisoned' : ''}${citizensFrostbitten ? ' ability-bar__stat-group--frostbitten' : ''}`}
+            title={
+              citizensPoisoned
+                ? 'Citizens poisoned — income reduced'
+                : citizensFrostbitten
+                  ? 'Frostbite — income reduced'
+                  : 'Citizens'
+            }
           >
             {citizensPoisoned && (
               <span className="ability-bar__citizen-contam" aria-hidden="true">
                 <span className="ability-bar__citizen-contam-wisp" />
                 <span className="ability-bar__citizen-contam-wisp" />
                 <span className="ability-bar__citizen-contam-icon"><GiPoisonGas /></span>
+              </span>
+            )}
+            {citizensFrostbitten && (
+              <span className="ability-bar__citizen-frost" data-testid="citizens-frostbitten" aria-hidden="true">
+                <span className="ability-bar__citizen-frost-flake" />
+                <span className="ability-bar__citizen-frost-flake" />
+                <span className="ability-bar__citizen-frost-icon"><FaSnowflake /></span>
               </span>
             )}
             <span className="ability-bar__stat-icon"><IoMdPeople /></span>

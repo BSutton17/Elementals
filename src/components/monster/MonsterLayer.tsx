@@ -108,11 +108,19 @@ export function MonsterLayer({
         ry={26}
       />
 
-      <g
-        className="monster-layer__body"
-        transform={`translate(${CX} ${CY + GROUND_Y}) scale(${SCALE})`}
-      >
-        <MonsterBody kind={kind} uid={uid} />
+      {/* ⚠️ TWO GROUPS, AND IT HAS TO BE TWO. The placement lives on the outer
+          element as a `transform` ATTRIBUTE and the breathing lives on the
+          inner one as a CSS animation. Putting both on one element is the
+          leviathan-fin bug: a CSS transform beats the attribute outright, so
+          the moment the animation takes hold the creature loses its position
+          and is drawn at the arena's origin — off-screen, leaving only its
+          shadow behind. It is invisible to anyone with reduced motion on
+          (the animation never runs, so the attribute survives), which is
+          exactly how it reached production. */}
+      <g transform={`translate(${CX} ${CY + GROUND_Y}) scale(${SCALE})`}>
+        <g className="monster-layer__body">
+          <MonsterBody kind={kind} uid={uid} />
+        </g>
       </g>
 
       {/* The hit area: a generous rectangle over the whole creature rather than

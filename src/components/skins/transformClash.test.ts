@@ -3,8 +3,8 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * No skin may put a CSS transform animation and a `transform` attribute on the
- * same element.
+ * NOTHING may put a CSS transform animation and a `transform` attribute on the
+ * same element — not a skin, not a layer, not anything under `components/`.
  *
  * ⚠️ THIS BUG IS INVISIBLE IN EVERY PREVIEW. A CSS `transform` beats the
  * `transform` presentation attribute on the same node, so the moment an
@@ -20,12 +20,37 @@ import { join } from 'node:path'
  *  · Air's Storm Titan rotated each scrap of debris on the same element as
  *    `.skin__debris`, so every scrap lay flat instead of at its angle.
  *
- * The fix in both cases is one wrapper: attribute on the outer element,
+ *  · The monster's body carried its placement (`translate(500 618) scale(1.34)`)
+ *    on the same group as `.monster-layer__body`, whose breathing keyframes set
+ *    `transform`. The creature was drawn at the arena's origin instead —
+ *    off-screen, leaving only its shadow. It looked FINE to anyone with reduced
+ *    motion on, because then the animation never runs and the attribute
+ *    survives, so it passed every check on a machine with animations disabled
+ *    and broke on every phone.
+ *
+ * The fix in every case is one wrapper: attribute on the outer element,
  * animated class on the inner one.
+ *
+ * ⚠️ THE SCAN IS DELIBERATELY WHOLESALE. It first covered only
+ * `skins/*Decor.tsx`, which is precisely why the monster shipped broken — the
+ * bug is a property of SVG and CSS, not of skins, so the net is every component
+ * and every stylesheet under `components/`.
  */
 
-const DIR = join(import.meta.dirname, '.')
-const css = readFileSync(join(DIR, 'skins.css'), 'utf8')
+const COMPONENTS = join(import.meta.dirname, '..')
+
+/** Every file under `components/` with one of these extensions, recursively. */
+function walk(dir: string, ext: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) return walk(path, ext)
+    return entry.name.endsWith(ext) ? [path] : []
+  })
+}
+
+const css = walk(COMPONENTS, '.css')
+  .map((f) => readFileSync(f, 'utf8'))
+  .join(String.fromCharCode(10))
 
 /** Classes whose CSS sets a transform, directly or through their keyframes. */
 function transformingClasses(): Set<string> {
@@ -61,14 +86,14 @@ function clashes(source: string, file: string, risky: Set<string>) {
   return found
 }
 
-describe('skin transforms', () => {
+describe('transform clashes', () => {
   it('never animates a transform on an element that also has a transform attribute', () => {
     const risky = transformingClasses()
     expect(risky.size).toBeGreaterThan(0) // the parse still works
 
-    const offenders = readdirSync(DIR)
-      .filter((f) => f.endsWith('Decor.tsx'))
-      .flatMap((f) => clashes(readFileSync(join(DIR, f), 'utf8'), f, risky))
+    const offenders = walk(COMPONENTS, '.tsx')
+      .filter((f) => !f.endsWith('.test.tsx'))
+      .flatMap((f) => clashes(readFileSync(f, 'utf8'), f.slice(COMPONENTS.length + 1), risky))
 
     expect(offenders).toEqual([])
   })

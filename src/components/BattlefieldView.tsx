@@ -378,6 +378,9 @@ export function BattlefieldView({
   const shopLocked = you.statuses?.some((s) => s.id === 'toxicGas') ?? false
   // Gastro Acid can poison the citizens, sapping income.
   const citizensPoisoned = you.statuses?.some((s) => s.id === 'poisonedCitizens') ?? false
+  // Ice's Frostbite (its retaliation passive) slows income — frost the citizens
+  // the same way Nature's poison greens them.
+  const citizensFrostbitten = you.statuses?.some((s) => s.id === 'frostbite') ?? false
   // Ice's Freeze ices over every action button and seals the shop.
   const frozen = you.statuses?.some((s) => s.id === 'frozen') ?? false
   // Chilling Retribution lengthens your cooldowns — snowflake the slowed cards.
@@ -704,6 +707,7 @@ export function BattlefieldView({
           maxRepairs={4}
           lockedOut={shopLocked}
           citizensPoisoned={citizensPoisoned}
+          citizensFrostbitten={citizensFrostbitten}
           frozen={frozen}
           // Never-ending Nightmare: every attack but your basic one, and your
           // ultimate, are illegal until it lifts.
