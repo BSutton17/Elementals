@@ -1,0 +1,1320 @@
+/* Party Mode: the panel a minigame is played in, and the five games inside it.
+
+   Sized in vmin/clamp throughout rather than pixels: the same panel has to be
+   playable on a 360px phone in portrait, the same phone sideways with 320px of
+   height, and a desktop monitor. */
+
+.party-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  /* The scrim takes the clicks; the panel takes its own. Anything outside both
+     goes through to the battlefield, which is still live. */
+  pointer-events: none;
+}
+
+.party-stage__scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgba(8, 6, 18, 0.55),
+    rgba(4, 3, 10, 0.82) 70%
+  );
+  pointer-events: auto;
+}
+
+.party-stage__panel {
+  position: relative;
+  pointer-events: auto;
+  box-sizing: border-box;
+  width: min(94vw, 30rem);
+  max-height: min(78vh, 40rem);
+  overflow-y: auto;
+  padding: clamp(0.9rem, 3vw, 1.4rem);
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, #171326 0%, #0e0b18 100%);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
+  color: #ece7fb;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  animation: party-panel-in 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+}
+
+.party-stage--closing .party-stage__panel {
+  animation: party-panel-out 0.4s ease-in forwards;
+}
+
+/* ⚠️ THE SCRIM HAS TO LEAVE WITH THE PANEL, AND THIS IS WHY IT DID NOT. A
+   finished session lingers for its result banner — four seconds — and the scrim
+   was drawn at full strength, `pointer-events: auto`, the whole time. The panel
+   faded out and left a black sheet over a live battlefield that swallowed every
+   click. It reads exactly like a freeze, and it is the last thing a player sees
+   after every single minigame.
+
+   Pointer events go FIRST, on the same class that starts the fade, so the board
+   is clickable the instant the game is over rather than when the fade ends. */
+.party-stage--closing .party-stage__scrim {
+  pointer-events: none;
+  animation: party-scrim-out 0.45s ease-in forwards;
+}
+
+@keyframes party-scrim-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.party-stage__panel--waiting {
+  width: min(80vw, 20rem);
+}
+
+@keyframes party-panel-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes party-panel-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* ---- the "you're done, they aren't" note --------------------------------- */
+
+.party-stage__waiting {
+  text-align: center;
+}
+
+.party-stage__waiting-mark {
+  display: block;
+  font-size: 2rem;
+  line-height: 1;
+  color: #4ade80;
+}
+
+.party-stage__waiting-line {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.party-stage__waiting-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9b93b8;
+}
+
+/* ---- shared game furniture ------------------------------------------------ */
+
+.party-maze__head,
+.party-memory__prompt,
+.party-bj__stake {
+  text-align: center;
+}
+
+/* ---- maze ----------------------------------------------------------------- */
+
+.party-maze__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-bottom: 0.6rem;
+}
+
+.party-maze__hint {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #cfc7e8;
+}
+
+.party-maze__clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffd76a;
+}
+
+.party-maze__board {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* A finger needs the whole cell; anything smaller and the drag fights the
+     player rather than the maze. */
+  max-height: 62vh;
+  margin: 0 auto;
+  cursor: grab;
+}
+
+.party-maze__board--bump {
+  animation: party-maze-bump 0.2s ease-out;
+}
+
+@keyframes party-maze-bump {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-2px); }
+  70% { transform: translateX(2px); }
+}
+
+.party-maze__floor {
+  fill: rgba(255, 255, 255, 0.03);
+}
+
+.party-maze__wall {
+  stroke: #8f86c9;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.party-maze__exit {
+  fill: rgba(74, 222, 128, 0.22);
+}
+
+.party-maze__exit-mark {
+  fill: #4ade80;
+  font-size: 6px;
+  text-anchor: middle;
+}
+
+.party-maze__trail {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.party-maze__runner-box {
+  fill: #ffffff;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.85));
+}
+
+/* ---- lockpick ------------------------------------------------------------- */
+
+.party-lock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.party-lock__pips {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.party-lock__pip {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.party-lock__pip--set {
+  background: #ffd76a;
+  border-color: #ffd76a;
+  box-shadow: 0 0 8px rgba(255, 215, 106, 0.6);
+}
+
+.party-lock__dial {
+  width: min(62vw, 15rem);
+  height: auto;
+}
+
+.party-lock__ring {
+  fill: rgba(255, 255, 255, 0.03);
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 6;
+}
+
+.party-lock__zone {
+  fill: none;
+  stroke: #4ade80;
+  stroke-width: 6;
+  stroke-linecap: butt;
+  filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.7));
+}
+
+.party-lock__needle {
+  stroke: #ffffff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.party-lock__hub {
+  fill: #ece7fb;
+}
+
+.party-lock__strike {
+  min-width: 9rem;
+  min-height: 3rem;
+  padding: 0.7rem 1.6rem;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #14121f;
+  background: linear-gradient(180deg, #ffe08a, #f5b93f);
+  border: none;
+  border-radius: 0.7rem;
+  cursor: pointer;
+  /* Stops iOS turning a fast double-press into a page zoom mid-game. */
+  touch-action: manipulation;
+}
+
+.party-lock__strike:disabled {
+  filter: grayscale(0.6);
+  cursor: default;
+}
+
+.party-lock__miss {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #ff9a9a;
+}
+
+/* ---- memory --------------------------------------------------------------- */
+
+.party-memory {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.party-memory__prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ece7fb;
+}
+
+.party-memory__countdown {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffd76a;
+  animation: party-count 1s ease-out infinite;
+}
+
+@keyframes party-count {
+  0% { transform: scale(1.25); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.party-memory__stage {
+  display: grid;
+  place-items: center;
+  width: min(48vw, 9rem);
+  height: min(48vw, 9rem);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.party-memory__symbol {
+  width: 62%;
+  height: 62%;
+  color: #ffffff;
+  animation: party-symbol-in 0.22s ease-out both;
+}
+
+@keyframes party-symbol-in {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.party-memory__progress {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.party-memory__tick {
+  width: 1.1rem;
+  height: 0.22rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.party-memory__tick--seen {
+  background: #8f86c9;
+}
+
+.party-memory__choices {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.party-memory__choice {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ece7fb;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.party-memory__choice:hover,
+.party-memory__choice:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.party-memory__choice-icon {
+  width: 58%;
+  height: 58%;
+}
+
+.party-memory__inline-icon {
+  width: 1.4rem;
+  height: 1.4rem;
+  vertical-align: middle;
+}
+
+.party-memory__verdict {
+  text-align: center;
+}
+
+.party-memory__verdict-line {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.party-memory__verdict--win .party-memory__verdict-line {
+  color: #4ade80;
+}
+
+.party-memory__verdict--loss .party-memory__verdict-line {
+  color: #ff8f8f;
+}
+
+.party-memory__verdict-answer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+  color: #b8b0d4;
+}
+
+/* ---- blackjack ------------------------------------------------------------ */
+
+.party-bj {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.party-bj__stake {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #ffd76a;
+}
+
+.party-bj__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9b93b8;
+}
+
+.party-bj__dealer,
+.party-bj__hand {
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.party-bj__hand--active {
+  border-color: rgba(255, 215, 106, 0.55);
+  box-shadow: 0 0 0 1px rgba(255, 215, 106, 0.25);
+}
+
+.party-bj__hand--win,
+.party-bj__hand--blackjack {
+  border-color: rgba(74, 222, 128, 0.5);
+}
+
+.party-bj__hand--lose {
+  border-color: rgba(255, 120, 120, 0.45);
+}
+
+.party-bj__hands {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.party-bj__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+/* ⚠️ THE TABLE IS WIDER THAN THE OTHER GAMES, ON PURPOSE. Blackjack is the only
+   minigame that can grow while you play it — split twice and there are four
+   hands and a dealer on screen — so it gets its own width rather than making
+   every other panel carry room it never uses. */
+.party-stage[data-game='blackjack'] .party-stage__panel {
+  width: min(96vw, 36rem);
+}
+
+.party-bj__card {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 3.1rem;
+  height: 4.3rem;
+  border-radius: 0.4rem;
+  background: linear-gradient(160deg, #ffffff 0%, #ece7fb 100%);
+  color: #14121f;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  /* Dealt: it arrives from off to the right, the way a card comes off a shoe,
+     lands with a small overshoot and settles. Staggered by `--deal` so an
+     opening two-card hand is dealt one card at a time rather than appearing
+     whole. */
+  animation: party-card-deal 0.34s cubic-bezier(0.2, 0.85, 0.3, 1.1) both;
+  animation-delay: var(--deal, 0ms);
+}
+
+@keyframes party-card-deal {
+  0% {
+    opacity: 0;
+    transform: translate(90px, -46px) rotate(16deg) scale(0.86);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(-3deg) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+}
+
+/* The suit again, large and faint behind the corner marks — what makes a card
+   read as a card rather than as two characters in a box. */
+.party-bj__pip {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 2.1rem;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.party-bj__card--red {
+  color: #d1344b;
+}
+
+.party-bj__card--down {
+  background: repeating-linear-gradient(
+    45deg,
+    #3b3160,
+    #3b3160 4px,
+    #2b2348 4px,
+    #2b2348 8px
+  );
+}
+
+.party-bj__rank {
+  position: relative;
+  z-index: 1;
+  font-size: 1.25rem;
+}
+
+.party-bj__suit {
+  position: relative;
+  z-index: 1;
+  font-size: 1.05rem;
+}
+
+.party-bj__hand-foot {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: #b8b0d4;
+}
+
+.party-bj__total {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ece7fb;
+}
+
+.party-bj__total--bust {
+  color: #ff8f8f;
+}
+
+.party-bj__actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.party-bj__act {
+  min-height: 3.4rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #14121f;
+  background: linear-gradient(180deg, #e6e1ff, #b9b0e8);
+  border: none;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.party-bj__act--risky {
+  background: linear-gradient(180deg, #ffd08a, #eba33f);
+}
+
+.party-bj__act:disabled {
+  filter: grayscale(0.75);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.party-bj__settled {
+  text-align: center;
+}
+
+.party-bj__net {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #ff8f8f;
+}
+
+.party-bj__net--up {
+  color: #4ade80;
+}
+
+.party-bj__owed {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: #ffb27a;
+}
+
+/* ---- spot the difference --------------------------------------------------- */
+
+.party-spot__pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.party-spot__side {
+  margin: 0;
+}
+
+.party-spot__castle {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.party-spot__castle--live {
+  cursor: crosshair;
+}
+
+.party-spot__castle--found {
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.7);
+}
+
+.party-spot__caption {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  text-align: center;
+  color: #9b93b8;
+}
+
+.party-spot__flash {
+  fill: none;
+  stroke-width: 3;
+  animation: party-spot-flash 0.5s ease-out forwards;
+}
+
+.party-spot__flash--hit {
+  stroke: #4ade80;
+}
+
+.party-spot__flash--miss {
+  stroke: #ff6f6f;
+}
+
+@keyframes party-spot-flash {
+  0% { opacity: 0.9; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+.party-spot__found {
+  fill: none;
+  stroke: #4ade80;
+  stroke-width: 3;
+  stroke-dasharray: 4 3;
+}
+
+.party-spot__misses {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  text-align: center;
+  color: #ff9a9a;
+}
+
+/* On a phone in portrait the two castles are still side by side — the whole
+   game is the comparison, and stacking them would put one off-screen. */
+@media (max-width: 380px) {
+  .party-spot__pair {
+    gap: 0.35rem;
+  }
+
+  .party-memory__choices {
+    gap: 0.35rem;
+  }
+}
+
+/* Phone sideways: the panel gets short, so the tall bits shrink instead of
+   scrolling out of reach. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .party-stage__panel {
+    max-height: 92vh;
+    padding: 0.7rem;
+  }
+
+  .party-maze__board {
+    max-height: 60vh;
+  }
+
+  .party-lock__dial {
+    width: min(34vh, 11rem);
+  }
+
+  .party-memory__stage {
+    width: 26vh;
+    height: 26vh;
+  }
+
+  .party-memory__countdown {
+    font-size: 2.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* ⚠️ THE SCRIM STILL HAS TO GO. `animation: none` here would leave it at full
+     opacity forever — the very bug this fixes — so it is set outright instead. */
+  .party-stage--closing .party-stage__scrim {
+    animation: none;
+    opacity: 0;
+  }
+
+  /* The deal becomes a fade rather than nothing: a card that pops into
+     existence with no transition at all is harder to follow than one that
+     simply appears gently, and the sequence still has to be readable. */
+  .party-bj__card {
+    animation: party-card-fade 0.2s linear both;
+  }
+
+  .party-stage__panel,
+  .party-memory__symbol,
+  .party-memory__countdown,
+  .party-maze__board--bump,
+  .party-spot__flash {
+    animation: none;
+  }
+}
+
+/* ---- reaction --------------------------------------------------------------- */
+
+.party-react {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.party-react__button {
+  width: min(70vw, 15rem);
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  font-size: clamp(1.2rem, 6vw, 1.9rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #2a0d0d;
+  background: radial-gradient(circle at 38% 32%, #ff8a7a, #c02b2b 70%);
+  box-shadow:
+    inset 0 -8px 18px rgba(0, 0, 0, 0.35),
+    0 10px 26px rgba(180, 30, 30, 0.4);
+  cursor: pointer;
+  touch-action: manipulation;
+  /* Only the colour moves. A button that also grew would give away the change a
+     frame early through peripheral vision, which is the whole game. */
+  transition: background 0.06s linear, box-shadow 0.06s linear, color 0.06s linear;
+}
+
+.party-react__button--go {
+  color: #062a12;
+  background: radial-gradient(circle at 38% 32%, #a8ffc6, #16a34a 70%);
+  box-shadow:
+    inset 0 -8px 18px rgba(0, 0, 0, 0.3),
+    0 10px 30px rgba(34, 197, 94, 0.55);
+}
+
+.party-react__verdict {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.party-react--jumped .party-react__verdict {
+  color: #ff8f8f;
+}
+
+.party-react--clicked .party-react__verdict {
+  color: #4ade80;
+}
+
+.party-react__time {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ffd76a;
+}
+
+.party-react__note {
+  margin: 0;
+  font-size: 0.82rem;
+  text-align: center;
+  color: #9b93b8;
+}
+
+/* ---- quick math ------------------------------------------------------------- */
+
+.party-math {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.party-math__sum {
+  margin: 0;
+  font-size: clamp(1.8rem, 9vw, 2.8rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: #ece7fb;
+}
+
+.party-math__input {
+  width: min(60vw, 9rem);
+  padding: 0.6rem;
+  font-size: 1.8rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: #14121f;
+  background: #f6f2ff;
+  border: 2px solid transparent;
+  border-radius: 0.6rem;
+}
+
+.party-math__input:focus {
+  outline: none;
+  border-color: #ffd76a;
+}
+
+.party-math__input--shake {
+  border-color: #ff6f6f;
+  animation: party-math-shake 0.4s ease-in-out;
+}
+
+/* A head-shake, not a wobble: side to side, decaying, saying "no". */
+@keyframes party-math-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-9px); }
+  30% { transform: translateX(8px); }
+  45% { transform: translateX(-6px); }
+  60% { transform: translateX(4px); }
+  80% { transform: translateX(-2px); }
+}
+
+.party-math__wrong {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ff8f8f;
+}
+
+.party-math__submit {
+  min-width: 8rem;
+  min-height: 2.8rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #14121f;
+  background: linear-gradient(180deg, #e6e1ff, #b9b0e8);
+  border: none;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.party-math--done .party-math__verdict {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #4ade80;
+}
+
+.party-math__note {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  color: #9b93b8;
+}
+
+/* ---- button mash ------------------------------------------------------------ */
+
+.party-mash {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.party-mash__clock {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ffd76a;
+}
+
+.party-mash__button {
+  width: min(72vw, 16rem);
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 50%;
+  font-size: clamp(1.3rem, 7vw, 2.1rem);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  color: #2a1206;
+  background: radial-gradient(circle at 38% 32%, #ffd9a0, #f0932b 70%);
+  box-shadow:
+    inset 0 -9px 20px rgba(0, 0, 0, 0.32),
+    0 12px 30px rgba(240, 147, 43, 0.45);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  /* A press that only moves 2px keeps up with a fast masher; anything larger
+     lags behind the finger and reads as dropped clicks. */
+  transition: transform 0.04s linear;
+}
+
+.party-mash__button:active {
+  transform: scale(0.97);
+}
+
+.party-mash__count {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ece7fb;
+}
+
+.party-mash__verdict {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.party-mash--most .party-mash__verdict {
+  color: #4ade80;
+}
+
+.party-mash--least .party-mash__verdict {
+  color: #ff8f8f;
+}
+
+.party-mash__note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9b93b8;
+}
+
+/* ---- bomb attack: the bomb over the holder's castle ------------------------ */
+
+.bomb-marker__icon {
+  /* ⚠️ ANIMATION ON THE ICON, POSITION ON ITS x/y ATTRIBUTES. Nothing here sets
+     a transform in CSS and an x/y attribute on the same element — that clash is
+     what once drew the monster off-screen. */
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+  animation: bomb-marker-bob 1.15s ease-in-out infinite;
+}
+
+.bomb-marker__halo {
+  fill: rgba(255, 122, 74, 0.22);
+  animation: bomb-marker-pulse 1.15s ease-in-out infinite;
+}
+
+/* A slight bob and tilt — alive, but not so busy that it fights the castle it
+   is sitting over. */
+@keyframes bomb-marker-bob {
+  0%, 100% { transform: translateY(0) rotate(-7deg); }
+  50% { transform: translateY(-7px) rotate(7deg); }
+}
+
+@keyframes bomb-marker-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.92); }
+  50% { opacity: 0.75; transform: scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .party-mash__button,
+  .party-math__input--shake,
+  .bomb-marker__icon,
+  .bomb-marker__halo {
+    animation: none;
+    transition: none;
+  }
+}
+
+@keyframes party-card-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- kingdom thief ---------------------------------------------------------- */
+
+.party-thief {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.party-thief__clock {
+  margin: 0;
+  font-size: 2.6rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ff9a6a;
+  /* Appears at three seconds, so it arrives with a shove rather than fading in
+     politely — it is a prompt to commit. */
+  animation: party-thief-urge 1s ease-out infinite;
+}
+
+@keyframes party-thief-urge {
+  0% { transform: scale(1.22); opacity: 0.5; }
+  35% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.party-thief__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.party-thief__option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 8.5rem;
+  padding: 0.9rem 0.7rem;
+  border: 2px solid transparent;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  text-align: center;
+}
+
+/* The two are coloured as what they MEAN — green for the shared good, red for
+   the grab — so the choice is legible before the words are read. */
+.party-thief__option--keep {
+  color: #06331b;
+  background: linear-gradient(180deg, #9ff5c0, #35b46f);
+}
+
+.party-thief__option--steal {
+  color: #3a0d0d;
+  background: linear-gradient(180deg, #ffb4a1, #d9503c);
+}
+
+.party-thief__option:focus-visible {
+  border-color: #ffffff;
+  outline: none;
+}
+
+.party-thief__word {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.party-thief__hint {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  opacity: 0.85;
+}
+
+.party-thief__count {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #9b93b8;
+}
+
+.party-thief__locked {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ece7fb;
+}
+
+.party-thief__note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #ffb27a;
+}
+
+/* ---- pick a chest ----------------------------------------------------------- */
+
+.party-chest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.party-chest__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.party-chest__map {
+  width: 1.6rem;
+  height: 1.6rem;
+  color: #c8b48a;
+}
+
+.party-chest__clock {
+  font-size: 1.8rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #ff9a6a;
+}
+
+.party-chest__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.party-chest__one {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.7rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  color: #e6c98a;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+
+.party-chest__one:hover,
+.party-chest__one:focus-visible {
+  border-color: rgba(255, 215, 106, 0.6);
+  transform: translateY(-3px);
+  outline: none;
+}
+
+/* Each chest rocks on its own beat, so the three read as three objects rather
+   than one picture repeated. */
+.party-chest__icon {
+  width: 62%;
+  height: 62%;
+  animation: party-chest-rock 2.6s ease-in-out infinite;
+}
+
+.party-chest__one:nth-child(2) .party-chest__icon { animation-delay: 0.5s; }
+.party-chest__one:nth-child(3) .party-chest__icon { animation-delay: 1s; }
+
+@keyframes party-chest-rock {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+.party-chest__odds {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #9b93b8;
+}
+
+.party-chest__opened {
+  width: min(38vw, 6rem);
+  height: min(38vw, 6rem);
+  color: #ffd76a;
+  animation: party-chest-open 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+@keyframes party-chest-open {
+  0% { transform: scale(0.6) rotate(-12deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.party-chest__prize {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.party-chest--good .party-chest__prize { color: #4ade80; }
+.party-chest--bad .party-chest__prize { color: #ff8f8f; }
+.party-chest--bad .party-chest__opened { color: #ff8f8f; }
+
+.party-chest__note {
+  margin: 0;
+  font-size: 0.78rem;
+  text-align: center;
+  color: #ffb27a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .party-thief__clock,
+  .party-chest__icon,
+  .party-chest__opened {
+    animation: none;
+  }
+
+  .party-chest__one:hover {
+    transform: none;
+  }
+}
+
+/* ---- the bomb going off ----------------------------------------------------- */
+
+.bomb-blast__core {
+  fill: #fff3c4;
+  animation: bomb-blast-core 0.42s ease-out forwards;
+}
+
+.bomb-blast__ring {
+  fill: none;
+  stroke: #ff7a2f;
+  stroke-width: 10;
+  animation: bomb-blast-ring 0.85s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+}
+
+.bomb-blast__ring--late {
+  stroke: #ffd76a;
+  stroke-width: 5;
+  animation-delay: 0.12s;
+}
+
+.bomb-blast__shard {
+  stroke: #ffb15c;
+  stroke-width: 6;
+  stroke-linecap: round;
+  animation: bomb-blast-shard 0.7s ease-out forwards;
+}
+
+@keyframes bomb-blast-core {
+  0% { opacity: 1; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+@keyframes bomb-blast-ring {
+  0% { opacity: 0.95; stroke-width: 14; transform: scale(0.25); }
+  100% { opacity: 0; stroke-width: 2; transform: scale(3.4); }
+}
+
+@keyframes bomb-blast-shard {
+  0% { opacity: 0.9; stroke-dasharray: 0 200; }
+  35% { opacity: 0.9; stroke-dasharray: 40 200; }
+  100% { opacity: 0; stroke-dasharray: 0 200; stroke-dashoffset: -120; }
+}
+
+/* ⚠️ SCALED FROM THE BLAST'S OWN CENTRE. Without `transform-box: fill-box` an
+   SVG transform-origin resolves against the whole 1000-unit viewport, and every
+   ring would expand from the arena's corner instead of from the castle. */
+.bomb-blast__core,
+.bomb-blast__ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* The shake lives on <body> so it moves the HUD and the arena together — a
+   screen shake that rocks the board while the ability bar stands still reads as
+   a broken layout rather than as an explosion. */
+.party-quake {
+  animation: party-quake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) 2;
+}
+
+@keyframes party-quake {
+  0%, 100% { transform: translate(0, 0); }
+  12% { transform: translate(-7px, 4px); }
+  28% { transform: translate(6px, -5px); }
+  44% { transform: translate(-5px, -3px); }
+  62% { transform: translate(4px, 4px); }
+  80% { transform: translate(-2px, 2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No shaking, but the blast still happens: it is information, not decoration
+     — it says which kingdom just took three thousand damage. */
+  .party-quake {
+    animation: none;
+  }
+
+  .bomb-blast__shard {
+    display: none;
+  }
+}

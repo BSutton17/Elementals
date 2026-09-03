@@ -18,6 +18,9 @@ import { useWatchedVictim } from '../game/spectatorFocus'
 import { RouletteMirror, type MirrorSpin } from '../components/roulette/RouletteMirror'
 import { useLobby } from '../game/useLobby'
 import { useGameState } from '../game/useGameState'
+import { PartyBanner } from '../components/party/PartyBanner'
+import { PartyStage } from '../components/party/PartyStage'
+import { PartyDebugPanel } from '../components/party/PartyDebugPanel'
 
 /** How long a finished wheel stays on Joker's side-screen before clearing. */
 const MIRROR_LINGER_SECONDS = 3
@@ -68,10 +71,12 @@ export function BattlefieldScreen() {
           tick={game.tick}
           volcano={game.volcano}
           monster={game.monster}
+          party={game.party}
           caprice={game.caprice}
           centrepiece={game.centrepiece}
           spectator
         />
+        <PartyBanner party={game.party} />
         <FogOverlay active={watchedGassed !== null} variant="toxic" />
         <BlizzardOverlay
           active={game.players.some((p) => p.statuses?.some((s) => s.id === 'blizzard'))}
@@ -175,9 +180,17 @@ export function BattlefieldScreen() {
         tick={game.tick}
         volcano={game.volcano}
         monster={game.monster}
+        party={game.party}
         caprice={game.caprice}
         centrepiece={game.centrepiece}
       />
+      {/* Party Mode: the banner across the top, and the panel the minigame is
+          played in. Above the ability bar but below the blinding overlays — a
+          Flash Bang is still a Flash Bang while you are in a maze. */}
+      <PartyBanner party={game.party} />
+      <PartyStage party={game.party} youId={youId} />
+      {/* Local development only; the server refuses it anywhere else. */}
+      <PartyDebugPanel />
       {/* Full-screen "you've been hacked" flash for the local victim. */}
       <HackOverlay youId={youId} />
       {/* Full-screen haze while the local player is blinded by Thick Fog (grey)

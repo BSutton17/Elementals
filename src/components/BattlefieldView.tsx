@@ -46,6 +46,9 @@ import type {
   MonsterSnapshot,
   VolcanoSnapshot,
 } from '../game/gameState'
+import { partyAct, type PartySnapshot } from '../game/party'
+import { BombMarker } from './party/BombMarker'
+import { BombBlast } from './party/BombBlast'
 import type { LobbyMatch } from '../game/lobby'
 import './BattlefieldView.css'
 
@@ -99,6 +102,7 @@ export function BattlefieldView({
   spectator = false,
   volcano = null,
   monster = null,
+  party = null,
   caprice = null,
   centrepiece = null,
 }: {
@@ -113,6 +117,8 @@ export function BattlefieldView({
   volcano?: VolcanoSnapshot | null
   /** The monster, when one is standing. Shown to everyone. */
   monster?: MonsterSnapshot | null
+  /** The running minigame, or null. Only Bomb Attack changes this view. */
+  party?: PartySnapshot | null
   /** Insects' butterfly, when one is out. Shown to everyone. */
   caprice?: CapriceSnapshot | null
   /** The NAME of whatever holds the middle of the field, or null when clear.
@@ -228,6 +234,10 @@ export function BattlefieldView({
   const grantedLimit = statusMultiTargetLimit(you.statuses)
   const multiTarget = canMultiTarget(you.kingdomId) || grantedLimit > 1
   const localSelect = usesLocalTargeting(you.kingdomId) || grantedLimit > 1
+  // Bomb Attack is played on this board rather than in a panel: while it runs,
+  // a castle click hands the bomb over instead of aiming at anybody.
+  const bombLive = party !== null && party.gameId === 'bombAttack' && !party.resolved
+  const bombHolderId = bombLive ? ((party.shared.holderId as string | undefined) ?? null) : null
   const selectLimit = Math.max(localSelectLimit(you.kingdomId), grantedLimit)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   /**
@@ -247,6 +257,17 @@ export function BattlefieldView({
   const isTargeted = (id: string) =>
     localSelect ? activeSelected.includes(id) : you?.target === id
   const toggleTarget = (id: string) => {
+    // ⚠️ DURING A BOMB, A CASTLE CLICK PASSES THE BOMB. It does not also aim
+    // at that kingdom — the server refuses targeting for the duration, so a
+    // click that tried to do both would half-work and read as a bug. Handled at
+    // the top of the one function every castle click goes through, so there is
+    // no path that misses it.
+    if (bombLive) {
+      if (bombHolderId === youId && id !== youId && id !== MONSTER_TARGET_ID) {
+        void partyAct({ type: 'pass', targetId: id })
+      }
+      return
+    }
     if (localSelect) {
       setSelectedIds((prev) => {
         /* ⚠️ THE CAP COUNTS LIVING TARGETS ONLY, AND THIS IS WHY. The stored
@@ -620,6 +641,11 @@ export function BattlefieldView({
           colorOf={colorOf}
           youId={youId}
         />
+
+        {/* Bomb Attack: the bomb over whoever is carrying it, and the blast
+            when it finally goes off. */}
+        <BombMarker party={party} positionOf={positionOf} />
+        <BombBlast party={party} positionOf={positionOf} />
 
         {/* Who got paid for killing the monster — a trophy for most damage, a
             tick for the finishing blow, over the winning castle(s). */}

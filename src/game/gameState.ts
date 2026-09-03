@@ -1,5 +1,6 @@
 import { socket } from '../sockets/socket'
 import type { MonsterKind } from '../components/monster/monsters'
+import type { PartySnapshot } from './party'
 
 // Client mirror of the server's `state:sync` broadcast (gameSync.ts): each
 // player's live castle, economy, and targeting state. This is the data source
@@ -236,6 +237,9 @@ export interface GameState {
   monster: MonsterSnapshot | null
   /** The butterfly holding the field, or null when there is none. */
   caprice: CapriceSnapshot | null
+  /** The minigame in front of the table, or null. Server-authoritative in
+   *  every particular — see `game/party.ts`. */
+  party: PartySnapshot | null
   /** The NAME of whatever holds the middle of the battlefield, or null when it
    *  is clear. Server-decided: only one thing may ever stand there, and two of
    *  the four candidates (the black hole, the Light Show) never appear in this
@@ -250,6 +254,7 @@ let state: GameState = {
   volcano: null,
   monster: null,
   caprice: null,
+  party: null,
   centrepiece: null,
 }
 
@@ -312,6 +317,7 @@ export function applyStateSync(payload: {
   volcano?: VolcanoSnapshot | null
   monster?: MonsterSnapshot | null
   caprice?: CapriceSnapshot | null
+  party?: PartySnapshot | null
   centrepiece?: string | null
 }): void {
   state = {
@@ -320,6 +326,7 @@ export function applyStateSync(payload: {
     players: withPaint(payload.players),
     volcano: payload.volcano ?? null,
     monster: payload.monster ?? null,
+    party: payload.party ?? null,
     caprice: payload.caprice ?? null,
     centrepiece: payload.centrepiece ?? null,
   }
@@ -334,8 +341,9 @@ export function clearGameState(): void {
     serverTime: null,
     players: [],
     volcano: null,
-  monster: null,
+    monster: null,
     caprice: null,
+    party: null,
     centrepiece: null,
   }
   listeners.forEach((l) => l())

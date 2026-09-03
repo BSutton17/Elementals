@@ -1,0 +1,88 @@
+/* The local-only minigame launcher. Deliberately plain: it is a tool, and it
+   must never be mistaken for part of the game. */
+
+.party-debug {
+  position: fixed;
+  left: 0.6rem;
+  bottom: 0.6rem;
+  z-index: 1500;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.party-debug__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0e0b18;
+  background: #ffd76a;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.party-debug__toggle:hover {
+  opacity: 1;
+}
+
+.party-debug__panel {
+  position: absolute;
+  left: 0;
+  bottom: 2.4rem;
+  width: 15rem;
+  padding: 0.6rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #131020;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.party-debug__note {
+  margin: 0 0 0.5rem;
+  font-size: 0.68rem;
+  color: #8f86c9;
+}
+
+.party-debug__game {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.3rem;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  color: #ece7fb;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.party-debug__game:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.party-debug__game:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.party-debug__game-id {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.party-debug__game-desc {
+  display: block;
+  font-size: 0.68rem;
+  color: #9b93b8;
+}
+
+.party-debug__refused {
+  margin: 0.4rem 0 0;
+  font-size: 0.68rem;
+  color: #ff9a9a;
+}

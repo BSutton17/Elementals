@@ -29,6 +29,7 @@ const state = {
   serverTime: 0,
   volcano: null,
   monster: monster() as MonsterSnapshot | null,
+  party: null,
   caprice: null,
   centrepiece: null,
 }

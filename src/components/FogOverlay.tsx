@@ -46,17 +46,35 @@ type FogLayer = {
   alpha: number
 }
 
+/**
+ * How much of the screen each blindness actually takes away.
+ *
+ * ⚠️ TUNED ON ALPHA, NOT ON COUNT. Thinning a fog by removing puffs makes it
+ * PATCHY — clear holes with solid clumps between them — which is harder to play
+ * through than an even haze at the same average density, and it reads as a
+ * rendering fault rather than as weather. Fading every puff keeps the shape of
+ * the effect and only changes how much it hides.
+ *
+ * ⚠️ AND SMOKE MOVES WITH FOG, BY DESIGN. Volcanic smoke deliberately reuses
+ * Thick Fog's density table so the game has ONE kind of blindness in two
+ * colours rather than two that have to be learned separately (there is a test
+ * on it). Thinning fog therefore thins smoke by the same amount; splitting them
+ * would create exactly the second kind this arrangement exists to avoid.
+ */
+const FOG_CLUTTER = 0.6 // Thick Fog (and Smoke): 40% less
+const TOXIC_CLUTTER = 0.5 // Toxic Gas: 50% less
+
 /** Per-layer parameters — bigger/slower/softer in back, smaller/faster in front. */
 const AIR_LAYERS: FogLayer[] = [
-  { count: 130, radius: [220, 380], speed: [6, 14], swirl: 5, alpha: 0.42 },
-  { count: 150, radius: [140, 260], speed: [12, 24], swirl: 9, alpha: 0.5 },
-  { count: 140, radius: [90, 170], speed: [20, 38], swirl: 14, alpha: 0.58 },
+  { count: 130, radius: [220, 380], speed: [6, 14], swirl: 5, alpha: 0.42 * FOG_CLUTTER },
+  { count: 150, radius: [140, 260], speed: [12, 24], swirl: 9, alpha: 0.5 * FOG_CLUTTER },
+  { count: 140, radius: [90, 170], speed: [20, 38], swirl: 14, alpha: 0.58 * FOG_CLUTTER },
 ]
 // Toxic Gas is a thinner, sparser haze than Thick Fog — fewer, softer puffs.
 const NATURE_LAYERS: FogLayer[] = [
-  { count: 8, radius: [220, 380], speed: [6, 14], swirl: 5, alpha: 0.42 },
-  { count: 16, radius: [140, 260], speed: [12, 24], swirl: 9, alpha: 0.5 },
-  { count: 10, radius: [90, 170], speed: [20, 38], swirl: 14, alpha: 0.58 },
+  { count: 8, radius: [220, 380], speed: [6, 14], swirl: 5, alpha: 0.42 * TOXIC_CLUTTER },
+  { count: 16, radius: [140, 260], speed: [12, 24], swirl: 9, alpha: 0.5 * TOXIC_CLUTTER },
+  { count: 10, radius: [90, 170], speed: [20, 38], swirl: 14, alpha: 0.58 * TOXIC_CLUTTER },
 ]
 
 export type FogVariant = 'fog' | 'toxic' | 'smoke'

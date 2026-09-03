@@ -1,0 +1,95 @@
+/* The Party Mode banner: one line across the top, over everything. */
+
+.party-banner {
+  position: fixed;
+  top: max(0.75rem, env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(92vw, 34rem);
+  padding: 0.6rem 1.15rem;
+  box-sizing: border-box;
+  text-align: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, rgba(28, 22, 48, 0.96), rgba(16, 13, 30, 0.96));
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  /* ⚠️ THE CENTRING LIVES HERE, and the entrance animation is on a CHILD.
+     A CSS transform beats the one an animation would set on the same element,
+     so an animated banner that also centres itself with translateX loses the
+     centring the instant the animation takes hold — the same bug that once put
+     the monster off-screen. */
+  transform: translateX(-50%);
+}
+
+.party-banner__text {
+  display: block;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: clamp(0.95rem, 3.4vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  color: #f2ecff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: party-banner-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+/* A result is an announcement, not an instruction: warmer, and it lands harder. */
+.party-banner--result {
+  border-color: rgba(255, 214, 120, 0.4);
+  background: linear-gradient(180deg, rgba(54, 40, 20, 0.96), rgba(30, 22, 12, 0.96));
+}
+
+.party-banner--result .party-banner__text {
+  color: #ffe6a8;
+}
+
+.party-banner--leaving {
+  animation: party-banner-out 0.6s ease-in forwards;
+}
+
+@keyframes party-banner-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes party-banner-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Landscape phones have almost no vertical room; the banner tucks in tighter. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .party-banner {
+    top: 0.35rem;
+    padding: 0.4rem 0.9rem;
+  }
+
+  .party-banner__text {
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .party-banner__text {
+    animation: none;
+  }
+
+  .party-banner--leaving {
+    animation: party-banner-out 0.2s linear forwards;
+  }
+}
