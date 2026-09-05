@@ -1,6 +1,20 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { partyAct, type PartySnapshot } from '../../game/party'
 import './CleanUpOverlay.css'
+
+/**
+ * How much bigger each blob is on a phone.
+ *
+ * ⚠️ A FRACTION OF THE VIEWPORT IS NOT A FRACTION OF THE SCREEN'S USEFULNESS.
+ * The server sends every splat as a share of the width, which keeps the mess
+ * looking identical at every size — and that was the problem: the same
+ * proportion that buries a monitor barely marks a phone, where the board is
+ * already small and the blobs landed in the gaps between things. Doubled here
+ * rather than in `buildMess`, because a splat's radius never leaves this side:
+ * the server only records which id was wiped.
+ */
+const PHONE_SCALE = 2
+const PHONE_MAX_PX = 820
 
 /**
  * The mess, wiped off the screen with a finger.
@@ -25,6 +39,19 @@ export function CleanUpOverlay({
 }) {
   const wiping = useRef(new Set<number>())
 
+  // Watched rather than read once: a phone rotated mid-game changes which of
+  // these two the screen is, and the drawn blob and the hit test have to agree
+  // about that at all times.
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth <= PHONE_MAX_PX,
+  )
+  useEffect(() => {
+    const onResize = () => setNarrow(window.innerWidth <= PHONE_MAX_PX)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  const scale = narrow ? PHONE_SCALE : 1
+
   if (!party || party.gameId !== 'cleanUp' || party.resolved) return null
   const mine = youId ? party.players[youId] : undefined
   if (!mine || mine.done) return null
@@ -41,13 +68,17 @@ export function CleanUpOverlay({
 
     for (const splat of splats) {
       if (wiped.includes(splat.id) || wiping.current.has(splat.id)) continue
-      // Elliptical, because the overlay is the viewport and the viewport is not
-      // square: a circular test in screen space would clear a wide blob from
-      // much further away horizontally than vertically.
+      // ⚠️ TESTED AGAINST THE ELLIPSE THAT IS ACTUALLY DRAWN. The blob is
+      // painted in a stretched viewBox — wide as `r` of the width, tall as
+      // 0.78r of the HEIGHT — so on a portrait phone it is far taller than it
+      // is wide. Comparing one distance against one radius (as this did) meant
+      // the top and bottom thirds of every blob were dead: you dragged over the
+      // mess, saw nothing happen, and dragged again.
       const dx = (x - splat.x) * box.width
       const dy = (y - splat.y) * box.height
-      const radius = splat.r * Math.min(box.width, box.height)
-      if (Math.hypot(dx, dy) > radius) continue
+      const rx = splat.r * scale * box.width
+      const ry = splat.r * 0.78 * scale * box.height
+      if ((dx / rx) ** 2 + (dy / ry) ** 2 > 1) continue
 
       wiping.current.add(splat.id)
       void partyAct({ type: 'wipe', splatId: splat.id })
@@ -86,8 +117,8 @@ export function CleanUpOverlay({
               transform={`translate(${splat.x * 100} ${splat.y * 100}) rotate(${splat.rotation})`}
             >
               <ellipse
-                rx={splat.r * 100}
-                ry={splat.r * 78}
+                rx={splat.r * 100 * scale}
+                ry={splat.r * 78 * scale}
                 className={`clean-up__splat clean-up__splat--${splat.shape}`}
               />
               {/* Two satellites, so a blob has spatter rather than being an
@@ -99,17 +130,17 @@ export function CleanUpOverlay({
                   filter then blended the two into a halo, which looked like a
                   rendering fault rather than spatter. */}
               <ellipse
-                cx={splat.r * 78}
-                cy={-splat.r * 46}
-                rx={splat.r * 30}
-                ry={splat.r * 24}
+                cx={splat.r * 78 * scale}
+                cy={-splat.r * 46 * scale}
+                rx={splat.r * 30 * scale}
+                ry={splat.r * 24 * scale}
                 className={`clean-up__splat clean-up__splat--${splat.shape}`}
               />
               <ellipse
-                cx={-splat.r * 62}
-                cy={splat.r * 52}
-                rx={splat.r * 22}
-                ry={splat.r * 18}
+                cx={-splat.r * 62 * scale}
+                cy={splat.r * 52 * scale}
+                rx={splat.r * 22 * scale}
+                ry={splat.r * 18 * scale}
                 className={`clean-up__splat clean-up__splat--${splat.shape}`}
               />
             </g>

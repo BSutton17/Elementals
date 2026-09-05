@@ -45,7 +45,7 @@ export function MemoryGame({
   const sequence = (party.shared.sequence as string[] | undefined) ?? []
   const question = party.shared.question as MemoryQuestionWire | null | undefined
   const countdownSeconds = (party.shared.countdownSeconds as number | undefined) ?? 3
-  const flashMs = (party.shared.flashMs as number | undefined) ?? 650
+  const flashMs = (party.shared.flashMs as number | undefined) ?? 813
   const mine = youId ? party.players[youId] : undefined
   const done = mine?.done ?? false
 

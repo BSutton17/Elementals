@@ -242,17 +242,25 @@ export function BattlefieldView({
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   /**
    * Whether a selected id is still worth holding a slot: a living opponent, or
-   * the volcano while it stands.
+   * one of the two things on the field that is not a kingdom.
    *
-   * ⚠️ THE VOLCANO COUNTS. It is not on the roster — it is not a kingdom —
-   * so a roster-only test silently dropped it from the selection the moment it
-   * was picked, which meant Air and a Dark player holding Infinitum Tenebrae
-   * could not attack "The End of the World" at all.
+   * ⚠️ NEITHER THE VOLCANO NOR THE MONSTER IS ON THE ROSTER, AND BOTH HAVE HIT
+   * THIS. A roster-only test drops them from the selection the very frame they
+   * are picked: the click registers, the id goes into the list, and the next
+   * render filters it straight back out — no ring, no target, nothing to
+   * explain it. It cost Air and Dark-under-Infinitum-Tenebrae "The End of the
+   * World"; the monster arrived later and was never given the same exemption,
+   * which cost Air, Love and the same Dark case the monster entirely.
+   *
+   * Only the multi-select kingdoms were ever affected. Everyone else aims
+   * through the server, which has always accepted both.
    */
   const stillTargetable = (id: string) =>
     id === VOLCANO_TARGET_ID
       ? !!volcano && volcano.hp > 0
-      : roster.some((p) => p.id === id && p.id !== youId && !p.eliminated)
+      : id === MONSTER_TARGET_ID
+        ? !!monster && monster.hp > 0
+        : roster.some((p) => p.id === id && p.id !== youId && !p.eliminated)
   const activeSelected = selectedIds.filter(stillTargetable)
   const isTargeted = (id: string) =>
     localSelect ? activeSelected.includes(id) : you?.target === id
@@ -480,7 +488,12 @@ export function BattlefieldView({
         <MonsterLayer
           monster={monster ?? null}
           tickRate={tickRate}
-          targeted={you?.target === MONSTER_TARGET_ID}
+          // ⚠️ `isTargeted`, NOT `you.target`. Air, Love and Dark under
+          // Infinitum Tenebrae aim with a LOCAL selection and never set
+          // `target` at all, so reading it directly meant the ring stayed off
+          // no matter how many times they pressed the monster — the same
+          // "nothing happened" the selection bug produced, one layer up.
+          targeted={isTargeted(MONSTER_TARGET_ID)}
           onTarget={
             !spectator && you && !you.eliminated
               ? () => toggleTarget(MONSTER_TARGET_ID)
@@ -495,7 +508,8 @@ export function BattlefieldView({
         <VolcanoLayer
           volcano={volcano}
           tickRate={tickRate}
-          targeted={you?.target === VOLCANO_TARGET_ID}
+          // Local multi-select never sets `target` — see the monster above.
+          targeted={isTargeted(VOLCANO_TARGET_ID)}
           onTarget={
             // Magma cannot attack its own eruption, and spectators cannot
             // attack anything — the server rejects both, so neither gets a

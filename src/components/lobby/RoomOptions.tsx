@@ -5,10 +5,11 @@ import './RoomOptions.css'
 /**
  * The room's optional rules, behind a gear in the corner.
  *
- * ⚠️ ADMIN-ONLY, AND HIDDEN RATHER THAN DISABLED. These two switches change
- * what a match IS — one hands eliminated players the whole board, the other
- * decides whether a monster turns up at all — so while they are being tuned
- * they belong to the account that owns the game. A greyed-out control that
+ * ⚠️ ADMIN-ONLY, AND HIDDEN RATHER THAN DISABLED. These switches change what a
+ * match IS — one hands eliminated players the whole board, one decides whether
+ * a monster turns up at all, one replaces stretches of the war with minigames
+ * — so while they are being tuned they belong to the account that owns the
+ * game. A greyed-out control that
  * nobody else can ever use is just a permanent advertisement for a thing they
  * cannot have; the panel simply is not there.
  *
@@ -20,6 +21,7 @@ export function RoomOptions({
   onOpenChange,
   eliminatedSeeAllHealth,
   monstersEnabled,
+  partyModeEnabled,
   onChange,
   disabled = false,
 }: {
@@ -27,7 +29,12 @@ export function RoomOptions({
   onOpenChange: (open: boolean) => void
   eliminatedSeeAllHealth: boolean
   monstersEnabled: boolean
-  onChange: (rules: { eliminatedSeeAllHealth?: boolean; monstersEnabled?: boolean }) => void
+  partyModeEnabled: boolean
+  onChange: (rules: {
+    eliminatedSeeAllHealth?: boolean
+    monstersEnabled?: boolean
+    partyModeEnabled?: boolean
+  }) => void
   /** True once the match has started — the rules are fixed from then on. */
   disabled?: boolean
 }) {
@@ -100,8 +107,25 @@ export function RoomOptions({
             </span>
           </label>
 
+          <label className="room-options__rule">
+            <input
+              type="checkbox"
+              checked={partyModeEnabled}
+              disabled={disabled}
+              onChange={(e) => onChange({ partyModeEnabled: e.target.checked })}
+              data-testid="option-party-mode"
+            />
+            <span>
+              <span className="room-options__name">Party Mode</span>
+              <span className="room-options__desc">
+                Minigames interrupt the match — production stops and attacks are held
+                until somebody finishes.
+              </span>
+            </span>
+          </label>
+
           <p className="room-options__note">
-            Both are always off in public matches
+            All three are always off in public matches
           </p>
         </div>
       )}

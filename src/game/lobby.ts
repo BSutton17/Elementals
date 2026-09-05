@@ -120,9 +120,12 @@ export interface LobbyMatch {
   /** Admin rule: an eliminated player keeps seeing every surviving kingdom's
    *  health bar. Off unless it was turned on. */
   eliminatedSeeAllHealth?: boolean
-  /** Admin rule: whether a monster can take the field at all. Always off in
-   *  public matches; defaults on in private ones. */
+  /** Admin rule: whether a monster can take the field at all. Off unless it
+   *  was turned on, and never available in public matches. */
   monstersEnabled?: boolean
+  /** Admin rule: whether Party Mode's minigames interrupt the match. Off
+   *  unless it was turned on, and never available in public matches. */
+  partyModeEnabled?: boolean
   /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
   visibility?: 'private' | 'public'
   /**
@@ -151,9 +154,12 @@ export interface MatchSnapshot {
   /** Admin rule: an eliminated player keeps seeing every surviving kingdom's
    *  health bar. Off unless it was turned on. */
   eliminatedSeeAllHealth?: boolean
-  /** Admin rule: whether a monster can take the field at all. Always off in
-   *  public matches; defaults on in private ones. */
+  /** Admin rule: whether a monster can take the field at all. Off unless it
+   *  was turned on, and never available in public matches. */
   monstersEnabled?: boolean
+  /** Admin rule: whether Party Mode's minigames interrupt the match. Off
+   *  unless it was turned on, and never available in public matches. */
+  partyModeEnabled?: boolean
   /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
   visibility?: 'private' | 'public'
   /**

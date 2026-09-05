@@ -26,6 +26,14 @@
   transform: translateX(-50%);
 }
 
+/* Bomb Attack: the board IS the game, and the top of it is where the first few
+   kingdoms sit. Down here nothing is covered — attacking is suspended, so the
+   controls this would normally sit on top of are not in use. */
+.party-banner--bottom {
+  top: auto;
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
 .party-banner__text {
   display: block;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -63,6 +71,22 @@
   }
 }
 
+/* It arrives from the edge it is anchored to, not from the top of the screen. */
+.party-banner--bottom .party-banner__text {
+  animation-name: party-banner-in-up;
+}
+
+@keyframes party-banner-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes party-banner-out {
   0% {
     opacity: 1;
@@ -77,6 +101,13 @@
   .party-banner {
     top: 0.35rem;
     padding: 0.4rem 0.9rem;
+  }
+
+  /* Restated, because the rule above sets `top` and would otherwise drag a
+     bottom-anchored banner back up. */
+  .party-banner--bottom {
+    top: auto;
+    bottom: 0.35rem;
   }
 
   .party-banner__text {

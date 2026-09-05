@@ -208,6 +208,7 @@ export async function selectPerks(perks: readonly string[]): Promise<void> {
 export async function setRoomRules(rules: {
   eliminatedSeeAllHealth?: boolean
   monstersEnabled?: boolean
+  partyModeEnabled?: boolean
 }): Promise<void> {
   const res = (await socket.emitWithAck('lobby:setRules', rules)) as Ack
   if (!res.ok) setState({ error: res.error?.message ?? 'Cannot change that rule' })

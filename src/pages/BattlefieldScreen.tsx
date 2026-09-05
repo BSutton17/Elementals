@@ -21,6 +21,7 @@ import { useGameState } from '../game/useGameState'
 import { PartyBanner } from '../components/party/PartyBanner'
 import { PartyStage } from '../components/party/PartyStage'
 import { CleanUpOverlay } from '../components/party/CleanUpOverlay'
+import { GoldPartyOverlay } from '../components/party/GoldPartyOverlay'
 import { PartyDebugPanel } from '../components/party/PartyDebugPanel'
 
 /** How long a finished wheel stays on Joker's side-screen before clearing. */
@@ -193,6 +194,9 @@ export function BattlefieldScreen() {
       {/* Clean Up's spill: its own layer over the board, because the mess has
           to be in the way of the match rather than inside a dialog. */}
       <CleanUpOverlay party={game.party} youId={youId} />
+      {/* Gold Party rains on the board itself — no panel, so a coin is caught
+          where it actually is rather than where a dialog redrew it. */}
+      <GoldPartyOverlay party={game.party} youId={youId} />
       {/* Draws nothing unless the server says this seat may launch minigames —
           a dev build over loopback, or (for now) an admin hosting the room. */}
       <PartyDebugPanel />

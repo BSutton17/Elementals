@@ -20,6 +20,7 @@ function panel(over: Partial<Parameters<typeof RoomOptions>[0]> = {}) {
       onOpenChange={() => {}}
       eliminatedSeeAllHealth={false}
       monstersEnabled
+      partyModeEnabled={false}
       onChange={onChange}
       {...over}
     />,
@@ -35,6 +36,9 @@ describe('the room options gear', () => {
 
     fireEvent.click(screen.getByTestId('option-monsters'))
     expect(onChange).toHaveBeenLastCalledWith({ monstersEnabled: false })
+
+    fireEvent.click(screen.getByTestId('option-party-mode'))
+    expect(onChange).toHaveBeenLastCalledWith({ partyModeEnabled: true })
   })
 
   it('shows the server\u2019s values, not its own', () => {

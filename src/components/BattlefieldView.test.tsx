@@ -479,3 +479,77 @@ describe('the volcano on the battlefield', () => {
     expect(container.querySelector('[data-testid="volcano-hit"]')).toBeNull()
   })
 })
+
+describe('the two things on the field that are not kingdoms', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  const monster = { hp: 40_000, maxHp: 60_000, attackDamage: 900, ticksUntilAttack: 120 }
+  const volcano = { ownerId: 'c', hp: 2400, maxHp: 3000, ticksRemaining: 200 }
+
+  /**
+   * ⚠️ THE BUG THIS WHOLE BLOCK EXISTS FOR, AND IT HIT TWICE. Neither the
+   * monster nor the volcano is on the roster, and the multi-select path kept
+   * its picks in a list pruned by a roster-only test. The click registered, the
+   * id went in, and the very next render threw it straight back out: no ring,
+   * no target, nothing on screen to explain it. Air, Love and a Dark player
+   * holding Infinitum Tenebrae simply could not attack either one.
+   *
+   * Single-target kingdoms were never affected — they aim through the server,
+   * which has always accepted both — which is exactly why it went unnoticed.
+   */
+  it('lets a multi-select kingdom actually hold the monster', () => {
+    const { container } = render(
+      <BattlefieldView match={airMatch} youId="a" players={airGame()} monster={monster} />,
+    )
+    fireEvent.click(screen.getByLabelText(/^Attack the /))
+
+    expect(container.querySelector('.monster-layer__reticle')).toBeTruthy()
+  })
+
+  it('lets a multi-select kingdom hold the volcano', () => {
+    const { container } = render(
+      <BattlefieldView match={airMatch} youId="a" players={airGame()} volcano={volcano} />,
+    )
+    fireEvent.click(screen.getByTestId('volcano-hit'))
+
+    expect(container.querySelector('.volcano__reticle')).toBeTruthy()
+  })
+
+  it('casts at the monster alongside the kingdoms picked with it', () => {
+    render(
+      <BattlefieldView match={airMatch} youId="a" players={airGame()} monster={monster} />,
+    )
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+    fireEvent.click(screen.getByLabelText(/^Attack the /))
+    fireEvent.click(screen.getByLabelText('Cast A Light Breeze'))
+
+    expect(castAbility).toHaveBeenCalledWith(
+      'aLightBreeze',
+      ['b', '__monster__'],
+      undefined,
+      undefined,
+    )
+  })
+
+  it('drops the monster from the set once it is dead', () => {
+    // Same reason a dead kingdom gives its slot back: a corpse must not sit in
+    // one of Air's three places with no way to click it out.
+    const { rerender, container } = render(
+      <BattlefieldView match={airMatch} youId="a" players={airGame()} monster={monster} />,
+    )
+    fireEvent.click(screen.getByLabelText(/^Attack the /))
+    fireEvent.click(screen.getByLabelText('Target Bob'))
+
+    rerender(
+      <BattlefieldView
+        match={airMatch}
+        youId="a"
+        players={airGame()}
+        monster={{ ...monster, hp: 0 }}
+      />,
+    )
+    fireEvent.click(screen.getByLabelText('Cast A Light Breeze'))
+    expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['b'], undefined, undefined)
+    expect(container).toBeTruthy()
+  })
+})

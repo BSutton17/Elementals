@@ -11,8 +11,6 @@ import { ButtonMashGame } from './ButtonMashGame'
 import { KingdomThiefGame } from './KingdomThiefGame'
 import { PickAChestGame } from './PickAChestGame'
 import { DontMoveGame } from './DontMoveGame'
-import { GoldPartyGame } from './GoldPartyGame'
-import { KingdomSwapNote } from './KingdomSwapNote'
 import './PartyStage.css'
 
 /**
@@ -41,8 +39,6 @@ const GAMES = {
   kingdomThief: KingdomThiefGame,
   pickAChest: PickAChestGame,
   dontMove: DontMoveGame,
-  goldParty: GoldPartyGame,
-  kingdomSwap: KingdomSwapNote,
 } as const
 
 /**
@@ -62,32 +58,39 @@ const FIELD_GAMES = new Set([
   // Haunted happens to the board, not in a dialog — the living carry on and the
   // dead get their kit back. The banner says everything there is to say.
   'haunted',
+  // ⚠️ KINGDOM SWAP HAS NO PANEL AT ALL, AND USED TO. A card naming the kingdom
+  // you had borrowed sat over the board while the borrowed kit went unused —
+  // and the ability bar underneath had ALREADY changed, so the card was telling
+  // the player something the screen was showing them. The banner says "Kingdom
+  // Swap" for a few seconds and the thirty they get is spent playing.
+  'kingdomSwap',
+  // Gold Party rains on the battlefield itself; catching a coin means tapping
+  // where it actually is, not where a panel redrew it.
+  'goldParty',
 ])
 
 /**
- * Games that get out of the way the instant you finish them.
+ * Games that get out of the way when you finish, and how long they wait first.
  *
  * ⚠️ THE WAITING PANEL IS ONLY WORTH SHOWING WHEN THERE IS SOMETHING TO SEE.
  * Blackjack has a settled hand, Memory has a verdict, Reaction has your time —
- * those are worth a beat. Spotting a difference, answering a sum and opening a
- * chest are not: you already know how it went, and being held behind a "waiting
- * on 4 kingdoms" card while the match runs on without you is a punishment for
- * being FAST.
+ * those are worth a beat, and those games are absent from this map. Spotting a
+ * difference and answering a sum are not: you already know how it went, and
+ * being held behind a "waiting on 4 kingdoms" card while the match runs on
+ * without you is a punishment for being FAST. Those two leave at once.
  *
- * The chest is the sharpest case of the three — its whole result is one number
- * that lands the instant you tap, and there is nothing after that to look at.
+ * ⚠️ THE CHEST IS NOT ONE OF THOSE, THOUGH IT WAS. Leaving at zero meant the
+ * opened chest and the number in it were mounted and unmounted in the same
+ * frame — the player tapped and was returned to the battlefield having been
+ * told nothing, which reads as the game being broken rather than as a loss.
+ * What you won is the ONLY thing that game has to say, so it holds long enough
+ * to be read.
  */
-const DISMISS_ON_FINISH = new Set(['spotTheDifference', 'quickMath', 'pickAChest'])
-
-/**
- * Games whose panel closes on a timer rather than on the player finishing.
- *
- * ⚠️ KINGDOM SWAP IS THIRTY SECONDS LONG AND MEANT TO BE PLAYED. Holding a card
- * over the board for its whole duration would be the exact opposite of what the
- * swap is for: it hands you a new kit and then hides the battlefield you would
- * use it on. The note says whose abilities you have, and gets out of the way.
- */
-const ANNOUNCEMENTS: Record<string, number> = { kingdomSwap: 3500 }
+const DISMISS_AFTER_MS: Record<string, number> = {
+  spotTheDifference: 0,
+  quickMath: 0,
+  pickAChest: 3200,
+}
 
 export function PartyStage({
   party,
@@ -107,16 +110,33 @@ export function PartyStage({
     setClosing(true)
   }, [party?.resolved])
 
+  // Whether this player's panel has served its time after they finished. Kept
+  // here rather than read off a finish tick because it is a presentation
+  // question — the server has already recorded everything that matters.
+  const [dismissed, setDismissed] = useState(false)
+  const gameId = party?.gameId ?? null
+  const mineDone = (party && youId ? party.players[youId]?.done : false) ?? false
+
+  useEffect(() => {
+    setDismissed(false)
+    if (!mineDone || gameId === null) return
+    const delay = DISMISS_AFTER_MS[gameId]
+    if (delay === undefined) return
+    if (delay === 0) {
+      setDismissed(true)
+      return
+    }
+    const timer = setTimeout(() => setDismissed(true), delay)
+    return () => clearTimeout(timer)
+  }, [mineDone, gameId])
+
   if (!party) return null
   // A spectator, or somebody who joined after it started, has no seat in it.
   const mine = youId ? party.players[youId] : undefined
   if (!mine) return null
 
   if (FIELD_GAMES.has(party.gameId)) return null
-  if (mine.done && DISMISS_ON_FINISH.has(party.gameId)) return null
-
-  const announcement = ANNOUNCEMENTS[party.gameId]
-  if (announcement !== undefined && party.elapsedTicks * 50 > announcement) return null
+  if (mine.done && dismissed) return null
 
   const Game = GAMES[party.gameId as keyof typeof GAMES]
   if (!Game) return null

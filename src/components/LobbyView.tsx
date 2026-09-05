@@ -33,7 +33,11 @@ interface LobbyViewProps {
   onSelectKingdom: (kingdom: KingdomId) => void
   onSelectPerks: (perks: string[]) => void
   /** Admin-only: change one or both of the room's optional rules. */
-  onSetRules?: (rules: { eliminatedSeeAllHealth?: boolean; monstersEnabled?: boolean }) => void
+  onSetRules?: (rules: {
+    eliminatedSeeAllHealth?: boolean
+    monstersEnabled?: boolean
+    partyModeEnabled?: boolean
+  }) => void
   /** Whether to draw the admin gear. The server re-checks before it acts. */
   isAdmin?: boolean
   onSpectate: () => void
@@ -239,7 +243,8 @@ export function LobbyView({
   if (match.eliminatedSeeAllHealth === true) activeRules.push('Elimination vision')
   // Named to match the switch in the options panel — a room that lists a rule
   // under one name and toggles it under another reads as two settings.
-  if (match.monstersEnabled !== false) activeRules.push('Monster Mayhem')
+  if (match.monstersEnabled === true) activeRules.push('Monster Mayhem')
+  if (match.partyModeEnabled === true) activeRules.push('Party Mode')
 
   const kingdomLabel = (id: string | null) =>
     KINGDOMS.find((k) => k.id === id)?.label ?? null
@@ -267,7 +272,8 @@ export function LobbyView({
             open={showOptions}
             onOpenChange={setShowOptions}
             eliminatedSeeAllHealth={match.eliminatedSeeAllHealth ?? false}
-            monstersEnabled={match.monstersEnabled ?? true}
+            monstersEnabled={match.monstersEnabled ?? false}
+            partyModeEnabled={match.partyModeEnabled ?? false}
             onChange={(rules) => onSetRules?.(rules)}
             disabled={match.phase !== 'lobby'}
           />

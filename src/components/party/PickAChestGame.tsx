@@ -36,7 +36,16 @@ export function PickAChestGame({
   if (done && prize) {
     const good = prize !== 'trap'
     return (
-      <div className={`party-chest party-chest--${good ? 'good' : 'bad'}`}>
+      <div
+        className={`party-chest party-chest--reveal party-chest--${good ? 'good' : 'bad'}`}
+        data-testid="chest-reveal"
+      >
+        {/* ⚠️ THE VERDICT IS SPELLED OUT, NOT LEFT TO THE SIGN OF A NUMBER.
+            "−2,000 gold" and "+150 gold" are the same shape at a glance on a
+            phone, and this panel is only up for a few seconds. */}
+        <p className="party-chest__verdict">
+          {prize === 'big' ? 'Jackpot!' : prize === 'small' ? 'You won!' : 'It bites!'}
+        </p>
         <GiOpenChest className="party-chest__opened" aria-hidden />
         <p className="party-chest__prize" data-testid="chest-prize">
           {PRIZE_WORD[prize] ?? prize}

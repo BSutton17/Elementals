@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { partyAct, type PartySnapshot } from '../../game/party'
-import { countdownSeconds } from './countdown'
 
 /**
  * Don't move.
@@ -30,7 +29,6 @@ export function DontMoveGame({
   const mine = youId ? party.players[youId] : undefined
   const moved = mine?.data.moved === true
   const done = mine?.done ?? false
-  const seconds = countdownSeconds(party.ticksRemaining)
   const [caught, setCaught] = useState(false)
 
   const reported = useRef(false)
@@ -76,37 +74,14 @@ export function DontMoveGame({
 
   return (
     <div className={`party-still${failed ? ' party-still--caught' : ''}`}>
-      <div className="party-still__clock" aria-hidden="true">
-        {/* A plain black-and-white clock, and it is the only thing moving on
-            the screen — which is the joke. */}
-        <svg viewBox="0 0 100 100" className="party-still__face">
-          <circle cx="50" cy="50" r="44" className="party-still__rim" />
-          {Array.from({ length: 12 }, (_, i) => {
-            const angle = (i / 12) * Math.PI * 2
-            return (
-              <line
-                key={i}
-                x1={50 + Math.sin(angle) * 36}
-                y1={50 - Math.cos(angle) * 36}
-                x2={50 + Math.sin(angle) * 41}
-                y2={50 - Math.cos(angle) * 41}
-                className="party-still__tick"
-              />
-            )
-          })}
-          <line x1="50" y1="50" x2="50" y2="22" className="party-still__hand" />
-          <circle cx="50" cy="50" r="4" className="party-still__hub" />
-        </svg>
-      </div>
-
+      {/* ⚠️ NO CLOCK AND NO COUNTDOWN, ON PURPOSE. Both were here, and both
+          took the game away: told exactly how many seconds are left, you stop
+          keeping still and start watching a number tick down. Not knowing when
+          it ends is the whole of it. The panel is translucent for the same
+          reason — you sit there and watch the match carry on behind it. */}
       <p className="party-still__line" data-testid="dontmove-line">
         {failed ? 'You moved.' : 'Do not move.'}
       </p>
-      {seconds !== null && !failed && (
-        <p className="party-still__count" data-testid="dontmove-clock">
-          {seconds}
-        </p>
-      )}
       {failed && <p className="party-still__cost">−5,000 health</p>}
     </div>
   )

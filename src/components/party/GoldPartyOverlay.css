@@ -1,0 +1,68 @@
+/* Gold Party: coins over the live battlefield, and nothing else. */
+
+.gold-party {
+  position: fixed;
+  inset: 0;
+  z-index: 1290;
+  overflow: hidden;
+  /* ⚠️ THE LAYER IS INERT; ONLY THE COINS TAKE PRESSES. This covers the entire
+     viewport for ten seconds — if it took pointer events the match underneath
+     would be untouchable for the whole shower: no targeting, no casting, no
+     buying, behind a sheet that looks like nothing is there. */
+  pointer-events: none;
+}
+
+.gold-party__coin {
+  position: absolute;
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  /* ⚠️ THE FALL IS A TRANSITION, NOT AN ANIMATION. `top` is recomputed on every
+     state sync (twenty a second) and the transition carries the coin smoothly
+     between those steps — so where it appears never drifts from where the
+     server will score a catch. A keyframe animation runs on its own clock and
+     slowly disagrees. */
+  transition: top 55ms linear;
+  /* Centred on its own coordinates rather than hanging off them. */
+  margin-left: -1.45rem;
+  margin-top: -1.45rem;
+}
+
+.gold-party__coin--bronze {
+  background: radial-gradient(circle at 35% 30%, #e8b184, #9a5a2b);
+  box-shadow: 0 0 10px rgba(190, 120, 60, 0.5);
+}
+
+.gold-party__coin--silver {
+  background: radial-gradient(circle at 35% 30%, #f2f4f8, #9aa4b4);
+  box-shadow: 0 0 12px rgba(200, 215, 235, 0.55);
+}
+
+.gold-party__coin--gold {
+  background: radial-gradient(circle at 35% 30%, #ffe9a0, #e0a01f);
+  box-shadow: 0 0 18px rgba(255, 200, 80, 0.75);
+  /* The rare one announces itself: with no legend on screen any more,
+     brightness is the only thing separating a hundred from twenty-five. */
+  animation: gold-party-shine 1.2s ease-in-out infinite;
+}
+
+@keyframes gold-party-shine {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 200, 80, 0.6); }
+  50% { box-shadow: 0 0 26px rgba(255, 220, 130, 0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gold-party__coin--gold {
+    animation: none;
+  }
+
+  /* The coins still fall — they are the game — they just stop easing. */
+  .gold-party__coin {
+    transition: none;
+  }
+}
