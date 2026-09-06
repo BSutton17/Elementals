@@ -22,7 +22,6 @@ import { PartyBanner } from '../components/party/PartyBanner'
 import { PartyStage } from '../components/party/PartyStage'
 import { CleanUpOverlay } from '../components/party/CleanUpOverlay'
 import { GoldPartyOverlay } from '../components/party/GoldPartyOverlay'
-import { PartyDebugPanel } from '../components/party/PartyDebugPanel'
 
 /** How long a finished wheel stays on Joker's side-screen before clearing. */
 const MIRROR_LINGER_SECONDS = 3
@@ -197,9 +196,6 @@ export function BattlefieldScreen() {
       {/* Gold Party rains on the board itself — no panel, so a coin is caught
           where it actually is rather than where a dialog redrew it. */}
       <GoldPartyOverlay party={game.party} youId={youId} />
-      {/* Draws nothing unless the server says this seat may launch minigames —
-          a dev build over loopback, or (for now) an admin hosting the room. */}
-      <PartyDebugPanel />
       {/* Full-screen "you've been hacked" flash for the local victim. */}
       <HackOverlay youId={youId} />
       {/* Full-screen haze while the local player is blinded by Thick Fog (grey)

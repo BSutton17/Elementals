@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { GiEagleEmblem, GiDreamCatcher } from 'react-icons/gi'
 import { CastleSprite } from './CastleSprite'
 import { getCastleOutline } from '../game/kingdomThemes'
@@ -21,20 +21,11 @@ const BIRDS_EYE_FADE_MS = 700
  * One kingdom's spot on the battlefield: castle (#194) with name, health bar
  * (#195), shield bar (#196), citizen count (#197), and income (#198), all
  * centered on the position chosen by the placement math (#193).
+ *
+ * Exported wrapped in `memo` — see `sameSite` at the foot of this file for what
+ * that costs and why it is safe.
  */
-export function KingdomSite({
-  player,
-  color,
-  x,
-  y,
-  isYou,
-  isYourTarget,
-  tickRate,
-  showStats = true,
-  ultShield = false,
-  slotDisplay = null,
-  onSelect,
-}: {
+export interface KingdomSiteProps {
   player: GamePlayer
   color: string
   x: number
@@ -51,7 +42,21 @@ export function KingdomSite({
   slotDisplay?: { text: string; spinning: boolean } | null
   /** Called when this kingdom is clicked (used to select it as your target). */
   onSelect?: () => void
-}) {
+}
+
+function KingdomSiteView({
+  player,
+  color,
+  x,
+  y,
+  isYou,
+  isYourTarget,
+  tickRate,
+  showStats = true,
+  ultShield = false,
+  slotDisplay = null,
+  onSelect,
+}: KingdomSiteProps) {
   const selectable = onSelect != null
   // Water's "Current" mark (from Waterfall): the castle looks half-submerged.
   // Rough advance width for the 26px label font — enough to place the badge
@@ -329,3 +334,105 @@ export function KingdomSite({
     </g>
   )
 }
+
+/**
+ * The statuses this component actually looks at.
+ *
+ * ⚠️ THIS LIST IS LOAD-BEARING AND `KingdomSite.test.tsx` ENFORCES IT. The
+ * memo below decides "nothing changed" partly from the status ids present, so a
+ * status read in the render but missing here would simply stop appearing:
+ * frozen castles that never freeze, a shield ring that never lights. That is a
+ * silent, visual-only regression of exactly the kind nothing else would catch,
+ * so a test scans this file for `s.id === '…'` and fails if the two disagree.
+ */
+export const WATCHED_STATUS_IDS = [
+  'current',
+  'frozen',
+  'naturalTerrain',
+  'orionsBelt',
+  'infatuated',
+  'loveGaloreShield',
+  'birdsEyeView',
+  'neverEndingNightmare',
+] as const
+
+/** The watched statuses this player has, as a comparable string. */
+function statusKey(player: GamePlayer): string {
+  const statuses = player.statuses
+  if (!statuses || statuses.length === 0) return ''
+  let key = ''
+  for (const s of statuses) {
+    if (!(WATCHED_STATUS_IDS as readonly string[]).includes(s.id)) continue
+    // `revealed` is read alongside the id for Love Galore's shield, so it is
+    // part of the identity of that status here.
+    key += `${s.id}${s.revealed ? '!' : ''},`
+  }
+  return key
+}
+
+/**
+ * Whether this site can skip a re-render.
+ *
+ * ⚠️ THE PARENT REBUILDS EVERY PROP TEN TIMES A SECOND, SO A SHALLOW COMPARE
+ * WOULD NEVER MATCH. The roster is re-derived on every render, so `player` is a
+ * new object each time even when not one number in it has moved; the server
+ * syncs at `TICK.RATE / SYNC_EVERY_TICKS`, which is ten a second, all match
+ * long. Un-memoised, seven of these subtrees — castle sprite, bars, auras,
+ * overlays — reconciled ten times a second for a match that might be entirely
+ * still. That is most of the CPU this screen spends, and on a phone it is felt
+ * as heat.
+ *
+ * ⚠️ SO IT COMPARES WHAT IS DRAWN, FIELD BY FIELD, AND NOTHING ELSE. Two
+ * omissions are deliberate and both matter:
+ *
+ *   - STATUS `remainingTicks` IS IGNORED. It counts down on every single sync,
+ *     so comparing it would mean never skipping a render — the memo would cost
+ *     a comparison and buy nothing. Nothing here draws it: only which statuses
+ *     are present (and `revealed` on one).
+ *   - `onSelect` IS COMPARED ONLY FOR EXISTENCE, NOT IDENTITY. The parent builds
+ *     a fresh closure per render, which would defeat the memo outright. That is
+ *     safe ONLY because `toggleTarget` is stable and reads live values through a
+ *     ref — see the note on it in `BattlefieldView`. Were it an ordinary
+ *     closure, a skipped render would leave this site holding a stale one, and
+ *     a castle clicked during Bomb Attack would aim instead of passing the bomb.
+ */
+export function sameSite(prev: KingdomSiteProps, next: KingdomSiteProps): boolean {
+  if (
+    prev.color !== next.color ||
+    prev.x !== next.x ||
+    prev.y !== next.y ||
+    prev.isYou !== next.isYou ||
+    prev.isYourTarget !== next.isYourTarget ||
+    prev.tickRate !== next.tickRate ||
+    prev.showStats !== next.showStats ||
+    prev.ultShield !== next.ultShield ||
+    (prev.onSelect == null) !== (next.onSelect == null)
+  ) {
+    return false
+  }
+
+  // Joker's slot readout: an object rebuilt each render, so compared by value.
+  const a = prev.slotDisplay
+  const b = next.slotDisplay
+  if ((a == null) !== (b == null)) return false
+  if (a && b && (a.text !== b.text || a.spinning !== b.spinning)) return false
+
+  const p = prev.player
+  const q = next.player
+  return (
+    p.id === q.id &&
+    p.name === q.name &&
+    p.kingdomId === q.kingdomId &&
+    p.level === q.level &&
+    p.eliminated === q.eliminated &&
+    p.castle.hp === q.castle.hp &&
+    p.castle.maxHp === q.castle.maxHp &&
+    p.castle.shield === q.castle.shield &&
+    p.castlePaint === q.castlePaint &&
+    p.economy.citizens === q.economy.citizens &&
+    p.economy.incomePerTick === q.economy.incomePerTick &&
+    statusKey(p) === statusKey(q)
+  )
+}
+
+export const KingdomSite = memo(KingdomSiteView, sameSite)

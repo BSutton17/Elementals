@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { onGameEvents } from '../game/gameEvents'
 import { SpectatorLog } from './SpectatorLog'
 import type {
@@ -264,7 +264,32 @@ export function BattlefieldView({
   const activeSelected = selectedIds.filter(stillTargetable)
   const isTargeted = (id: string) =>
     localSelect ? activeSelected.includes(id) : you?.target === id
-  const toggleTarget = (id: string) => {
+  /**
+   * Everything `toggleTarget` needs, refreshed on every render.
+   *
+   * ⚠️ THIS EXISTS SO THE HANDLER CAN BE STABLE, AND THE MEMO ON `KingdomSite`
+   * DEPENDS ON IT. That memo ignores `onSelect`'s identity, because the parent
+   * builds a fresh closure per render and comparing it would skip nothing. The
+   * price of ignoring it is that a site which skips a render keeps the closure
+   * it already had — so an ordinary closure would go stale, and a castle
+   * clicked during Bomb Attack would aim at it instead of passing the bomb.
+   *
+   * Reading through a ref means the handler never captures anything: the
+   * closure is created once and always sees the current values.
+   */
+  const live = useRef({
+    bombLive,
+    bombHolderId,
+    youId,
+    localSelect,
+    selectLimit,
+    stillTargetable,
+  })
+  live.current = { bombLive, bombHolderId, youId, localSelect, selectLimit, stillTargetable }
+
+  const toggleTarget = useCallback((id: string) => {
+    const { bombLive, bombHolderId, youId, localSelect, selectLimit, stillTargetable } =
+      live.current
     // ⚠️ DURING A BOMB, A CASTLE CLICK PASSES THE BOMB. It does not also aim
     // at that kingdom — the server refuses targeting for the duration, so a
     // click that tried to do both would half-work and read as a bug. Handled at
@@ -296,7 +321,7 @@ export function BattlefieldView({
     } else {
       void changeTarget(id)
     }
-  }
+  }, [])
 
   // Joker's Slot Machine, watched from outside. Only Joker sees this — it is
   // the payoff for casting it, and nobody else needs to know who is stuck at

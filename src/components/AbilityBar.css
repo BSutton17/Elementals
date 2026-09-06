@@ -26,9 +26,19 @@
   display: flex;
   align-items: stretch;
   gap: 1rem;
-  background: linear-gradient(135deg, rgba(11, 14, 23, 0.92) 0%, rgba(20, 25, 40, 0.85) 100%);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /* ⚠️ NO `backdrop-filter` HERE, DELIBERATELY, AND IT IS A PERFORMANCE RULE
+     RATHER THAN A TASTE ONE. This bar spans the width of the screen and is on
+     it for the entire match, so a backdrop blur meant the compositor re-sampled
+     everything behind a full-width element on every frame — the one filter in
+     the app that never got to stop. On a phone that is a measurable share of
+     why the device gets hot.
+
+     It costs almost nothing to give up: the gradient underneath was already
+     0.92/0.85 opaque, so there was barely any battlefield showing through to be
+     blurred. Nudged to fully opaque at the top so the edge reads as cleanly as
+     it did before. The transient glass — tooltips, the shop panel — keeps its
+     blur: those are on screen for a moment, not for a match. */
+  background: linear-gradient(135deg, rgba(11, 14, 23, 0.97) 0%, rgba(20, 25, 40, 0.93) 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.14);
   border-radius: 18px;
   box-shadow:
@@ -788,13 +798,16 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  /* Every locked ability card carries one of these, so early in a match there
+     are five of them on screen at once and none of them ever leave. Same
+     reasoning as the bar itself: at 0.75 opaque a 2px blur was almost
+     invisible, and five permanent backdrop samples are not. */
+  background: rgba(0, 0, 0, 0.82);
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   border-radius: 12px;
-  backdrop-filter: blur(2px);
 }
 
 .ability-button__locked-content {
