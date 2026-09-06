@@ -146,12 +146,25 @@ export function PartyStage({
   if (!mine) return null
 
   if (FIELD_GAMES.has(party.gameId)) return null
-  if (mine.done && dismissed) return null
+
+  const hold = DISMISS_AFTER_MS[party.gameId]
+  // ⚠️ A ZERO HOLD IS DECIDED HERE, NOT IN THE EFFECT. Waiting for the effect
+  // to set `dismissed` costs a render, and that render is the waiting card — a
+  // "Waiting on 6 kingdoms" flash after every hand of blackjack.
+  if (mine.done && (hold === 0 || dismissed)) return null
 
   const Game = GAMES[party.gameId as keyof typeof GAMES]
   if (!Game) return null
 
-  const waiting = mine.done && !party.resolved
+  /**
+   * ⚠️ THE HOLD IS FOR THE GAME'S OWN RESULT, SO THE GAME KEEPS THE PANEL.
+   * This showed the waiting card the moment a player finished, which meant the
+   * chest's whole reason for holding — the opened chest and the number in it —
+   * was replaced by "Waiting on 6 kingdoms" for the entire 3.2 seconds. The
+   * player never saw what they won at all; they watched a queue.
+   */
+  const holding = mine.done && hold !== undefined && !dismissed
+  const waiting = mine.done && !party.resolved && !holding
   const others = Object.values(party.players).filter((p) => !p.done).length
 
   return (

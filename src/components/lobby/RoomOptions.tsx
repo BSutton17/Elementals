@@ -102,7 +102,7 @@ export function RoomOptions({
             <span>
               <span className="room-options__name">Monster Mayhem</span>
               <span className="room-options__desc">
-                A monster can take the middle of the field and start hitting the whole table.
+                A monster can take the middle of the field and grants rewards when defeated.
               </span>
             </span>
           </label>
@@ -118,8 +118,7 @@ export function RoomOptions({
             <span>
               <span className="room-options__name">Party Mode</span>
               <span className="room-options__desc">
-                Minigames interrupt the match — production stops and attacks are held
-                until somebody finishes.
+                Minigames have a chance to happen every few moments.
               </span>
             </span>
           </label>

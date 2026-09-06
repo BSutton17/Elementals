@@ -149,6 +149,41 @@ describe('the maze drag', () => {
     }
   })
 
+  it('turns a corner without the finger being lifted', () => {
+    // ⚠️ THE REPORTED BUG, AND IT IS ABOUT STALE STATE, NOT ABOUT WALLS.
+    // `pointermove` fires faster than React commits a render, so several
+    // handlers used to run against the SAME position from the last paint. Each
+    // recomputed its walk from a cell the box had already left, so a change of
+    // direction was measured from the wrong origin, came out illegal, and was
+    // dropped — while the route collected repeated segments the server would
+    // refuse. Firing three moves with no render in between is exactly that.
+    const { container } = render(<MazeGame party={party()} youId="me" />)
+    const board = container.querySelector('[data-testid="maze-board"]')!
+
+    fireEvent.pointerDown(board, { ...pointIn(0, 9), pointerId: 1 })
+    // Down the right-hand side, then left along the bottom, then back up.
+    fireEvent.pointerMove(board, { ...pointIn(4, 9), pointerId: 1 })
+    fireEvent.pointerMove(board, { ...pointIn(4, 5), pointerId: 1 })
+    fireEvent.pointerMove(board, { ...pointIn(1, 5), pointerId: 1 })
+
+    expect(runnerCell(container)).toEqual({ row: 1, col: 5 })
+  })
+
+  it('keeps following a finger that strays off the edge of the board', () => {
+    // The start and the exit sit in opposite CORNERS, so the finger is over the
+    // edge exactly where the maze matters most. An off-board point used to map
+    // to nothing and the drag quietly stopped registering.
+    const { container } = render(<MazeGame party={party()} youId="me" />)
+    const board = container.querySelector('[data-testid="maze-board"]')!
+
+    fireEvent.pointerDown(board, { ...pointIn(0, 9), pointerId: 1 })
+    fireEvent.pointerMove(board, { ...pointIn(-2, 12), pointerId: 1 })
+    expect(runnerCell(container)).toEqual({ row: 0, col: 9 })
+
+    fireEvent.pointerMove(board, { ...pointIn(12, -2), pointerId: 1 })
+    expect(runnerCell(container)).toEqual({ row: 9, col: 0 })
+  })
+
   it('never moves the board itself, however hard it is dragged into a wall', () => {
     // ⚠️ THE BOARD SHAKING WAS NOT A COSMETIC PROBLEM. Wall feedback used to
     // translate the whole SVG, and dragging along a wall triggers it on almost
@@ -164,7 +199,7 @@ describe('the maze drag', () => {
     for (let i = 0; i < 5; i++) {
       fireEvent.pointerMove(board, { ...pointIn(-1, 9), pointerId: 1 })
     }
-    expect(board.className.baseVal ?? board.getAttribute('class')).toBe('party-maze__board')
+    expect(board.getAttribute('class')).toBe('party-maze__board')
   })
 
   it('will not walk through a wall', () => {

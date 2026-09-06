@@ -52,6 +52,25 @@ export function MazeGame({
    * same thing and moves nothing.
    */
   const [nudged, setNudged] = useState(false)
+  /**
+   * Where the box actually is, right now.
+   *
+   * ⚠️ THE REF IS THE TRUTH DURING A DRAG; THE STATE IS ONLY FOR DRAWING. A
+   * pointer can fire faster than React re-renders — routinely so on a phone,
+   * where `pointermove` runs at the screen's refresh rate and a render does
+   * not. Every one of those handlers closed over the SAME stale `at` from the
+   * last committed render, so each recomputed its walk from a position the box
+   * had already left and appended those steps to the route AGAIN.
+   *
+   * That is the whole complaint: the box jitters between two cells because
+   * consecutive handlers disagree about where it is, changes of direction land
+   * on a stale origin and are computed as illegal, and the route arrives at the
+   * server with repeated and impossible segments, so a maze that was solved on
+   * screen is refused. Reading and writing the ref makes every handler start
+   * from where the previous one finished, however many of them run between
+   * paints.
+   */
+  const atRef = useRef<{ row: number; col: number } | null>(maze ? { ...maze.start } : null)
   const route = useRef<{ row: number; col: number }[]>(maze ? [{ ...maze.start }] : [])
   const svg = useRef<SVGSVGElement>(null)
   const sent = useRef(false)
@@ -119,10 +138,15 @@ export function MazeGame({
     point.x = event.clientX
     point.y = event.clientY
     const local = point.matrixTransform(matrix.inverse())
-    const col = Math.floor(local.x / cell)
-    const row = Math.floor(local.y / cell)
-    if (row < 0 || col < 0 || row >= size || col >= size) return null
-    return { row, col }
+    // ⚠️ CLAMPED TO THE BOARD, NOT REJECTED FOR LEAVING IT. Straying a few
+    // pixels past the edge used to return nothing, so the drag simply stopped
+    // registering — and the two places a finger is most likely to be over the
+    // edge are the START and the EXIT, which sit in opposite CORNERS. The last
+    // stretch of every maze was the least reliable part of it. The box still
+    // only moves by legal steps, so treating an off-board point as the nearest
+    // cell concedes nothing.
+    const clamp = (v: number) => Math.min(size - 1, Math.max(0, Math.floor(v / cell)))
+    return { row: clamp(local.y), col: clamp(local.x) }
   }
 
   /** Whether a step from `from` to `to` passes through a wall. */
@@ -190,9 +214,12 @@ export function MazeGame({
     if (!dragging || done) return
     const target = cellAt(event)
     if (!target) return
-    if (target.row === at.row && target.col === at.col) return
+    // Read from the ref, never from `at` — see the note on `atRef`.
+    const from = atRef.current
+    if (!from) return
+    if (target.row === from.row && target.col === from.col) return
 
-    const steps = walkTowards(at, target)
+    const steps = walkTowards(from, target)
     if (steps.length === 0) {
       // Nowhere legal to go: a wall is in the way. Flash the box rather than
       // the board — see the note on `nudged`.
@@ -205,6 +232,7 @@ export function MazeGame({
 
     for (const step of steps) route.current.push(step)
     const last = steps[steps.length - 1]!
+    atRef.current = last
     setAt(last)
     if (last.row === maze.exit.row && last.col === maze.exit.col) {
       setDragging(false)
@@ -242,13 +270,15 @@ export function MazeGame({
           if (done) return
           const here = cellAt(e)
           if (!here) return
+          const from = atRef.current
+          if (!from) return
           // Start from the box or anywhere within two cells of it. Demanding
           // the exact cell is unusable with a thumb on a ten-by-ten grid, and a
           // wide grab cannot be abused: the box still only ever travels by
           // legal single steps, and the server replays the whole route against
           // its own walls.
           const near =
-            Math.abs(here.row - at.row) <= 2 && Math.abs(here.col - at.col) <= 2
+            Math.abs(here.row - from.row) <= 2 && Math.abs(here.col - from.col) <= 2
           if (!near) return
 
           // ⚠️ CAPTURE IS AN ENHANCEMENT, NOT A REQUIREMENT, AND IT MUST NOT BE

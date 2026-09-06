@@ -392,6 +392,14 @@ export function BattlefieldView({
 
   const yourTheme = getKingdomTheme(you.kingdomId)
   const hasAirVision = you.statuses?.some((s) => s.id === 'birdsEyeView') ?? false
+  /**
+   * Whose abilities this player is holding, and whether they are on loan.
+   *
+   * During a Kingdom Swap the ability layer is somebody else's while `kingdomId`
+   * — the castle's colour, the roster, the win screen — stays their own.
+   */
+  const kitKingdom = you.abilityKingdomId ?? you.kingdomId
+  const borrowedKit = you.abilityKingdomId != null && you.abilityKingdomId !== you.kingdomId
   // "Besieged": living kingdoms currently targeting you BEYOND the first. The
   // bonus starts at two attackers — a fair 1v1 earns nothing — so this mirrors
   // the server's `besiegedStacks` exactly rather than counting targeters.
@@ -783,13 +791,22 @@ export function BattlefieldView({
           // server would have refused them anyway because a swapped player may
           // only use the kit they were lent. Thirty seconds of a dead bar for
           // everybody at the table, which is exactly how it was reported.
-          abilities={getAbilitiesForKingdom(you.abilityKingdomId ?? you.kingdomId).map((metadata) => {
+          abilities={getAbilitiesForKingdom(kitKingdom).map((metadata) => {
             const prices = you.abilityPrices?.[metadata.id]
-            // ⚠️ THE SERVER'S ANSWER FIRST. Both of these go through its slot
-            // mirror during a swap, which this side cannot reproduce from the
-            // raw maps — those are keyed by the player's OWN ability ids. The
-            // maps are the fallback for a server one release behind.
-            const isUnlocked = prices?.unlocked ?? you.unlocked?.[metadata.id] ?? false
+            // ⚠️ THE SERVER'S ANSWER FIRST, AND A BORROWED KIT SECOND — NEVER
+            // THE RAW MAPS ALONE. `unlocked` is keyed by the player's OWN
+            // ability ids, so during a Kingdom Swap it answers "locked" for
+            // every borrowed ability, correctly and uselessly.
+            //
+            // The middle term is what stops a deploy skew locking the whole
+            // kit: the client ships from Netlify and the server from Heroku, so
+            // for a few minutes after a push this side can be newer than the
+            // one it is talking to. Reading `prices.unlocked` alone meant that
+            // window rendered five locked buttons — the exact failure this was
+            // meant to fix. The loan itself is reason enough, and it is the
+            // rule anyway: a borrowed kit arrives unlocked.
+            const isUnlocked =
+              prices?.unlocked ?? (borrowedKit || (you.unlocked?.[metadata.id] ?? false))
             const tier = you.upgrades?.[metadata.id] ?? 0
             const level = prices?.level ?? (isUnlocked ? tier + 1 : 0)
             const cooldownRemaining = you.cooldowns?.[metadata.id] ?? 0
