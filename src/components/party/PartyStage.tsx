@@ -58,12 +58,6 @@ const FIELD_GAMES = new Set([
   // Haunted happens to the board, not in a dialog — the living carry on and the
   // dead get their kit back. The banner says everything there is to say.
   'haunted',
-  // ⚠️ KINGDOM SWAP HAS NO PANEL AT ALL, AND USED TO. A card naming the kingdom
-  // you had borrowed sat over the board while the borrowed kit went unused —
-  // and the ability bar underneath had ALREADY changed, so the card was telling
-  // the player something the screen was showing them. The banner says "Kingdom
-  // Swap" for a few seconds and the thirty they get is spent playing.
-  'kingdomSwap',
   // Gold Party rains on the battlefield itself; catching a coin means tapping
   // where it actually is, not where a panel redrew it.
   'goldParty',

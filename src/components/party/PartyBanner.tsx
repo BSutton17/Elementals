@@ -34,13 +34,11 @@ const BOTTOM_BANNER = new Set(['bombAttack'])
  * Games whose description says its piece and goes, rather than standing for the
  * whole session.
  *
- * ⚠️ KINGDOM SWAP RUNS FOR THIRTY SECONDS AND HAS NO OTHER UI AT ALL. A line
- * reading "Kingdom Swap" pinned across the top for half a minute stops being an
- * announcement and becomes furniture — and it sits over the board the borrowed
- * kit is supposed to be used on. It announces, then leaves; the ability bar has
- * already changed underneath, which is the real notification.
+ * Empty since Kingdom Swap was retired — it was the only game long enough, and
+ * quiet enough, for a permanent line across the top to become furniture. Kept
+ * because the next long ambient game will want it.
  */
-const BRIEF_MS: Record<string, number> = { kingdomSwap: 3500 }
+const BRIEF_MS: Record<string, number> = {}
 
 export function PartyBanner({ party }: { party?: PartySnapshot | null }) {
   // ⚠️ DERIVED, NOT STORED. What the banner says is a function of the session:
@@ -52,6 +50,7 @@ export function PartyBanner({ party }: { party?: PartySnapshot | null }) {
   // this arrives as `undefined` as readily as `null`. Checking only for null
   // threw on the undefined case, and this component sits above the whole
   // battlefield: it took the entire match screen down with it.
+
   // A brief game's description is only shown for its first few seconds. Read
   // off the session's own elapsed ticks rather than a local timer, so it is the
   // same few seconds on every screen and survives a re-render.

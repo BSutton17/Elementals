@@ -16,7 +16,9 @@ import { countdownSeconds } from './countdown'
 const PRIZE_WORD: Record<string, string> = {
   big: '+500 gold',
   small: '+150 gold',
-  trap: '−2,000 gold',
+  // The trap's number is different for every player and only the server knows
+  // it, so it is filled in from `taken` below rather than written here.
+  trap: 'Half your gold',
 }
 
 export function PickAChestGame({
@@ -29,7 +31,7 @@ export function PickAChestGame({
   const mine = youId ? party.players[youId] : undefined
   const picked = mine?.data.picked as number | null | undefined
   const prize = mine?.data.prize as string | null | undefined
-  const owed = mine?.data.owed as number | undefined
+  const taken = mine?.data.taken as number | undefined
   const done = mine?.done ?? false
   const seconds = countdownSeconds(party.ticksRemaining)
 
@@ -41,22 +43,20 @@ export function PickAChestGame({
         data-testid="chest-reveal"
       >
         {/* ⚠️ THE VERDICT IS SPELLED OUT, NOT LEFT TO THE SIGN OF A NUMBER.
-            "−2,000 gold" and "+150 gold" are the same shape at a glance on a
+            "−1,240 gold" and "+150 gold" are the same shape at a glance on a
             phone, and this panel is only up for a few seconds. */}
         <p className="party-chest__verdict">
           {prize === 'big' ? 'Jackpot!' : prize === 'small' ? 'You won!' : 'It bites!'}
         </p>
         <GiOpenChest className="party-chest__opened" aria-hidden />
         <p className="party-chest__prize" data-testid="chest-prize">
-          {PRIZE_WORD[prize] ?? prize}
+          {prize === 'trap' && taken !== undefined
+            ? `−${Math.round(taken).toLocaleString()} gold`
+            : PRIZE_WORD[prize] ?? prize}
         </p>
+        {prize === 'trap' && <p className="party-chest__note">Half of everything you had.</p>}
         {mine?.data.defaulted === true && (
           <p className="party-chest__note">Time ran out — a chest was picked for you.</p>
-        )}
-        {owed !== undefined && owed > 0 && (
-          <p className="party-chest__note" data-testid="chest-owed">
-            {Math.round(owed).toLocaleString()} more than you had — your production pays it off.
-          </p>
         )}
       </div>
     )
