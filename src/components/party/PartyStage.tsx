@@ -72,23 +72,33 @@ const FIELD_GAMES = new Set([
 /**
  * Games that get out of the way when you finish, and how long they wait first.
  *
- * ⚠️ THE WAITING PANEL IS ONLY WORTH SHOWING WHEN THERE IS SOMETHING TO SEE.
- * Blackjack has a settled hand, Memory has a verdict, Reaction has your time —
- * those are worth a beat, and those games are absent from this map. Spotting a
- * difference and answering a sum are not: you already know how it went, and
- * being held behind a "waiting on 4 kingdoms" card while the match runs on
- * without you is a punishment for being FAST. Those two leave at once.
+ * ⚠️ FINISHING EARLY MUST NOT BE A PUNISHMENT. Being held behind a "waiting on
+ * 4 kingdoms" card while the match runs on without you is a penalty for being
+ * FAST, so anything with nothing left to show leaves the moment it is over.
  *
- * ⚠️ THE CHEST IS NOT ONE OF THOSE, THOUGH IT WAS. Leaving at zero meant the
- * opened chest and the number in it were mounted and unmounted in the same
- * frame — the player tapped and was returned to the battlefield having been
- * told nothing, which reads as the game being broken rather than as a loss.
- * What you won is the ONLY thing that game has to say, so it holds long enough
- * to be read.
+ * The delay is only ever there to let a RESULT be read, and only when the game
+ * has not already shown it: the chest's whole outcome is one number that lands
+ * as you tap, so it holds; blackjack's hand was already read during the
+ * server's own reveal window, so it does not. A game absent from this map is
+ * one where the waiting card itself is worth seeing — Memory's verdict and
+ * Reaction's placing only mean anything against the rest of the table.
+ *
+ * ⚠️ AND ZERO IS NOT THE SAME AS ABSENT. The chest sat at zero, which mounted
+ * and unmounted the opened chest in the same frame: the player tapped and was
+ * returned to the battlefield having been told nothing, which reads as a broken
+ * game rather than as a loss.
  */
 const DISMISS_AFTER_MS: Record<string, number> = {
   spotTheDifference: 0,
   quickMath: 0,
+  // Blackjack's hand is already over by the time `done` is set: the server
+  // holds the table open for its own reveal window so the dealer's cards can be
+  // read, and only then marks the player finished. By that point there is
+  // nothing left to look at, so it leaves at once rather than showing a
+  // "waiting on 4 kingdoms" card on top of a result already read.
+  blackjack: 0,
+  // Five locks picked is five locks picked. Nothing follows it.
+  lockpick: 0,
   pickAChest: 3200,
 }
 

@@ -40,7 +40,18 @@ export function MazeGame({
     maze ? { ...maze.start } : null,
   )
   const [dragging, setDragging] = useState(false)
-  const [bumped, setBumped] = useState(false)
+  /**
+   * Wall feedback, shown on the BOX rather than on the board.
+   *
+   * ⚠️ THE BOARD ITSELF MUST NEVER MOVE, AND IT USED TO SHAKE. Hitting a wall
+   * played a 2px translate on the whole SVG — and dragging along a wall hits one
+   * on almost every frame, so on a phone the maze juddered continuously while
+   * being played. It also broke the drag outright: `getScreenCTM()` reads that
+   * same element, so the screen-to-cell mapping shifted with the shake and the
+   * maze moved out from under the finger. A colour flash on the box says the
+   * same thing and moves nothing.
+   */
+  const [nudged, setNudged] = useState(false)
   const route = useRef<{ row: number; col: number }[]>(maze ? [{ ...maze.start }] : [])
   const svg = useRef<SVGSVGElement>(null)
   const sent = useRef(false)
@@ -130,28 +141,72 @@ export function MazeGame({
     void partyAct({ type: 'solve', route: route.current })
   }
 
+  /**
+   * Every legal single step from `from` towards `target`, in order.
+   *
+   * ⚠️ A JUMP OF MORE THAN ONE CELL USED TO BE DISCARDED, AND THAT WAS MOST
+   * OF THEM. A finger crossing two or three cells between two pointer events is
+   * not unusual on a phone — it is what a normal-speed drag looks like — and
+   * dropping those frames meant the box only moved when the drag happened to be
+   * slow enough. It read as the box refusing to follow.
+   *
+   * Walked one cell at a time, greedily, through walls it may not cross, so the
+   * result is still a route of legal single steps. Greedy is enough: this only
+   * ever closes a gap of a few cells, and if it runs into a wall it stops and
+   * the next pointer event carries on from there.
+   */
+  const walkTowards = (
+    from: { row: number; col: number },
+    target: { row: number; col: number },
+  ) => {
+    const steps: { row: number; col: number }[] = []
+    let cur = from
+    // Bounded: a greedy walk can stall against a wall, and this must never spin.
+    for (let guard = 0; guard < size * 2; guard++) {
+      if (cur.row === target.row && cur.col === target.col) break
+      const options: { row: number; col: number }[] = []
+      // The longer axis first, so a diagonal drag tracks the finger rather than
+      // staircasing along one wall.
+      const dRow = target.row - cur.row
+      const dCol = target.col - cur.col
+      const vertical = { row: cur.row + Math.sign(dRow), col: cur.col }
+      const horizontal = { row: cur.row, col: cur.col + Math.sign(dCol) }
+      if (Math.abs(dRow) >= Math.abs(dCol)) {
+        if (dRow !== 0) options.push(vertical)
+        if (dCol !== 0) options.push(horizontal)
+      } else {
+        if (dCol !== 0) options.push(horizontal)
+        if (dRow !== 0) options.push(vertical)
+      }
+      const next = options.find((o) => !blocked(cur, o))
+      if (!next) break
+      steps.push(next)
+      cur = next
+    }
+    return steps
+  }
+
   const move = (event: React.PointerEvent) => {
     if (!dragging || done) return
-    const next = cellAt(event)
-    if (!next) return
-    if (next.row === at.row && next.col === at.col) return
+    const target = cellAt(event)
+    if (!target) return
+    if (target.row === at.row && target.col === at.col) return
 
-    // One step at a time, walls respected. A finger crossing two cells in one
-    // frame is normal, so anything that is not a legal single step is simply
-    // ignored rather than treated as a cheat — the drag continues from where
-    // the box actually is.
-    if (Math.abs(next.row - at.row) + Math.abs(next.col - at.col) !== 1) return
-    if (blocked(at, next)) {
-      if (!bumped) {
-        setBumped(true)
-        window.setTimeout(() => setBumped(false), 220)
+    const steps = walkTowards(at, target)
+    if (steps.length === 0) {
+      // Nowhere legal to go: a wall is in the way. Flash the box rather than
+      // the board — see the note on `nudged`.
+      if (!nudged) {
+        setNudged(true)
+        window.setTimeout(() => setNudged(false), 220)
       }
       return
     }
 
-    route.current.push(next)
-    setAt(next)
-    if (next.row === maze.exit.row && next.col === maze.exit.col) {
+    for (const step of steps) route.current.push(step)
+    const last = steps[steps.length - 1]!
+    setAt(last)
+    if (last.row === maze.exit.row && last.col === maze.exit.col) {
       setDragging(false)
       finish()
     }
@@ -178,7 +233,7 @@ export function MazeGame({
 
       <svg
         ref={svg}
-        className={`party-maze__board${bumped ? ' party-maze__board--bump' : ''}`}
+        className="party-maze__board"
         viewBox={`-3 -3 ${BOARD + 6} ${BOARD + 6}`}
         data-testid="maze-board"
         // Stops the browser panning the page while a finger is dragging in here.
@@ -187,11 +242,13 @@ export function MazeGame({
           if (done) return
           const here = cellAt(e)
           if (!here) return
-          // Start from the box or the cell beside it. Demanding the exact cell
-          // is unusable with a thumb on a ten-by-ten grid, and it cannot be
-          // abused: the box still only ever moves one legal step at a time.
+          // Start from the box or anywhere within two cells of it. Demanding
+          // the exact cell is unusable with a thumb on a ten-by-ten grid, and a
+          // wide grab cannot be abused: the box still only ever travels by
+          // legal single steps, and the server replays the whole route against
+          // its own walls.
           const near =
-            Math.abs(here.row - at.row) <= 1 && Math.abs(here.col - at.col) <= 1
+            Math.abs(here.row - at.row) <= 2 && Math.abs(here.col - at.col) <= 2
           if (!near) return
 
           // ⚠️ CAPTURE IS AN ENHANCEMENT, NOT A REQUIREMENT, AND IT MUST NOT BE
@@ -253,7 +310,9 @@ export function MazeGame({
             width={cell * 0.6}
             height={cell * 0.6}
             rx={1.2}
-            className="party-maze__runner-box"
+            className={`party-maze__runner-box${
+              nudged ? ' party-maze__runner-box--nudged' : ''
+            }`}
           />
         </g>
 

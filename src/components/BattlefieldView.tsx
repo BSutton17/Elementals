@@ -774,11 +774,24 @@ export function BattlefieldView({
           memoryFull={match.config?.memoryFull}
           perks={you.perks}
           besieged={besiegedStacks > 0}
-          abilities={getAbilitiesForKingdom(you.kingdomId).map((metadata) => {
-            // Bought abilities show as level 1; upgrade tiers stack on top.
-            const isUnlocked = you.unlocked?.[metadata.id] ?? false
+          // ⚠️ THE KIT THEY ARE HOLDING, WHICH IS SOMEBODY ELSE'S DURING A
+          // KINGDOM SWAP — AND THIS BAR USED TO IGNORE THAT ENTIRELY. The
+          // server swaps the ability layer and prices the BORROWED kingdom's
+          // abilities; this side drew the player's own five. So not one id the
+          // client rendered appeared in the server's price table: every card
+          // came back unpriced, refused to unlock and refused to cast, and the
+          // server would have refused them anyway because a swapped player may
+          // only use the kit they were lent. Thirty seconds of a dead bar for
+          // everybody at the table, which is exactly how it was reported.
+          abilities={getAbilitiesForKingdom(you.abilityKingdomId ?? you.kingdomId).map((metadata) => {
+            const prices = you.abilityPrices?.[metadata.id]
+            // ⚠️ THE SERVER'S ANSWER FIRST. Both of these go through its slot
+            // mirror during a swap, which this side cannot reproduce from the
+            // raw maps — those are keyed by the player's OWN ability ids. The
+            // maps are the fallback for a server one release behind.
+            const isUnlocked = prices?.unlocked ?? you.unlocked?.[metadata.id] ?? false
             const tier = you.upgrades?.[metadata.id] ?? 0
-            const level = isUnlocked ? tier + 1 : 0
+            const level = prices?.level ?? (isUnlocked ? tier + 1 : 0)
             const cooldownRemaining = you.cooldowns?.[metadata.id] ?? 0
             // Find if there is an active/enabled state from server snapshot
             const enabled = true // fallback to true
@@ -786,7 +799,6 @@ export function BattlefieldView({
             // with upgrade tiers and perks already applied — the client has no
             // cost data of its own to drift from it. Zeroed until the first
             // sync arrives, at which point real prices replace them.
-            const prices = you.abilityPrices?.[metadata.id]
             warnIfUnpriced(
               metadata.id,
               Object.keys(you.abilityPrices ?? {}).length > 0,

@@ -115,15 +115,56 @@ describe('the maze drag', () => {
     expect(runnerCell(container)).toEqual({ row: 1, col: 8 })
   })
 
-  it('ignores a jump across the board', () => {
-    // A finger crossing two cells in one frame is normal — the box holds its
-    // position rather than teleporting to wherever the pointer got to.
+  it('walks to where the finger got to, one legal step at a time', () => {
+    // ⚠️ THIS USED TO DO NOTHING AT ALL, AND THAT WAS THE COMPLAINT. A finger
+    // crossing two or three cells between pointer events is what a
+    // normal-speed drag looks like on a phone; those frames were discarded, so
+    // the box only moved when the drag happened to be slow enough and
+    // otherwise appeared to refuse to follow.
     const { container } = render(<MazeGame party={party()} youId="me" />)
     const board = container.querySelector('[data-testid="maze-board"]')!
 
     fireEvent.pointerDown(board, { ...pointIn(0, 9), pointerId: 1 })
     fireEvent.pointerMove(board, { ...pointIn(5, 2), pointerId: 1 })
-    expect(runnerCell(container)).toEqual({ row: 0, col: 9 })
+    expect(runnerCell(container)).toEqual({ row: 5, col: 2 })
+  })
+
+  it('reports every cell it crossed, not just the two ends', () => {
+    // The server replays the route against its own walls, so a walk has to
+    // arrive as the individual steps it was made of. A route that jumped from
+    // the start straight to the exit is precisely what it refuses.
+    const { container } = render(<MazeGame party={party()} youId="me" />)
+    const board = container.querySelector('[data-testid="maze-board"]')!
+
+    fireEvent.pointerDown(board, { ...pointIn(0, 9), pointerId: 1 })
+    fireEvent.pointerMove(board, { ...pointIn(9, 0), pointerId: 1 })
+
+    const route = acted.mock.calls.at(-1)?.[0].route as { row: number; col: number }[]
+    expect(route[0]).toEqual({ row: 0, col: 9 })
+    expect(route.at(-1)).toEqual({ row: 9, col: 0 })
+    for (let i = 1; i < route.length; i++) {
+      const step = Math.abs(route[i]!.row - route[i - 1]!.row) +
+        Math.abs(route[i]!.col - route[i - 1]!.col)
+      expect(step).toBe(1)
+    }
+  })
+
+  it('never moves the board itself, however hard it is dragged into a wall', () => {
+    // ⚠️ THE BOARD SHAKING WAS NOT A COSMETIC PROBLEM. Wall feedback used to
+    // translate the whole SVG, and dragging along a wall triggers it on almost
+    // every frame — so the maze juddered continuously while being played. It
+    // also broke the drag: `getScreenCTM()` reads that same element, so the
+    // shake moved the screen-to-cell mapping out from under the finger.
+    const cells = openGrid()
+    const { container } = render(<MazeGame party={party(cells)} youId="me" />)
+    const board = container.querySelector('[data-testid="maze-board"]')!
+
+    fireEvent.pointerDown(board, { ...pointIn(0, 9), pointerId: 1 })
+    // Straight up, into the boundary wall, repeatedly.
+    for (let i = 0; i < 5; i++) {
+      fireEvent.pointerMove(board, { ...pointIn(-1, 9), pointerId: 1 })
+    }
+    expect(board.className.baseVal ?? board.getAttribute('class')).toBe('party-maze__board')
   })
 
   it('will not walk through a wall', () => {

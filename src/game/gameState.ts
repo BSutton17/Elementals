@@ -34,6 +34,19 @@ export interface GameEconomy {
 export interface AbilityPrices {
   /** Effective cast cost at the player's current upgrade tier. */
   cast: number
+  /**
+   * Whether it is bought, and what tier it sits at — both server-resolved.
+   *
+   * ⚠️ NOT DERIVABLE FROM `unlocked`/`upgrades` ON THIS SIDE. During a Kingdom
+   * Swap both answers go through the server's slot mirror, and those two maps
+   * are keyed by the player's OWN ability ids — so a borrowed ability reads
+   * back locked and level 0 from them, every time.
+   *
+   * Optional only for a server one release behind; the bar falls back to the
+   * raw maps when they are absent.
+   */
+  unlocked?: boolean
+  level?: number
   /** Price to buy this ability, or null once it is unlocked. */
   unlock: number | null
   /** Price of the next upgrade tier, or null while locked or fully upgraded. */
@@ -79,6 +92,14 @@ export interface GamePlayer {
    * field is on GamePlayer because that is what the battlefield renders from.
    */
   castlePaint?: CastlePaint
+  /**
+   * Whose abilities this player is HOLDING, during a Kingdom Swap.
+   *
+   * ⚠️ THE KINGDOM ITSELF NEVER CHANGES. `kingdomId` still drives the castle's
+   * colour, the roster and the win screen — only the ability layer sees this.
+   * Absent whenever nothing is borrowed, which is nearly always.
+   */
+  abilityKingdomId?: string
   id: string
   name: string
   kingdomId: string | null

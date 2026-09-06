@@ -174,14 +174,22 @@
   cursor: grab;
 }
 
-.party-maze__board--bump {
-  animation: party-maze-bump 0.2s ease-out;
+
+
+/* ⚠️ WALL FEEDBACK ON THE BOX, NOT ON THE BOARD, AND NOT A TRANSFORM. The
+   board used to shake by 2px on every blocked step — which, dragging along a
+   wall, is nearly every frame — so the maze juddered while being played. Worse,
+   `getScreenCTM()` reads that element, so the shake moved the screen-to-cell
+   mapping out from under the finger. A fill flash carries the same message and
+   cannot move anything; it also stays clear of the runner's own `transform`
+   attribute, which a CSS transform here would silently beat. */
+.party-maze__runner-box--nudged {
+  animation: party-maze-nudge 0.22s ease-out;
 }
 
-@keyframes party-maze-bump {
-  0%, 100% { transform: translateX(0); }
-  30% { transform: translateX(-2px); }
-  70% { transform: translateX(2px); }
+@keyframes party-maze-nudge {
+  0%, 100% { fill: #ffffff; }
+  45% { fill: #ff9a9a; }
 }
 
 .party-maze__floor {
@@ -768,7 +776,7 @@
   .party-stage__panel,
   .party-memory__symbol,
   .party-memory__countdown,
-  .party-maze__board--bump,
+  .party-maze__runner-box--nudged,
   .party-spot__flash {
     animation: none;
   }
@@ -1076,9 +1084,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  min-height: 8.5rem;
-  padding: 0.9rem 0.7rem;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 9.5rem;
+  padding: 1.1rem 0.9rem;
   border: 2px solid transparent;
   border-radius: 0.8rem;
   cursor: pointer;
@@ -1109,11 +1118,17 @@
   letter-spacing: 0.08em;
 }
 
+/* ⚠️ THE HINT IS THE RULES, NOT A CAPTION. Kingdom Thief is the one game whose
+   whole decision lives in these two sentences — what "keep" pays and what
+   "steal" costs — and they were set at 0.72rem in a half-width column, which on
+   a phone is six lines of tiny grey text under a ten-second clock. Nobody reads
+   that; they press a colour. Bigger, and given the room to be read. */
 .party-thief__hint {
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  line-height: 1.3;
-  opacity: 0.85;
+  line-height: 1.35;
+  opacity: 0.92;
+  text-wrap: balance;
 }
 
 .party-thief__count {
@@ -1133,6 +1148,20 @@
   margin: 0;
   font-size: 0.78rem;
   color: #ffb27a;
+}
+
+/* One per row on a phone. Side by side, each option gets under half of a
+   ~366px panel, and a sentence in 175px is five or six lines however it is
+   sized. Stacked, both read in two. */
+@media (max-width: 520px) {
+  .party-thief__options {
+    grid-template-columns: 1fr;
+  }
+
+  .party-thief__option {
+    min-height: 0;
+    padding: 0.9rem 1rem;
+  }
 }
 
 /* ---- pick a chest ----------------------------------------------------------- */
