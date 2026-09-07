@@ -1,5 +1,6 @@
 import type { Socket } from 'socket.io-client'
 import type { Ack } from './types'
+import { getDisplaySettings } from '../game/displaySettings'
 
 // Per-tab session identity. We use sessionStorage (NOT localStorage) so each
 // browser tab/window is its own player: it survives a refresh (so reconnection
@@ -67,7 +68,29 @@ export async function identify(socket: Socket): Promise<string | null> {
 
   const sessionId = res.ok ? res.data?.sessionId ?? null : null
   if (sessionId) storeSessionId(sessionId)
+  // The cadence this device asked for, told to the server as soon as it will
+  // listen. Sent on every identify rather than once ever, because a reconnect
+  // is a NEW socket and the server knows nothing about it.
+  void sendSyncRate(socket)
   return sessionId
+}
+
+/**
+ * Tells the server how often this device wants to be sent the match state.
+ *
+ * ⚠️ FIRE AND FORGET, AND IT MUST STAY THAT WAY. This is a comfort setting: a
+ * server that predates it answers nothing, and an older one must not stop a
+ * player joining a game. The worst case of it failing is full-rate updates,
+ * which is exactly what everybody had before the setting existed.
+ */
+export async function sendSyncRate(socket: Socket): Promise<void> {
+  try {
+    await socket.timeout(4000).emitWithAck('conn:setSyncRate', {
+      rate: getDisplaySettings().syncRate,
+    })
+  } catch {
+    // Older server, or no answer. Full rate it is.
+  }
 }
 
 /**

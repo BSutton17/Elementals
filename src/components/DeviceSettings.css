@@ -1,0 +1,72 @@
+/* Per-device settings, at the foot of the profile screen. Deliberately plain:
+   these are controls, not part of the game's showmanship. */
+
+.device-settings {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: left;
+}
+
+.device-settings__title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8f86c9;
+}
+
+.device-settings__lead {
+  margin: 0.3rem 0 0.9rem;
+  font-size: 0.78rem;
+  color: #9b93b8;
+}
+
+.device-settings__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  /* A comfortable target on a phone: this whole screen is thumb-operated. */
+  min-height: 2.75rem;
+  margin-bottom: 0.55rem;
+  cursor: pointer;
+}
+
+.device-settings__row input {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.15rem;
+  accent-color: #ffd76a;
+}
+
+.device-settings__name {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #ece7fb;
+}
+
+.device-settings__desc {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: #9b93b8;
+  text-wrap: pretty;
+}
+
+.device-settings__group {
+  margin: 1.1rem 0 0;
+  padding: 0;
+  border: none;
+}
+
+.device-settings__group legend {
+  padding: 0;
+}
+
+.device-settings__group > .device-settings__desc {
+  margin-bottom: 0.6rem;
+}

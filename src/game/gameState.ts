@@ -1,4 +1,5 @@
 import { socket } from '../sockets/socket'
+import { getDisplaySettings } from './displaySettings'
 import type { MonsterKind } from '../components/monster/monsters'
 import type { PartySnapshot } from './party'
 
@@ -317,7 +318,7 @@ export function setCastlePaints(
   }
   castlePaints = next
   state = { ...state, players: withPaint(state.players) }
-  listeners.forEach((l) => l())
+  announce()
 }
 
 /** Forgets every skin. Called when gameplay state is cleared. */
@@ -351,7 +352,49 @@ export function applyStateSync(payload: {
     caprice: payload.caprice ?? null,
     centrepiece: payload.centrepiece ?? null,
   }
-  listeners.forEach((l) => l())
+  announce()
+}
+
+/**
+ * How long battery saver may sit on a sync before drawing it, in ms.
+ *
+ * The server sends ten a second. Coalescing to roughly five halves the render
+ * and composite work for a screen where almost nothing moves between one sync
+ * and the next — a health bar creeping down, a number ticking up.
+ */
+const COALESCE_MS = 200
+let pending: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * Tells the UI that the state changed — immediately, or on the next coalescing
+ * window when battery saver is on.
+ *
+ * ⚠️ A MINIGAME IS NEVER COALESCED, AND THIS IS NOT A REFINEMENT. Reaction Test
+ * is scored by the server from the tick your press ARRIVES against the tick the
+ * button turned green. Learn about green 200ms late and your reaction time is
+ * 200ms worse — the setting would not be costing you battery, it would be
+ * costing you the game. Bomb Attack and the barrier games have the same shape.
+ * So the moment a session is live, every sync is drawn at once.
+ *
+ * ⚠️ AND THE LAST ONE ALWAYS LANDS. A coalescing window that dropped its
+ * trailing edge would leave the final state of anything — the killing blow, the
+ * result banner — unpainted until something else happened to arrive.
+ */
+function announce(): void {
+  const live = state.party !== null && !state.party.resolved
+  if (!getDisplaySettings().batterySaver || live) {
+    if (pending) {
+      clearTimeout(pending)
+      pending = null
+    }
+    listeners.forEach((l) => l())
+    return
+  }
+  if (pending) return // a window is already open; its trailing edge draws this
+  pending = setTimeout(() => {
+    pending = null
+    listeners.forEach((l) => l())
+  }, COALESCE_MS)
 }
 
 /** Clears gameplay state (e.g. after leaving a match). */

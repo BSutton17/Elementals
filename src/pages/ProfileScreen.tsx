@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CgProfile } from 'react-icons/cg'
 import { UsernameDialog } from '../components/profile/UsernameDialog'
+import { DeviceSettings } from '../components/DeviceSettings'
 import { DeleteAccountDialog } from '../components/profile/DeleteAccountDialog'
 import {
   fetchProfile,
@@ -451,6 +452,11 @@ export function ProfileScreen({ onBack }: { onBack: () => void }) {
             </footer>
           </>
         )}
+
+        {/* ⚠️ OUTSIDE THE SIGNED-IN BRANCH, ON PURPOSE. These describe the
+            DEVICE, not the account — a guest on a phone that is getting hot
+            needs them exactly as much as anyone, and more of them are guests. */}
+        <DeviceSettings />
       </div>
 
       {/* Deletion is irreversible, so it is confirmed by TYPING, not by a

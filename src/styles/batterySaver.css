@@ -1,0 +1,67 @@
+/* Battery saver: what the game stops PAINTING when a phone is getting hot.
+   Switched on by `data-fx="low"` on <html> (see game/displaySettings.ts).
+
+   ⚠️ LESS PAINT, NEVER LESS INFORMATION. This is the same rule the
+   `prefers-reduced-motion` blocks live under, and it exists because two
+   abilities once shipped broken on exactly that mistake: Kitsune Rush hid its
+   streaks with `display: none`, so a player cast their ultimate and saw
+   nothing at all, and Caprice froze its butterfly into a still image. Nothing
+   in this file may hide an element, empty it, or stop it telling the player
+   what is happening — `reducedMotion.test.ts` reads this file and enforces it.
+
+   ⚠️ AND IT TARGETS WHAT WAS MEASURED, NOT WHAT LOOKS EXPENSIVE. Counting
+   across the stylesheets: 35 backdrop-filters and 55 drop-shadows, and a
+   battlefield of only ~335 nodes. The node count is not the problem and never
+   was; the filters are, because a filtered layer is re-rasterised by the
+   compositor every frame it changes. */
+
+/* ---- glass -----------------------------------------------------------------
+   The single most expensive property in the app. `backdrop-filter` re-samples
+   everything painted behind the element, every frame, and defeats the
+   compositor's fast path entirely. Every use of it here is decoration over a
+   background that is already 75–97% opaque, so removing it costs a little
+   depth and nothing else. */
+:root[data-fx='low'] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ---- filters ---------------------------------------------------------------
+   Drop-shadows and blurs on SVG force a filter pass per repaint. Flattening
+   them changes how things LOOK — a glow becomes a flat shape — and changes
+   nothing about what is on screen or where.
+
+   `!important` because these are set on individual components; the point of
+   the switch is to overrule them, and a specificity race with 55 separate
+   rules is not a fight worth having. */
+:root[data-fx='low'] * {
+  filter: none !important;
+}
+
+/* ---- ambient decoration ----------------------------------------------------
+   Castle skins carry 64 continuous animations between them — a breathing core,
+   drifting motes, an orbiting ring — and in a lobby where several players own
+   one, that is several filtered SVG groups animating without pause for the
+   whole match.
+
+   ⚠️ THE SKIN ITSELF STAYS. This stops the motion, not the artwork: a
+   legendary castle still looks legendary, it simply holds still. Anything that
+   REPORTS something — a health bar, a status aura, an ability's own effect —
+   is untouched, because that is the line this file does not cross. */
+:root[data-fx='low'] [class*='skin__'] {
+  animation: none !important;
+}
+
+/* ---- shadows ---------------------------------------------------------------
+   Layered box-shadows on the always-present furniture (the ability bar and its
+   cards) are painted on every repaint of those elements. Flattened to a single
+   hairline border's worth of depth.
+
+   Deliberately NOT applied to `text-shadow`: that one is doing legibility work
+   over busy backgrounds, and dropping it would cost the player readability
+   rather than gloss. */
+:root[data-fx='low'] .ability-bar,
+:root[data-fx='low'] .ability-button,
+:root[data-fx='low'] .ability-bar__stat-group {
+  box-shadow: none !important;
+}

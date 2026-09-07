@@ -113,3 +113,61 @@ describe('the presentation stays alive under reduced motion', () => {
     expect(block).toMatch(/\.caprice__mote\b/) // the companions wandering
   })
 })
+
+/**
+ * Battery saver plays by exactly the same rule.
+ *
+ * ⚠️ IT IS A SETTING A PLAYER TURNS ON TO KEEP PLAYING, not a way to opt out of
+ * seeing the game. The moment it hides an ability, a health bar or a status,
+ * the player who most needs it — someone on a phone hot enough to throttle — is
+ * the one playing blind. Same failure as Kitsune Rush's `display: none`, with a
+ * wider blast radius, because this stylesheet reaches every component at once.
+ */
+describe('battery saver dims the game without hiding any of it', () => {
+  // ⚠️ COMMENTS STRIPPED FIRST. This file explains the bugs it exists to avoid,
+  // by name — "hid its streaks with `display: none`" — so a test reading the raw
+  // text fails on the prose describing the very thing it is checking for.
+  const css = readFileSync('src/styles/batterySaver.css', 'utf8').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  )
+
+  it('never removes an element', () => {
+    expect(css, 'battery saver hides elements').not.toMatch(/display:\s*none/)
+    expect(css, 'battery saver makes elements transparent').not.toMatch(/opacity:\s*0\s*[;}!]/)
+    expect(css, 'battery saver hides elements').not.toMatch(/visibility:\s*hidden/)
+    expect(css, 'battery saver scales elements away').not.toMatch(/scale\(0\)/)
+    expect(css, 'battery saver empties elements').not.toMatch(/content:\s*(''|"")/)
+  })
+
+  it('only ever stops motion on decoration, never on an ability', () => {
+    // A blanket `* { animation: none }` is the tempting version of this file and
+    // the wrong one: it freezes Caprice's butterfly into a still image and stops
+    // every ability that says what it is doing by moving. The only motion this
+    // file is allowed to stop belongs to castle SKINS, which are ornament.
+    const kills = [...css.matchAll(/([^{}]+)\{[^}]*animation:\s*none[^}]*\}/g)].map((m) =>
+      m[1]!.trim(),
+    )
+    for (const selector of kills) {
+      expect(
+        selector,
+        `battery saver stops animation on "${selector}", which is not decoration`,
+      ).toMatch(/skin__/)
+    }
+  })
+
+  it('is scoped to the switch, so it can never apply to anyone who did not ask', () => {
+    // Every rule has to sit behind the attribute. One unscoped selector in here
+    // would flatten the game for the whole player base.
+    const selectors = [...css.matchAll(/(^|\})\s*([^{}@]+)\{/g)]
+      .map((m) => m[2]!.trim())
+      .filter((s) => s.length > 0 && !s.startsWith('/*'))
+    for (const selector of selectors) {
+      for (const part of selector.split(',')) {
+        expect(part.trim(), `"${part.trim()}" is not behind [data-fx='low']`).toMatch(
+          /\[data-fx='low'\]/,
+        )
+      }
+    }
+  })
+})
