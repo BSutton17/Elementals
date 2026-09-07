@@ -154,6 +154,13 @@ export interface CardDrawnEvent {
   suit?: string | null
   /** Pre-pipeline damage the card rolled (display only). */
   damage: number
+  /**
+   * Who the card was played at.
+   *
+   * Optional only for a server one release behind; the reveal falls back to the
+   * caster's current target when it is absent.
+   */
+  targetId?: string
 }
 
 /** Joker's Lucky Draw landed a face. `outcome` names it (a status id, or

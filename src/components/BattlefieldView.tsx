@@ -369,8 +369,19 @@ export function BattlefieldView({
         for (const event of events) {
           if (event.type !== 'cardDrawn') continue
           const draw = event as unknown as CardDrawnEvent
+          // The server names the victim; the caster's current target is only a
+          // fallback for an older server, and is a different question anyway —
+          // a target can move between the cast and the animation.
+          const victimId =
+            draw.targetId ?? roster.find((r) => r.id === draw.playerId)?.target
+          // ⚠️ THE DRAW IS FOR THE TWO KINGDOMS IN IT, NOBODY ELSE. Every
+          // kingdom at the table received this event and every one of them
+          // played the card cinematic, so a seven-player match had cards flying
+          // across six screens belonging to fights those players were not in.
+          // Spectators were already excluded at the render; everyone else was
+          // not excluded at all.
+          if (youId !== draw.playerId && youId !== victimId) continue
           const caster = positionOf(draw.playerId)
-          const victimId = roster.find((r) => r.id === draw.playerId)?.target
           const victim = victimId ? positionOf(victimId) : undefined
           setBlackjack({
             key: ++blackjackKey.current,

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BattlefieldView } from './BattlefieldView'
 import { castAbility, changeTarget } from '../game/matchStore'
+import { applyEventBatch } from '../game/gameEvents'
 import type { LobbyMatch } from '../game/lobby'
 import type { GamePlayer } from '../game/gameState'
 
@@ -551,5 +552,68 @@ describe('the two things on the field that are not kingdoms', () => {
     fireEvent.click(screen.getByLabelText('Cast A Light Breeze'))
     expect(castAbility).toHaveBeenCalledWith('aLightBreeze', ['b'], undefined, undefined)
     expect(container).toBeTruthy()
+  })
+})
+
+describe("Joker's card is for the two kingdoms in the fight", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  /**
+   * ⚠️ EVERY KINGDOM AT THE TABLE PLAYED THIS ANIMATION. `cardDrawn` is
+   * broadcast to the whole room and the only gate on the reveal was
+   * `spectator`, so in a seven-player match six people watched a card fly
+   * across their screen for a fight they had no part in.
+   *
+   * The event now names its target, which also fixes a second thing: the
+   * victim used to be inferred from the caster's CURRENT target, and a target
+   * can move between the cast and the animation.
+   */
+  const draw = (playerId: string, targetId: string) => ({
+    tick: 100,
+    events: [
+      {
+        type: 'cardDrawn',
+        tick: 100,
+        playerId,
+        abilityId: 'blackjack',
+        card: 'Queen',
+        suit: 'hearts',
+        damage: 900,
+        targetId,
+      },
+    ],
+  })
+
+  it('shows the draw to the Joker who played it', async () => {
+    const { container } = render(<BattlefieldView match={match} youId="a" players={game()} />)
+    applyEventBatch(draw('a', 'b'))
+    await waitFor(() =>
+      expect(container.querySelector('[data-testid="blackjack-reveal"]')).toBeTruthy(),
+    )
+  })
+
+  it('shows it to the kingdom being hit', async () => {
+    const { container } = render(<BattlefieldView match={match} youId="b" players={game()} />)
+    applyEventBatch(draw('a', 'b'))
+    await waitFor(() =>
+      expect(container.querySelector('[data-testid="blackjack-reveal"]')).toBeTruthy(),
+    )
+  })
+
+  it('shows it to nobody else at the table', async () => {
+    const { container } = render(<BattlefieldView match={match} youId="c" players={game()} />)
+    applyEventBatch(draw('a', 'b'))
+    // Given a beat to appear, so this is not passing on timing alone.
+    await new Promise((r) => setTimeout(r, 50))
+    expect(container.querySelector('[data-testid="blackjack-reveal"]')).toBeNull()
+  })
+
+  it('shows it to no spectator either', async () => {
+    const { container } = render(
+      <BattlefieldView match={match} youId={null} players={game()} spectator />,
+    )
+    applyEventBatch(draw('a', 'b'))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(container.querySelector('[data-testid="blackjack-reveal"]')).toBeNull()
   })
 })
