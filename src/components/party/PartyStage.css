@@ -232,6 +232,13 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+  /* The entire stack takes the strike — see LockpickGame.tsx. The padding is
+     deliberate slop: a thumb that lands just off the dial still counts, which
+     is the difference between a game about timing and a game about aim. */
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .party-lock__pips {

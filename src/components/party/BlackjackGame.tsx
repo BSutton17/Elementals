@@ -52,6 +52,33 @@ function valueOf(cards: Card[]): number {
 }
 
 /**
+ * ⚠️ THE TWO NUMBERS THAT SET THE DEALING SPEED. Change them here and nowhere
+ * else — they are the whole control.
+ *
+ * Each is the gap between one card landing and the next, in milliseconds. A
+ * card's delay is its position in the hand times this, so card 3 of the
+ * dealer's hand lands at 3 x DEALER_DEAL_STAGGER_MS.
+ *
+ * The dealer is deliberately slower than the players. The dealer's draw is the
+ * only part of the round nobody can influence — everyone is just watching to
+ * see if it busts — so it is the one part worth drawing out. A player's own
+ * hits stay quick because they are waiting on their own decision.
+ *
+ * ⚠️ CEILING: the dealer's cards must all land before the table clears, which
+ * is `BLACKJACK_REVEAL_SECONDS` (3.5 s) after the turn-over — see
+ * `Server/src/data/balance.ts`. The stagger is capped at `MAX_STAGGERED_CARD`
+ * positions, so the last card lands at most
+ * MAX_STAGGERED_CARD x DEALER_DEAL_STAGGER_MS after the first. Keep that
+ * product comfortably under 3500 ms or the reveal gets cut off, and raise the
+ * server's constant first if you want it slower still.
+ */
+const DEAL_STAGGER_MS = 110
+const DEALER_DEAL_STAGGER_MS = 320
+
+/** Past this position cards stop staggering, so a big hand cannot run long. */
+const MAX_STAGGERED_CARD = 5
+
+/**
  * One card, dealt.
  *
  * ⚠️ THE ANIMATION IS KEYED TO THE CARD'S POSITION IN THE HAND, and that is
@@ -65,13 +92,18 @@ function CardFace({
   card,
   hidden = false,
   index = 0,
+  stagger = DEAL_STAGGER_MS,
 }: {
   card?: Card
   hidden?: boolean
   /** Position in the hand — drives the deal stagger. */
   index?: number
+  /** Milliseconds between this hand's cards. See the constants above. */
+  stagger?: number
 }) {
-  const style = { '--deal': `${Math.min(index, 5) * 110}ms` } as React.CSSProperties
+  const style = {
+    '--deal': `${Math.min(index, MAX_STAGGERED_CARD) * stagger}ms`,
+  } as React.CSSProperties
   if (hidden || !card) {
     return (
       <span
@@ -125,11 +157,17 @@ export function BlackjackGame({
         <span className="party-bj__label">Dealer</span>
         <div className="party-bj__cards">
           {settled ? (
-            state.dealerCards.map((card, i) => <CardFace key={i} card={card} index={i} />)
+            state.dealerCards.map((card, i) => (
+              <CardFace key={i} card={card} index={i} stagger={DEALER_DEAL_STAGGER_MS} />
+            ))
           ) : (
             <>
-              <CardFace card={state.dealerUp ?? undefined} index={0} />
-              <CardFace hidden index={1} />
+              <CardFace
+                card={state.dealerUp ?? undefined}
+                index={0}
+                stagger={DEALER_DEAL_STAGGER_MS}
+              />
+              <CardFace hidden index={1} stagger={DEALER_DEAL_STAGGER_MS} />
             </>
           )}
         </div>

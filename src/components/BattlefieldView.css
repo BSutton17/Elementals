@@ -451,6 +451,28 @@
   }
 }
 
+/* ⚠️ THESE TWO BELONG AT THE BASE LAYER, NOT IN A MEDIA QUERY. They spent a
+   while trapped inside the portrait block below, which meant a risen kingdom
+   was only purple on a portrait phone — on a desktop or a sideways phone it
+   kept the ELIMINATED colour and read as still dead, which is the one thing
+   Haunted needs to say it is not. */
+
+/* A risen kingdom is not a dead one: same slot as ELIMINATED, but it reads as
+   something happening rather than something over. */
+.battlefield__risen {
+  fill: #c9a3ff;
+}
+
+/* The name and, under it, the matchup badge — stacked beside the level circle
+   rather than in the header's own row, so the badge sits under the NAME rather
+   than beside the circle. (On a phone the badge leaves this stack entirely and
+   goes to the opposite corner — see MatchupBadge.css.) */
+.battlefield__kingdom-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 /* Portrait phones/tablets: smaller header chrome. */
 @media (max-width: 900px) and (orientation: portrait), (max-width: 700px) and (orientation: portrait) {
   .battlefield__kingdom-header h2 {
@@ -465,22 +487,7 @@
     gap: 0.6rem;
   }
 
-  /* The name and, under it, the matchup badge — stacked beside the level circle
-   rather than in the header's own row, so the badge sits under the NAME rather
-   than beside the circle. */
-/* A risen kingdom is not a dead one: same slot as ELIMINATED, but it reads as
-   something happening rather than something over. */
-.battlefield__risen {
-  fill: #c9a3ff;
-}
-
-.battlefield__kingdom-titles {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.battlefield__level-circle {
+  .battlefield__level-circle {
     width: 28px;
     height: 28px;
     font-size: 0.8rem;

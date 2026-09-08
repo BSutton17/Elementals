@@ -50,3 +50,49 @@ test('a nonsense pixel ratio falls back to 1x rather than 0', () => {
   expect(chooseQuality({ devicePixelRatio: 0 }).resolution).toBe(1)
   expect(chooseQuality({ devicePixelRatio: Number.NaN }).resolution).toBe(1)
 })
+
+// ---- battery saver ----------------------------------------------------------
+// ⚠️ THE SETTING USED NOT TO REACH THIS FUNCTION AT ALL. Battery saver dropped
+// filters and glass out of the CSS while the canvas underneath kept rasterising
+// at 2x device pixels, sixty times a second, on two mounted stages — so a phone
+// with the switch ON still cooked. These pin the wiring.
+
+test('battery saver overrules the hardware and drops to 1x', () => {
+  const q = chooseQuality({
+    devicePixelRatio: 3,
+    hardwareConcurrency: 8,
+    batterySaver: true,
+  })
+  expect(q.resolution, 'battery saver did not reach the renderer').toBe(1)
+  expect(q.reduced).toBe(true)
+})
+
+test('...and caps the frame rate, which nothing else does', () => {
+  const saver = chooseQuality({ devicePixelRatio: 3, hardwareConcurrency: 8, batterySaver: true })
+  expect(saver.maxFps).toBe(30)
+
+  // ⚠️ A CONSTRAINED DEVICE IS NOT REASON ENOUGH ON ITS OWN. Dropping frames for
+  // somebody who never asked for it is the "quietly degrades the game for
+  // everyone who never opens the menu" decision the settings module refuses to
+  // make.
+  const budget = chooseQuality({ devicePixelRatio: 3, hardwareConcurrency: 2 })
+  expect(budget.maxFps, 'a weak device had its frames capped uninvited').toBe(0)
+})
+
+test('battery saver turns multisampling off rather than on at 1x', () => {
+  // The ordinary 1x rule turns antialias ON, because at 1x it is the only thing
+  // softening an edge. Under battery saver that trade is the wrong way round:
+  // multisampling is disproportionately costly on the tile-based GPUs phones
+  // use, and a slightly harder edge is a look, not lost information.
+  const plain = chooseQuality({ devicePixelRatio: 1, hardwareConcurrency: 8 })
+  expect(plain.antialias).toBe(true)
+
+  const saver = chooseQuality({ devicePixelRatio: 1, hardwareConcurrency: 8, batterySaver: true })
+  expect(saver.antialias).toBe(false)
+})
+
+test('everyone else is left exactly as they were', () => {
+  const off = chooseQuality({ devicePixelRatio: 3, hardwareConcurrency: 8, batterySaver: false })
+  expect(off.resolution).toBe(2)
+  expect(off.maxFps).toBe(0)
+})

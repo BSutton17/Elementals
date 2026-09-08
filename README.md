@@ -55,6 +55,36 @@ Not a nice-to-have. It shapes what belongs in the UI:
   new one against a real phone in both orientations, not just a narrow desktop
   window.
 
+## Keeping phones cool
+
+Phones were getting hot enough to notice. The work that fixed it is easy to undo
+by accident, so:
+
+- **Per-device settings live in `game/displaySettings.ts`** and are set from the
+  profile screen (`components/DeviceSettings.tsx`): a **battery saver** switch
+  (`styles/batterySaver.css` drops the expensive effects) and a **network
+  cadence** choice (how often this device asks for state). They are per device,
+  not per account — the phone that is overheating is the one that should turn
+  them down.
+- **`React.memo` comparators must compare every field the component draws.** A
+  comparator that forgets one does not render slightly wrong; it stops updating
+  that thing entirely, forever, with no error. `KingdomSite.memo.test.tsx` guards
+  this by scanning the source, and it is the reason that guard exists.
+- **Keep event handlers stable** (the "latest ref" pattern — a `useCallback([])`
+  reading a mutable ref) so memoized children can ignore callback identity. A
+  handler rebuilt every tick re-renders the whole battlefield.
+- Announcements coalesce (200 ms, `game/gameState.ts`) — except during a live
+  party minigame, where timing is the game.
+
+## One duplicated file, on purpose
+
+`game/elementalCycle.ts` is a **second copy** of the server's rings. The server
+decides all damage; this copy only says *who to expect it from*. If the two
+drift, the game keeps playing perfectly while telling the player the wrong thing
+about why — much harder to notice than a wrong number. Both repos pin the chain
+to an explicit list of pairs in their tests, so editing one side alone fails the
+other side's suite.
+
 ## Design docs
 
 Canonical at the **workspace root**, shared with the Server repo:

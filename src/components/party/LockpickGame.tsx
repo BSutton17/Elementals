@@ -100,7 +100,20 @@ export function LockpickGame({
   const picked = lock.picked;
 
   return (
-    <div className="party-lock">
+    /* ⚠️ THE WHOLE LOCK IS THE BUTTON, NOT JUST THE BUTTON. The dial is the
+       biggest thing on the screen and the only part that looks like a
+       mechanism, so that is where a thumb goes — and it did nothing, because
+       the only live target was the 9rem bar underneath it. The hit area now
+       matches what the game looks like: dial, pips, button, the lot.
+
+       Safe to widen because `strike` already latches on `armed` and returns
+       early when `done`, so a tap that reaches both this and the button still
+       sends exactly one strike. */
+    <div
+      className="party-lock"
+      onPointerDown={strike}
+      data-testid="lock-surface"
+    >
       <div className="party-lock__pips" data-testid="lock-pips">
         {Array.from({ length: target }, (_, i) => (
           <span
@@ -126,7 +139,6 @@ export function LockpickGame({
       <button
         type="button"
         className="party-lock__strike"
-        onPointerDown={strike}
         disabled={done}
         data-testid="lock-strike"
       >

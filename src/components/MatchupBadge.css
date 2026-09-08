@@ -51,20 +51,33 @@
 }
 
 /* ---- phones ----------------------------------------------------------------
-   ⚠️ THIS SITS OVER THE ARENA, SO ITS HEIGHT IS TAKEN FROM THE BOARD. Two
-   stacked rows under an already-shrunk kingdom name pushed the top-left castle
-   behind a wall of text on a phone. One line instead of two halves the
-   intrusion, and the whole thing shrinks: the names stay, because an arrow and
-   an icon alone do not answer "who should I be hitting".
+   ⚠️ IT LEAVES THE HEADER ENTIRELY AND CROSSES TO THE OTHER CORNER. The header
+   is anchored top-LEFT, directly over the first castles on the board, and on a
+   phone there is no version of two extra lines there that does not sit on top
+   of somebody's kingdom. The arena is a centred circle, so the corners are the
+   only genuinely free space on the screen — and the top-left one is already
+   spent on the level circle, the kingdom name and (for a spectator or an
+   eliminated player) the log.
 
-   Both orientations, not just landscape — the original rule only covered short
-   screens and portrait is where it was actually in the way. */
-@media (max-width: 900px) {
+   `position: fixed` is what takes it out of the header's flow; it is safe here
+   because nothing between this and the viewport sets a transform or a filter,
+   either of which would silently re-anchor it to that ancestor instead. It
+   keeps `pointer-events: none`, so it never takes a tap meant for a castle. */
+@media (max-width: 900px), (orientation: landscape) and (max-height: 560px) {
   .matchup {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.1rem;
+    position: fixed;
+    top: max(1rem, env(safe-area-inset-top, 0px));
+    right: max(0.6rem, env(safe-area-inset-right, 0px));
+    z-index: 50;
+
+    /* Stacked again. The side-by-side row only ever existed to halve the
+       badge's height while it was over the castles; in an empty corner that
+       trade buys nothing, and two short right-aligned lines read faster. */
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    margin-top: 0;
+    text-align: right;
   }
 
   .matchup__row {
@@ -79,8 +92,14 @@
   }
 }
 
-/* Landscape phones have almost no vertical room at all. */
+/* Landscape phones have almost no vertical room at all, and the header itself
+   tightens to 0.5rem — the badge matches it so the two corners stay level. */
 @media (orientation: landscape) and (max-height: 560px) {
+  .matchup {
+    top: max(0.5rem, env(safe-area-inset-top, 0px));
+    right: max(0.5rem, env(safe-area-inset-right, 0px));
+  }
+
   .matchup__row {
     font-size: 0.6rem;
   }

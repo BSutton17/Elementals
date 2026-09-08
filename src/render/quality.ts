@@ -19,6 +19,8 @@
 // frame: the per-effect work rises with the field while the per-pixel work was
 // already consuming the budget.
 
+import { getDisplaySettings } from '../game/displaySettings'
+
 /** What the renderer should be built with on this device. */
 export interface RenderQuality {
   /** Device pixel ratio to rasterise at. */
@@ -27,6 +29,16 @@ export interface RenderQuality {
   antialias: boolean;
   /** True when this device was treated as constrained. */
   reduced: boolean;
+  /**
+   * Ceiling on rendered frames per second. `0` means uncapped (Pixi's default,
+   * i.e. whatever the display asks for).
+   *
+   * ⚠️ THIS IS A FRAME CAP, NOT A SPEED CHANGE. Every system in the framework
+   * is driven by `update(deltaMS)`, so an effect covers the same ground in the
+   * same wall-clock time at 30fps as at 60 — it is drawn half as often, not
+   * played half as fast.
+   */
+  maxFps: number;
 }
 
 /**
@@ -53,6 +65,8 @@ interface QualityInputs {
   devicePixelRatio: number;
   hardwareConcurrency?: number;
   deviceMemory?: number;
+  /** The player's own battery-saver switch. Overrules what the device claims. */
+  batterySaver?: boolean;
 }
 
 /**
@@ -62,6 +76,18 @@ interface QualityInputs {
  * decision is the thing worth pinning, not the fact that it reads `window`.
  */
 export function chooseQuality(inputs: QualityInputs): RenderQuality {
+  // ⚠️ THE PLAYER'S SWITCH BEATS EVERY HARDWARE GUESS, and it used not to reach
+  // this function at all: battery saver dropped filters and glass out of the
+  // CSS while the canvas underneath carried on rasterising at 2x device pixels,
+  // sixty times a second, on two mounted stages. That is why a phone with the
+  // setting ON still got hot — the setting was never wired to the renderer.
+  //
+  // 1x instead of 2x is a QUARTER of the pixels per canvas; the frame cap
+  // halves how often those pixels are drawn. Neither changes what is on screen.
+  if (inputs.batterySaver === true) {
+    return { resolution: 1, antialias: false, reduced: true, maxFps: 30 };
+  }
+
   const dpr = Number.isFinite(inputs.devicePixelRatio) && inputs.devicePixelRatio > 0
     ? inputs.devicePixelRatio
     : 1;
@@ -85,18 +111,24 @@ export function chooseQuality(inputs: QualityInputs): RenderQuality {
     // is the only thing softening an edge.
     antialias: resolution < 1.5,
     reduced: resolution < dpr,
+    // Uncapped unless the player asked otherwise. A constrained device is not
+    // reason enough on its own: dropping frames for somebody who never asked
+    // for it is exactly the "quietly degrades the game" decision the settings
+    // module refuses to make.
+    maxFps: 0,
   };
 }
 
 /** Reads the current device and chooses. Falls back to 1x off-browser. */
 export function detectQuality(): RenderQuality {
   if (typeof window === 'undefined') {
-    return { resolution: 1, antialias: true, reduced: false };
+    return { resolution: 1, antialias: true, reduced: false, maxFps: 0 };
   }
   const nav = navigator as Navigator & { deviceMemory?: number };
   return chooseQuality({
     devicePixelRatio: window.devicePixelRatio,
     hardwareConcurrency: nav.hardwareConcurrency,
     deviceMemory: nav.deviceMemory,
+    batterySaver: getDisplaySettings().batterySaver,
   });
 }

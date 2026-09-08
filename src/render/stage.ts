@@ -50,7 +50,12 @@ export class PixiStage {
    *  castles AND this canvas, so both shake together as one screen. */
   private shakeTarget: HTMLElement | null = null
   /** Resolved once at mount; see quality.ts. */
-  private quality: RenderQuality = { resolution: 1, antialias: true, reduced: false }
+  private quality: RenderQuality = {
+    resolution: 1,
+    antialias: true,
+    reduced: false,
+    maxFps: 0,
+  }
   private baseScale = 1
   private baseX = 0
   private baseY = 0
@@ -120,7 +125,12 @@ export class PixiStage {
       // A hint, not a guarantee. It matters on hybrid-GPU laptops, where the
       // default can hand a particle-heavy canvas to the integrated chip; phones
       // largely ignore it. Harmless where unsupported.
-      powerPreference: 'high-performance',
+      //
+      // Reversed under battery saver: asking for the discrete GPU is the one
+      // thing a player who just said "use less power" plainly did not ask for.
+      powerPreference: this.quality.reduced && this.quality.maxFps > 0
+        ? 'low-power'
+        : 'high-performance',
     })
     // If destroy() was called while `app.init()` was still pending (common under
     // React StrictMode's mount→unmount→mount), tear the freshly-inited app down
@@ -132,6 +142,14 @@ export class PixiStage {
     host.appendChild(this.app.canvas)
     this.app.stage.addChild(this.layers.root)
     this.resize()
+    // ⚠️ THE FRAME CAP, AND IT IS THE OTHER HALF OF BATTERY SAVER. This ticker
+    // renders every frame for the whole match whether anything is happening or
+    // not, on both mounted stages — an idle battlefield still costs two full
+    // canvases sixty times a second. Halving that halves the steady cost of
+    // simply having the game open, and costs nothing in what is shown: every
+    // system is driven by `deltaMS`, so effects play at the same speed.
+    // `maxFPS = 0` is Pixi's uncapped default, which is what everyone else gets.
+    this.app.ticker.maxFPS = this.quality.maxFps
     this.app.ticker.add(this.tick)
     window.addEventListener('resize', this.resize)
     this.mounted = true
