@@ -465,7 +465,16 @@
     gap: 0.6rem;
   }
 
-  .battlefield__level-circle {
+  /* The name and, under it, the matchup badge — stacked beside the level circle
+   rather than in the header's own row, so the badge sits under the NAME rather
+   than beside the circle. */
+.battlefield__kingdom-titles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.battlefield__level-circle {
     width: 28px;
     height: 28px;
     font-size: 0.8rem;

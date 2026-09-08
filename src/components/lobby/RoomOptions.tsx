@@ -7,9 +7,9 @@ import './RoomOptions.css'
  *
  * ⚠️ ADMIN-ONLY, AND HIDDEN RATHER THAN DISABLED. These switches change what a
  * match IS — one hands eliminated players the whole board, one decides whether
- * a monster turns up at all, one replaces stretches of the war with minigames
- * — so while they are being tuned they belong to the account that owns the
- * game. A greyed-out control that
+ * a monster turns up at all, one replaces stretches of the war with minigames,
+ * one puts the whole table in a single kingdom — so while they are being tuned
+ * they belong to the account that owns the game. A greyed-out control that
  * nobody else can ever use is just a permanent advertisement for a thing they
  * cannot have; the panel simply is not there.
  *
@@ -22,6 +22,8 @@ export function RoomOptions({
   eliminatedSeeAllHealth,
   monstersEnabled,
   partyModeEnabled,
+  copyCatEnabled,
+  elementalEnabled,
   onChange,
   disabled = false,
 }: {
@@ -30,10 +32,14 @@ export function RoomOptions({
   eliminatedSeeAllHealth: boolean
   monstersEnabled: boolean
   partyModeEnabled: boolean
+  copyCatEnabled: boolean
+  elementalEnabled: boolean
   onChange: (rules: {
     eliminatedSeeAllHealth?: boolean
     monstersEnabled?: boolean
     partyModeEnabled?: boolean
+    copyCatEnabled?: boolean
+    elementalEnabled?: boolean
   }) => void
   /** True once the match has started — the rules are fixed from then on. */
   disabled?: boolean
@@ -123,8 +129,42 @@ export function RoomOptions({
             </span>
           </label>
 
+          <label className="room-options__rule">
+            <input
+              type="checkbox"
+              checked={copyCatEnabled}
+              disabled={disabled}
+              onChange={(e) => onChange({ copyCatEnabled: e.target.checked })}
+              data-testid="option-copy-cat"
+            />
+            <span>
+              <span className="room-options__name">Copy Cat</span>
+              <span className="room-options__desc">
+                Everyone plays the same kingdom — drawn at random when the match
+                starts, so nobody knows which until it does.
+              </span>
+            </span>
+          </label>
+
+          <label className="room-options__rule">
+            <input
+              type="checkbox"
+              checked={elementalEnabled}
+              disabled={disabled}
+              onChange={(e) => onChange({ elementalEnabled: e.target.checked })}
+              data-testid="option-elemental"
+            />
+            <span>
+              <span className="room-options__name">Elemental&rsquo;s Elementaled</span>
+              <span className="room-options__desc">
+                Matchups matter: every kingdom hits one other kingdom 10% harder
+                and takes 10% less from it. Shown under your name in the match.
+              </span>
+            </span>
+          </label>
+
           <p className="room-options__note">
-            All three are always off in public matches
+            All of these are always off in public matches
           </p>
         </div>
       )}

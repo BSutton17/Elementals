@@ -1,0 +1,64 @@
+/* "Elemental's Elementaled": who you beat, and who beats you — tucked under the
+   kingdom name in the top-left corner. */
+
+.matchup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: 0.2rem;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* It sits inside the header, which is already positioned over the arena — it
+     must never take a click meant for a castle behind it. */
+  pointer-events: none;
+}
+
+.matchup__row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  /* Numbers and short words on a busy battlefield: the shadow is doing
+     legibility work, not decoration. */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.matchup__arrow {
+  flex: none;
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+/* Green up, red down — the same direction language the rest of the HUD uses for
+   a buff and a debuff, so it reads without a legend. */
+.matchup__row--strong .matchup__arrow {
+  color: #4ade80;
+}
+
+.matchup__row--weak .matchup__arrow {
+  color: #ff8f8f;
+}
+
+.matchup__kingdom-icon {
+  flex: none;
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.matchup__kingdom {
+  color: #ece7fb;
+}
+
+/* Landscape phones have almost no vertical room, and this sits above the
+   arena — one line rather than two. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .matchup {
+    flex-direction: row;
+    gap: 0.6rem;
+  }
+
+  .matchup__row {
+    font-size: 0.66rem;
+  }
+}

@@ -126,6 +126,12 @@ export interface LobbyMatch {
   /** Admin rule: whether Party Mode's minigames interrupt the match. Off
    *  unless it was turned on, and never available in public matches. */
   partyModeEnabled?: boolean
+  /** Admin rule: the whole table plays one kingdom, drawn when the match
+   *  starts. Off unless it was turned on, and never in public matches. */
+  copyCatEnabled?: boolean
+  /** Admin rule: kingdom matchups modify damage ("Elemental's Elementaled").
+   *  Off unless it was turned on, and never in public matches. */
+  elementalEnabled?: boolean
   /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
   visibility?: 'private' | 'public'
   /**
@@ -160,6 +166,12 @@ export interface MatchSnapshot {
   /** Admin rule: whether Party Mode's minigames interrupt the match. Off
    *  unless it was turned on, and never available in public matches. */
   partyModeEnabled?: boolean
+  /** Admin rule: the whole table plays one kingdom, drawn when the match
+   *  starts. Off unless it was turned on, and never in public matches. */
+  copyCatEnabled?: boolean
+  /** Admin rule: kingdom matchups modify damage ("Elemental's Elementaled").
+   *  Off unless it was turned on, and never in public matches. */
+  elementalEnabled?: boolean
   /** "private" (code + host) or "public" (matchmade, hostless, self-starting). */
   visibility?: 'private' | 'public'
   /**

@@ -37,6 +37,8 @@ interface LobbyViewProps {
     eliminatedSeeAllHealth?: boolean
     monstersEnabled?: boolean
     partyModeEnabled?: boolean
+    copyCatEnabled?: boolean
+    elementalEnabled?: boolean
   }) => void
   /** Whether to draw the admin gear. The server re-checks before it acts. */
   isAdmin?: boolean
@@ -245,6 +247,8 @@ export function LobbyView({
   // under one name and toggles it under another reads as two settings.
   if (match.monstersEnabled === true) activeRules.push('Monster Mayhem')
   if (match.partyModeEnabled === true) activeRules.push('Party Mode')
+  if (match.copyCatEnabled === true) activeRules.push('Copy Cat')
+  if (match.elementalEnabled === true) activeRules.push("Elemental's Elementaled")
 
   const kingdomLabel = (id: string | null) =>
     KINGDOMS.find((k) => k.id === id)?.label ?? null
@@ -274,6 +278,8 @@ export function LobbyView({
             eliminatedSeeAllHealth={match.eliminatedSeeAllHealth ?? false}
             monstersEnabled={match.monstersEnabled ?? false}
             partyModeEnabled={match.partyModeEnabled ?? false}
+            copyCatEnabled={match.copyCatEnabled ?? false}
+            elementalEnabled={match.elementalEnabled ?? false}
             onChange={(rules) => onSetRules?.(rules)}
             disabled={match.phase !== 'lobby'}
           />

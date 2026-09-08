@@ -21,6 +21,8 @@ function panel(over: Partial<Parameters<typeof RoomOptions>[0]> = {}) {
       eliminatedSeeAllHealth={false}
       monstersEnabled
       partyModeEnabled={false}
+      copyCatEnabled={false}
+      elementalEnabled={false}
       onChange={onChange}
       {...over}
     />,
@@ -39,6 +41,12 @@ describe('the room options gear', () => {
 
     fireEvent.click(screen.getByTestId('option-party-mode'))
     expect(onChange).toHaveBeenLastCalledWith({ partyModeEnabled: true })
+
+    fireEvent.click(screen.getByTestId('option-copy-cat'))
+    expect(onChange).toHaveBeenLastCalledWith({ copyCatEnabled: true })
+
+    fireEvent.click(screen.getByTestId('option-elemental'))
+    expect(onChange).toHaveBeenLastCalledWith({ elementalEnabled: true })
   })
 
   it('shows the server\u2019s values, not its own', () => {

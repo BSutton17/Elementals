@@ -20,6 +20,7 @@ import { placeKingdoms, VOLCANO_TARGET_ID } from '../game/placement'
 import { MONSTER_TARGET_ID } from '../game/placement'
 import { getKingdomTheme } from '../game/kingdomThemes'
 import { KingdomSite } from './KingdomSite'
+import { MatchupBadge } from './MatchupBadge'
 // import { TargetIndicator } from './TargetIndicator'
 import { BattlefieldFx } from './BattlefieldFx'
 import { LightShowLayer } from './lightShow/LightShowLayer'
@@ -496,7 +497,16 @@ export function BattlefieldView({
           <div className="battlefield__level-circle">
             {you.unlocked ? Object.values(you.unlocked).filter(Boolean).length : 0}
           </div>
-          <h2>{yourTheme?.name || 'Kingdom'}</h2>
+          <div className="battlefield__kingdom-titles">
+            <h2>{yourTheme?.name || 'Kingdom'}</h2>
+            {/* Only while the rule is running: every kingdom has a matchup all
+                the time, but it only MEANS anything under "Elemental's
+                Elementaled". Advertising a mechanic that is not in play is
+                worse than showing nothing. */}
+            {match.elementalEnabled === true && (
+              <MatchupBadge kingdomId={you.kingdomId} />
+            )}
+          </div>
         </div>
       )}
       <div className="battlefield__arena-box">

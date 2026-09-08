@@ -209,6 +209,8 @@ export async function setRoomRules(rules: {
   eliminatedSeeAllHealth?: boolean
   monstersEnabled?: boolean
   partyModeEnabled?: boolean
+  copyCatEnabled?: boolean
+  elementalEnabled?: boolean
 }): Promise<void> {
   const res = (await socket.emitWithAck('lobby:setRules', rules)) as Ack
   if (!res.ok) setState({ error: res.error?.message ?? 'Cannot change that rule' })
