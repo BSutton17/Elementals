@@ -7,7 +7,7 @@ import './MemoryMeter.css'
  * hardcode the live value here (see RageMeter, which advertised a stale cap for
  * a whole retune).
  */
-const MEMORY_FULL_FALLBACK = 6000
+export const MEMORY_FULL_FALLBACK = 6000
 
 /**
  * Kitsune's "Ancient Memory" readout ("Swift Tails"), and the price of Kitsune

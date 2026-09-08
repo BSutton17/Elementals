@@ -2,6 +2,7 @@ import { IoMdPeople } from 'react-icons/io'
 import { GiAutoRepair } from 'react-icons/gi'
 import { FaShieldAlt } from 'react-icons/fa'
 import { type KingdomTheme } from '../game/kingdomThemes'
+import type { ScrambleDisplay } from './scramble/useScrambleValues'
 import './AbilityBar.css'
 
 interface ShopOverlayProps {
@@ -22,6 +23,16 @@ interface ShopOverlayProps {
   /** A swarm on YOUR castle bars you from buying a shield (Light's Fireflies)
    *  — the server rejects the purchase, so grey it out and say why. */
   shieldBlockedBySwarm?: boolean
+  /**
+   * Half Past 12: show these numbers instead of the real ones. Null normally.
+   *
+   * ⚠️ DISPLAY ONLY, AND THE DISTINCTION IS LOAD-BEARING HERE. Every
+   * `canAfford*` below is computed from the REAL props and stays that way: this
+   * panel gates its own buttons, so feeding it scrambled prices would disable a
+   * purchase the player can actually afford and change what a click does. The
+   * scramble lies about what things cost; it must never lie about what happens.
+   */
+  scramble?: ScrambleDisplay | null
   theme: KingdomTheme | null
   onBuyItem: (id: 'citizen' | 'repair' | 'shield' | 'dispel') => void
   onClose: () => void
@@ -41,6 +52,7 @@ export function ShopOverlay({
   maxRepairs,
   shieldCooldownSeconds = 0,
   shieldBlockedBySwarm = false,
+  scramble = null,
   theme,
   onBuyItem,
   onClose,
@@ -56,6 +68,17 @@ export function ShopOverlay({
   const canAffordRepair = currency >= nextRepairCost && !isFullHp && !repairsExhausted
   const canAffordShield =
     currency >= shieldCost && !hasActiveShield && !shieldOnCooldown && !shieldBlockedBySwarm
+
+  // ---- what the player SEES. Everything above this line is the truth and
+  // decides what the buttons do; everything below is only drawn.
+  const dCitizenCost = scramble ? scramble.citizenCost : nextCitizenCost
+  const dRepairCost = scramble ? scramble.repairCost : nextRepairCost
+  const dShieldCost = scramble ? scramble.shieldCost : shieldCost
+  const dCurrency = scramble ? scramble.gold : currency
+  const dCitizens = scramble ? scramble.citizens : citizens
+  const dCastleHp = scramble ? scramble.castleHp : castleHp
+  const dShieldHp = scramble ? scramble.shieldHp : shieldHp
+  const shortBy = (cost: number) => Math.max(0, cost - dCurrency).toFixed(0)
 
   const themeVars = {
     '--bar-primary': theme?.primary || '#4aa3ff',
@@ -86,10 +109,10 @@ export function ShopOverlay({
           <div className="shop-item__info">
             <span className="shop-item__name">Hire Citizen</span>
             <span className="shop-item__desc">Increases passive income generation.</span>
-            <span className="shop-item__stat">Current: {citizens} citizens</span>
+            <span className="shop-item__stat">Current: {dCitizens} citizens</span>
             {!canAffordCitizen && (
               <span className="shop-item__cost-needed">
-                Need {(nextCitizenCost - currency).toFixed(0)}g more
+                Need {shortBy(dCitizenCost)}g more
               </span>
             )}
           </div>
@@ -99,7 +122,7 @@ export function ShopOverlay({
             disabled={!canAffordCitizen}
             onClick={() => onBuyItem('citizen')}
           >
-            Buy ({nextCitizenCost}g)
+            Buy ({dCitizenCost}g)
           </button>
         </div>
 
@@ -114,11 +137,11 @@ export function ShopOverlay({
               Restores a portion of your castle's health. Limited uses per match.
             </span>
             <span className="shop-item__stat">
-              HP: {castleHp} / {maxCastleHp} · Repairs: {repairsUsed}/{maxRepairs}
+              HP: {dCastleHp} / {maxCastleHp} · Repairs: {repairsUsed}/{maxRepairs}
             </span>
             {!isFullHp && !repairsExhausted && !canAffordRepair && (
               <span className="shop-item__cost-needed">
-                Need {(nextRepairCost - currency).toFixed(0)}g more
+                Need {shortBy(dRepairCost)}g more
               </span>
             )}
           </div>
@@ -132,7 +155,7 @@ export function ShopOverlay({
               ? 'No repairs left'
               : isFullHp
                 ? 'Max HP'
-                : `Buy (${nextRepairCost}g)`}
+                : `Buy (${dRepairCost}g)`}
           </button>
         </div>
 
@@ -145,7 +168,7 @@ export function ShopOverlay({
             <span className="shop-item__name">Buy Shield</span>
             <span className="shop-item__desc">Surrounds your castle with a protective barrier.</span>
             <span className="shop-item__stat">
-              Active Shield: {shieldHp > 0 ? `${shieldHp} HP` : 'None'}
+              Active Shield: {shieldHp > 0 ? `${dShieldHp} HP` : 'None'}
             </span>
             {shieldBlockedBySwarm ? (
               <span className="shop-item__cost-needed">
@@ -159,7 +182,7 @@ export function ShopOverlay({
               !hasActiveShield &&
               !canAffordShield && (
                 <span className="shop-item__cost-needed">
-                  Need {(shieldCost - currency).toFixed(0)}g more
+                  Need {shortBy(dShieldCost)}g more
                 </span>
               )
             )}
@@ -178,7 +201,7 @@ export function ShopOverlay({
                 ? 'Swarmed'
                 : shieldOnCooldown
                   ? `${Math.ceil(shieldCooldownSeconds)}s`
-                  : `Buy (${shieldCost}g)`}
+                  : `Buy (${dShieldCost}g)`}
           </button>
         </div>
 

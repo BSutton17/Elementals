@@ -12,8 +12,16 @@ import { useEffect, useRef, useState } from 'react'
 //   • castle HP   → 0–10000       every 0.5s
 //   • shield HP   → 0–2000        every 0.5s   (only shown when a shield is up)
 //   • Supernova meter (Space only) → 0–250     every 0.5s (its full charge range)
+//   • Rage / Ancient Memory meters → a FRACTION 0–1, every 0.5s
+//   • Repairs & Shields prices  → citizen / repair / shield, every 0.5s
 //   • ability costs (cast / upgrade / unlock) → 0–1000 per ability, every 0.5s
 //   • "can I afford it?" LOOK → flips with 20% chance every 1s (visual only)
+//
+// ⚠️ THE METERS ARE A FRACTION, NOT AN ABSOLUTE, AND DELIBERATELY SO. Dark's
+// RAGE_FULL and Kitsune's MEMORY_FULL are server-owned and sent with the match
+// config; RageMeter carries a comment about having once advertised a stale cap
+// for a whole retune. An absolute range invented here would be exactly that bug
+// again, so the caller multiplies by the live cap it already has.
 
 export interface ScrambleDisplay {
   gold: number
@@ -23,6 +31,18 @@ export interface ScrambleDisplay {
   shieldHp: number
   /** Scrambled displayed Supernova charge (Space only; 0–250). */
   supernovaMeter: number
+  /**
+   * How full a capped meter should LOOK, 0–1. Multiply by the live cap — see
+   * the note above about not inventing an absolute range here. Used for Dark's
+   * Unlimited Rage and Kitsune's Ancient Memory.
+   */
+  meterFraction: number
+  /** Scrambled displayed price of the next citizen. */
+  citizenCost: number
+  /** Scrambled displayed price of the next repair. */
+  repairCost: number
+  /** Scrambled displayed price of a shield. */
+  shieldCost: number
   /** Scrambled displayed cast cost for an ability id (0–1000). */
   cost: (abilityId: string) => number
   /** Scrambled displayed upgrade cost for an ability id (0–1000). */
@@ -45,6 +65,10 @@ interface Scalars {
   castleHp: number
   shieldHp: number
   supernovaMeter: number
+  meterFraction: number
+  citizenCost: number
+  repairCost: number
+  shieldCost: number
 }
 
 function genScalars(): Scalars {
@@ -55,6 +79,10 @@ function genScalars(): Scalars {
     castleHp: ri(0, 10000),
     shieldHp: ri(0, 2000),
     supernovaMeter: ri(0, 250),
+    meterFraction: rf(0, 1),
+    citizenCost: ri(0, 1000),
+    repairCost: ri(0, 2000),
+    shieldCost: ri(0, 2000),
   }
 }
 

@@ -12,8 +12,8 @@ import { DispelButton } from './DispelButton'
 import { PerkChips } from './PerkChips'
 import { FrostCoat } from './FrostCoat'
 import { SupernovaMeter } from './SupernovaMeter'
-import { RageMeter } from './RageMeter'
-import { MemoryMeter } from './MemoryMeter'
+import { RageMeter, RAGE_FULL_FALLBACK } from './RageMeter'
+import { MemoryMeter, MEMORY_FULL_FALLBACK } from './MemoryMeter'
 import type { ScrambleDisplay } from './scramble/useScrambleValues'
 import type { AbilityPrices } from '../game/gameState'
 import './AbilityBar.css'
@@ -225,6 +225,22 @@ export function AbilityBar({
   // shown (Supernova unlocked), never conjured out of nothing by the scramble.
   const displaySupernovaMeter =
     scramble && supernovaMeter != null ? scramble.supernovaMeter : supernovaMeter
+  // Dark's Rage and Kitsune's Ancient Memory scramble the same way, and for the
+  // same reason: a meter is a promise about when your ultimate lands, so a
+  // scrambled HUD that left it honest would still be telling the truth about
+  // the one number worth lying about.
+  //
+  // ⚠️ SCALED BY THE LIVE CAP, NOT BY A RANGE INVENTED IN THE HOOK. Both caps
+  // are server-owned and arrive with the match config; hardcoding a range for
+  // them is the stale-cap bug RageMeter warns about in its own header.
+  const displayRageMeter =
+    scramble && rageMeter != null
+      ? Math.round(scramble.meterFraction * (rageFull ?? RAGE_FULL_FALLBACK))
+      : rageMeter
+  const displayMemoryMeter =
+    scramble && memoryMeter != null
+      ? Math.round(scramble.meterFraction * (memoryFull ?? MEMORY_FULL_FALLBACK))
+      : memoryMeter
   const formattedHp = (scramble ? scramble.castleHp : castleHp).toLocaleString()
   const formattedIncome = (scramble ? scramble.incomePerSecond : incomePerSecond).toFixed(1)
   const formattedCurrency = Math.floor(scramble ? scramble.gold : currency)
@@ -265,6 +281,7 @@ export function AbilityBar({
         shieldBlockedBySwarm={shieldBlockedBySwarm}
         repairsUsed={repairsUsed}
         maxRepairs={maxRepairs}
+        scramble={scramble}
         theme={theme}
         onBuyItem={onBuyItem}
         onClose={() => setIsShopOpen(false)}
@@ -285,9 +302,9 @@ export function AbilityBar({
           shrinks the battlefield above it. Supernova shows only once Supernova
           is unlocked (the parent passes a number then). */}
       {supernovaMeter != null && <SupernovaMeter meter={displaySupernovaMeter!} />}
-      {rageMeter != null && <RageMeter meter={rageMeter} full={rageFull} />}
+      {rageMeter != null && <RageMeter meter={displayRageMeter!} full={rageFull} />}
       {memoryMeter != null && (
-        <MemoryMeter meter={memoryMeter} full={memoryFull} />
+        <MemoryMeter meter={displayMemoryMeter!} full={memoryFull} />
       )}
 
       {/* Main Bottom HUD Bar */}
