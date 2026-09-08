@@ -40,7 +40,14 @@ const BOTTOM_BANNER = new Set(['bombAttack'])
  */
 const BRIEF_MS: Record<string, number> = {}
 
-export function PartyBanner({ party }: { party?: PartySnapshot | null }) {
+export function PartyBanner({
+  party,
+  youId = null,
+}: {
+  party?: PartySnapshot | null
+  /** The local seat, so the banner knows when THIS player is finished. */
+  youId?: string | null
+}) {
   // ⚠️ DERIVED, NOT STORED. What the banner says is a function of the session:
   // the description while it runs, the result once it is over. Keeping that in
   // state and filling it from an effect costs a blank first frame and puts the
@@ -60,6 +67,19 @@ export function PartyBanner({ party }: { party?: PartySnapshot | null }) {
       ? party.elapsedTicks * 50 > brief
       : false
 
+  /**
+   * ⚠️ THE DESCRIPTION IS AN INSTRUCTION, AND IT GOES WHEN YOU HAVE FOLLOWED IT.
+   * "May the odds be ever in your favor" stayed across the top of the screen
+   * after a hand of blackjack was settled and the panel had gone — the player
+   * was back on the battlefield being told to play a game they had finished,
+   * for as long as the slowest person at the table took. The same was true of
+   * "Escape the maze" once you were out.
+   *
+   * A RESULT is different and still shows: that is news, not an instruction.
+   * Spectators have no seat, so nothing is finished and they keep the line.
+   */
+  const mineDone = (party && youId ? party.players[youId]?.done : false) ?? false
+
   const shown =
     !party
       ? null
@@ -67,7 +87,7 @@ export function PartyBanner({ party }: { party?: PartySnapshot | null }) {
         ? party.resultText
           ? { text: party.resultText, kind: 'result' as const }
           : null
-        : briefExpired
+        : briefExpired || mineDone
           ? null
           : { text: party.description, kind: 'description' as const }
 

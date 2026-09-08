@@ -48,6 +48,7 @@ import type {
   VolcanoSnapshot,
 } from '../game/gameState'
 import { partyAct, type PartySnapshot } from '../game/party'
+import { isGhost } from '../game/ghosts'
 import { BombMarker } from './party/BombMarker'
 import { BombBlast } from './party/BombBlast'
 import type { LobbyMatch } from '../game/lobby'
@@ -636,6 +637,8 @@ export function BattlefieldView({
                 tickRate={tickRate}
                 showStats={spectator || isYou || hasAirVision || deadSeesAll}
                 ultShield={ultShieldIds.has(p.id) && p.castle.shield > 0}
+                // Haunted has them up: eliminated, and playing anyway.
+                ghost={isGhost(p, tick)}
                 slotDisplay={slotDisplayFor(p)}
                 onSelect={
                   !spectator && !isYou && !p.eliminated

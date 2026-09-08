@@ -167,3 +167,43 @@ describe('the KingdomSite memo', () => {
     expect(container.querySelector('[data-testid="frozen"]')).toBeTruthy()
   })
 })
+
+describe('a raised kingdom is not a dead one', () => {
+  /**
+   * ⚠️ REPORTED FROM A LIVE MATCH: Haunted raised the dead and the board still
+   * said ELIMINATED. A ghost keeps `eliminated` true for the whole haunting —
+   * that is what stops it winning the match and what makes it untargetable — so
+   * anything reading that flag alone calls a kingdom that is up and attacking a
+   * corpse.
+   */
+  it('says RISEN instead of ELIMINATED', () => {
+    const { container } = render(
+      <svg>
+        <KingdomSite {...props({ player: player({ eliminated: true }), ghost: true })} />
+      </svg>,
+    )
+    expect(container.querySelector('[data-testid="risen"]')).toBeTruthy()
+    expect(container.querySelector('[data-testid="eliminated"]')).toBeNull()
+  })
+
+  it('still says ELIMINATED for a kingdom that is actually out', () => {
+    const { container } = render(
+      <svg>
+        <KingdomSite {...props({ player: player({ eliminated: true }) })} />
+      </svg>,
+    )
+    expect(container.querySelector('[data-testid="eliminated"]')).toBeTruthy()
+  })
+
+  it('redraws when the haunting starts and when it ends', () => {
+    // ⚠️ THE MEMO HAD TO LEARN THIS PROP. It compares what is drawn, field by
+    // field — a new prop that changes the render and is not compared does not
+    // throw or warn, it just stops updating, which here would mean a kingdom
+    // stuck reading ELIMINATED for the whole haunting. Exactly the bug again,
+    // arriving by a different route.
+    const dead = props({ player: player({ eliminated: true }) })
+    const risen = props({ player: player({ eliminated: true }), ghost: true })
+    expect(sameSite(dead, risen)).toBe(false)
+    expect(sameSite(risen, dead)).toBe(false)
+  })
+})

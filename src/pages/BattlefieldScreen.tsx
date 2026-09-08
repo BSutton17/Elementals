@@ -77,7 +77,7 @@ export function BattlefieldScreen() {
           centrepiece={game.centrepiece}
           spectator
         />
-        <PartyBanner party={game.party} />
+        <PartyBanner party={game.party} youId={youId} />
         <FogOverlay active={watchedGassed !== null} variant="toxic" />
         <BlizzardOverlay
           active={game.players.some((p) => p.statuses?.some((s) => s.id === 'blizzard'))}
@@ -188,7 +188,7 @@ export function BattlefieldScreen() {
       {/* Party Mode: the banner across the top, and the panel the minigame is
           played in. Above the ability bar but below the blinding overlays — a
           Flash Bang is still a Flash Bang while you are in a maze. */}
-      <PartyBanner party={game.party} />
+      <PartyBanner party={game.party} youId={youId} />
       <PartyStage party={game.party} youId={youId} />
       {/* Clean Up's spill: its own layer over the board, because the mess has
           to be in the way of the match rather than inside a dialog. */}

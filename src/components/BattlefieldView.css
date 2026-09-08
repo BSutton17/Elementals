@@ -468,6 +468,12 @@
   /* The name and, under it, the matchup badge — stacked beside the level circle
    rather than in the header's own row, so the badge sits under the NAME rather
    than beside the circle. */
+/* A risen kingdom is not a dead one: same slot as ELIMINATED, but it reads as
+   something happening rather than something over. */
+.battlefield__risen {
+  fill: #c9a3ff;
+}
+
 .battlefield__kingdom-titles {
   display: flex;
   flex-direction: column;

@@ -37,6 +37,15 @@ export interface KingdomSiteProps {
   /** This kingdom's shield came from its ULTIMATE (Earth's Brick Wall) — render
    *  the fortress hexadecagon instead of the normal circle. */
   ultShield?: boolean
+  /**
+   * Haunted has this kingdom raised: out of the match, but up and fighting.
+   *
+   * ⚠️ A GHOST IS STILL `eliminated`, WHICH IS WHY THIS IS A SEPARATE PROP. The
+   * server keeps that flag for the whole haunting — it is what stops a ghost
+   * winning the match and what makes it untargetable — so reading `eliminated`
+   * alone labelled a kingdom that was actively attacking as ELIMINATED.
+   */
+  ghost?: boolean
   /** Joker's Slot Machine readout above this kingdom: "Spinning…" while their
    *  reels turn, then the emojis they landed. Null when there's nothing to say. */
   slotDisplay?: { text: string; spinning: boolean } | null
@@ -54,6 +63,7 @@ function KingdomSiteView({
   tickRate,
   showStats = true,
   ultShield = false,
+  ghost = false,
   slotDisplay = null,
   onSelect,
 }: KingdomSiteProps) {
@@ -243,7 +253,9 @@ function KingdomSiteView({
         <CastleSprite
           color={color}
           outline={getCastleOutline(player.kingdomId)}
-          eliminated={player.eliminated}
+          // A risen kingdom is playing, so it does not wear the dead castle's
+          // grey — it is back, and the label above says for how long.
+          eliminated={player.eliminated && !ghost}
           // Resolved by the server, so a client one release behind still shows
           // a stranger the right castle rather than the wrong one.
           paint={player.castlePaint}
@@ -313,8 +325,12 @@ function KingdomSiteView({
       )}
 
       {player.eliminated ? (
-        <text y={78} className="battlefield__eliminated" data-testid="eliminated">
-          ELIMINATED
+        <text
+          y={78}
+          className={`battlefield__eliminated${ghost ? ' battlefield__risen' : ''}`}
+          data-testid={ghost ? 'risen' : 'eliminated'}
+        >
+          {ghost ? 'RISEN' : 'ELIMINATED'}
         </text>
       ) : (
         showStats && (
@@ -406,6 +422,7 @@ export function sameSite(prev: KingdomSiteProps, next: KingdomSiteProps): boolea
     prev.tickRate !== next.tickRate ||
     prev.showStats !== next.showStats ||
     prev.ultShield !== next.ultShield ||
+    prev.ghost !== next.ghost ||
     (prev.onSelect == null) !== (next.onSelect == null)
   ) {
     return false

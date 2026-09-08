@@ -114,6 +114,16 @@ export interface GamePlayer {
   /** The player this kingdom is currently targeting, or null. */
   target: string | null
   eliminated: boolean
+  /**
+   * While Haunted has this kingdom raised: the tick its second life ends.
+   *
+   * ⚠️ A GHOST IS STILL `eliminated`, AND DELIBERATELY SO. Keeping the flag is
+   * what stops a ghost winning the match and what makes it untargetable and
+   * immune — but it means every "is this player out" check reads a ghost as a
+   * corpse unless it also asks this. That is exactly how the battlefield came
+   * to label a raised kingdom ELIMINATED while it was up and fighting.
+   */
+  ghostUntilTick?: number
   cooldowns?: Record<string, number>
   upgrades?: Record<string, number>
   /** Abilities the player has bought; bought = usable at base strength. */

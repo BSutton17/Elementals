@@ -140,8 +140,7 @@ export function RoomOptions({
             <span>
               <span className="room-options__name">Copy Cat</span>
               <span className="room-options__desc">
-                Everyone plays the same kingdom — drawn at random when the match
-                starts, so nobody knows which until it does.
+                Everyone plays the same kingdom
               </span>
             </span>
           </label>
@@ -158,7 +157,7 @@ export function RoomOptions({
               <span className="room-options__name">Elemental&rsquo;s Elementaled</span>
               <span className="room-options__desc">
                 Matchups matter: every kingdom hits one other kingdom 10% harder
-                and takes 10% less from it. Shown under your name in the match.
+                and takes 10% less from it.
               </span>
             </span>
           </label>
