@@ -15,8 +15,15 @@ import './PartyBanner.css'
  * a copy that can drift.
  */
 
-/** Matches the server's `PARTY.RESULT_SECONDS`, plus the fade. */
-const RESULT_MS = 4000
+/**
+ * Matches the server's `PARTY.RESULT_SECONDS`, plus the fade.
+ *
+ * ⚠️ KEEP THESE TWO IN STEP. The server decides when the session clears; this
+ * decides when the banner fades. Let them drift and the line disappears while
+ * the verdict it belongs to is still on screen, or hangs after the panel has
+ * gone.
+ */
+const RESULT_MS = 5250
 const FADE_MS = 600
 
 /**

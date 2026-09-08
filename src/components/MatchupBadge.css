@@ -50,15 +50,38 @@
   color: #ece7fb;
 }
 
-/* Landscape phones have almost no vertical room, and this sits above the
-   arena — one line rather than two. */
-@media (orientation: landscape) and (max-height: 560px) {
+/* ---- phones ----------------------------------------------------------------
+   ⚠️ THIS SITS OVER THE ARENA, SO ITS HEIGHT IS TAKEN FROM THE BOARD. Two
+   stacked rows under an already-shrunk kingdom name pushed the top-left castle
+   behind a wall of text on a phone. One line instead of two halves the
+   intrusion, and the whole thing shrinks: the names stay, because an arrow and
+   an icon alone do not answer "who should I be hitting".
+
+   Both orientations, not just landscape — the original rule only covered short
+   screens and portrait is where it was actually in the way. */
+@media (max-width: 900px) {
   .matchup {
     flex-direction: row;
-    gap: 0.6rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.1rem;
   }
 
   .matchup__row {
-    font-size: 0.66rem;
+    gap: 0.22rem;
+    font-size: 0.64rem;
+  }
+
+  .matchup__arrow,
+  .matchup__kingdom-icon {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+}
+
+/* Landscape phones have almost no vertical room at all. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .matchup__row {
+    font-size: 0.6rem;
   }
 }

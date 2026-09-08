@@ -279,6 +279,18 @@ export function BattlefieldView({
    * Reading through a ref means the handler never captures anything: the
    * closure is created once and always sees the current values.
    */
+  /**
+   * Insects' butterfly has this player's aim.
+   *
+   * ⚠️ THE SERVER REFUSES `selectTarget` DURING A SCRAMBLE, WHICH COVERED EVERY
+   * KINGDOM THAT AIMS THROUGH IT — AND NOT THE TWO THAT DO NOT. Air and Love
+   * keep their selection here and send it with the cast, so nothing stopped
+   * them picking their own targets while the rest of the table was being thrown
+   * around. The engine now overrules an explicit target list too; this stops the
+   * UI offering a choice the server is about to discard.
+   */
+  const capriceScrambling = caprice !== null && caprice.ownerId !== youId
+
   const live = useRef({
     bombLive,
     bombHolderId,
@@ -286,12 +298,31 @@ export function BattlefieldView({
     localSelect,
     selectLimit,
     stillTargetable,
+    capriceScrambling,
   })
-  live.current = { bombLive, bombHolderId, youId, localSelect, selectLimit, stillTargetable }
+  live.current = {
+    bombLive,
+    bombHolderId,
+    youId,
+    localSelect,
+    selectLimit,
+    stillTargetable,
+    capriceScrambling,
+  }
 
   const toggleTarget = useCallback((id: string) => {
-    const { bombLive, bombHolderId, youId, localSelect, selectLimit, stillTargetable } =
-      live.current
+    const {
+      bombLive,
+      bombHolderId,
+      youId,
+      localSelect,
+      selectLimit,
+      stillTargetable,
+      capriceScrambling,
+    } = live.current
+    // Aim belongs to the butterfly for the duration; a click here would either
+    // be refused or silently overruled a moment later.
+    if (capriceScrambling) return
     // ⚠️ DURING A BOMB, A CASTLE CLICK PASSES THE BOMB. It does not also aim
     // at that kingdom — the server refuses targeting for the duration, so a
     // click that tried to do both would half-work and read as a bug. Handled at
